@@ -4,13 +4,13 @@ namespace OttoTheGeek.Core
 {
     public class ObjectType
     {
-        public static readonly ObjectType String = new ObjectType { Name = "String", Kind = "SCALAR" };
-        public static readonly ObjectType Int = new ObjectType { Name = "Int", Kind = "SCALAR" };
+        public static readonly ObjectType String = new ObjectType { Name = "String", Kind = ObjectKinds.Scalar };
+        public static readonly ObjectType Int = new ObjectType { Name = "Int", Kind = ObjectKinds.Scalar };
 
         public static ObjectType NonNullableOf(ObjectType innerType)
         {
             return new ObjectType {
-                Kind = "NON_NULL",
+                Kind = ObjectKinds.NonNull,
                 OfType = innerType
             };
         }
@@ -22,5 +22,12 @@ namespace OttoTheGeek.Core
 
         public IEnumerable<ObjectField> Fields { get; set; }
 
+    }
+
+    public static class ObjectKinds
+    {
+        public const string Scalar = "SCALAR";
+        public const string Object = "OBJECT";
+        public const string NonNull = "NON_NULL";
     }
 }

@@ -3,6 +3,7 @@ using System.Reflection;
 namespace OttoTheGeek.Core
 {
     public sealed class QueryFieldConfigBuilder<T, TProp>
+        where TProp : class
     {
         private readonly SchemaBuilder<T> _parent;
         private readonly PropertyInfo _propertyInfo;
@@ -16,7 +17,9 @@ namespace OttoTheGeek.Core
         public SchemaBuilder<T> ResolvesVia<TResolver>()
             where TResolver : IQueryFieldResolver<TProp>
         {
-            return _parent.WithQueryFieldResolver(typeof(IQueryFieldResolver<TProp>), typeof(TResolver));
+            return _parent.WithGraphTypeBuilder(
+                new GraphTypeBuilder<TProp>().WithScalarQueryFieldResolver<TResolver>()
+                );
         }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 using FluentAssertions;
+using FluentAssertions.Json;
 using Newtonsoft.Json.Linq;
 using Xunit;
 
@@ -53,12 +54,58 @@ namespace OttoTheGeek.Core.Tests
         }
 
         [Fact]
-        public void BuildsServerWhenResolverPresent()
+        public void BuildsSchemaType()
         {
-            var model = new WorkingModel();
-            new Action(() => model.CreateServer())
-                .Should()
-                .NotThrow();
+            var server = new WorkingModel().CreateServer();
+
+            var rawResult = server.Execute<JObject>(@"{
+                __type(name:""Query"") {
+                    name
+                    kind
+                    fields {
+                        name
+                    }
+                }
+            }");
+
+            var expectedType = new ObjectType {
+                Kind = ObjectKinds.Object,
+                Name = "Query",
+                Fields = new [] {
+                    new ObjectField
+                    {
+                        Name = "child"
+                    }
+                }
+            };
+
+            var queryType = rawResult["__type"].ToObject<ObjectType>();
+
+            queryType.Should().BeEquivalentTo(expectedType);
+        }
+
+        [Fact]
+        public void ReturnsObjectValues()
+        {
+            var expectedData = JObject.Parse(@"{
+                child: {
+                    value1: ""hello"",
+                    value2: ""world"",
+                    value3: 654,
+                }
+            }");
+
+            var server = new WorkingModel().CreateServer();
+
+            var result = server.Execute<JObject>(@"{
+                child {
+                    value1
+                    value2
+                    value3
+                }
+            }");
+
+            result.Should().BeEquivalentTo(expectedData);
         }
 
     }

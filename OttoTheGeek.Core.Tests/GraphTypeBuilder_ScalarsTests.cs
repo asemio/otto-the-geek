@@ -5,6 +5,7 @@ using Xunit;
 
 namespace OttoTheGeek.Core.Tests
 {
+
     public sealed class GraphTypeBuilder_ScalarsTests
     {
         public sealed class Model
@@ -15,7 +16,7 @@ namespace OttoTheGeek.Core.Tests
             public long? NullableLongVal { get; set; }
         }
 
-        private static readonly ObjectGraphType<Model> GraphType = new GraphTypeBuilder<Model>().Build();
+        private static readonly ObjectGraphType<Model> GraphType = new GraphTypeBuilder<Model>().BuildGraphType();
 
         [Fact]
         public void BuildsStringField()

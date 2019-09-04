@@ -1,10 +1,20 @@
 using System;
 using System.Collections.Generic;
+using System.Reflection;
+using System.Threading.Tasks;
+using GraphQL.Resolvers;
 using GraphQL.Types;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace OttoTheGeek.Core
 {
-    public sealed class GraphTypeBuilder<TModel>
+
+    public abstract class GraphTypeBuilder
+    {
+        public abstract void ConfigureScalarQueryField(PropertyInfo prop, ObjectGraphType queryType, IServiceCollection services);
+    }
+
+    public sealed class GraphTypeBuilder<TModel> : GraphTypeBuilder
         where TModel : class
     {
         private static readonly IReadOnlyDictionary<Type, Type> CSharpToGraphqlTypeMapping = new Dictionary<Type, Type>{
@@ -39,9 +49,42 @@ namespace OttoTheGeek.Core
             [typeof(uint?)]             = typeof(UIntGraphType),
             // TODO: timespan
         };
-        public ObjectGraphType<TModel> Build()
+
+        private Type _scalarQueryFieldResolver;
+
+        public GraphTypeBuilder<TModel> WithScalarQueryFieldResolver<TResolver>()
+            where TResolver : IQueryFieldResolver<TModel>
         {
-            var graphType = new ObjectGraphType<TModel>();
+            var newBuilder = new GraphTypeBuilder<TModel>();
+
+            newBuilder._scalarQueryFieldResolver = typeof(TResolver);
+
+            return newBuilder;
+        }
+
+        public override void ConfigureScalarQueryField(PropertyInfo prop, ObjectGraphType queryType, IServiceCollection services)
+        {
+            if(_scalarQueryFieldResolver == null)
+            {
+                throw new UnableToResolveException(prop);
+            }
+
+            services.AddTransient(typeof(IQueryFieldResolver<TModel>), _scalarQueryFieldResolver);
+
+            queryType.AddField(new FieldType {
+                Name = prop.Name,
+                ResolvedType = BuildGraphType(),
+                Type = prop.PropertyType,
+                Resolver = new ScalarQueryFieldResolverProxy()
+            });
+        }
+
+        public ObjectGraphType<TModel> BuildGraphType()
+        {
+            var graphType = new ObjectGraphType<TModel>
+            {
+                Name = typeof(TModel).Name
+            };
 
             foreach(var prop in typeof(TModel).GetProperties())
             {
@@ -59,6 +102,22 @@ namespace OttoTheGeek.Core
                 }
             }
             return graphType;
+        }
+
+        private sealed class ScalarQueryFieldResolverProxy : IFieldResolver<Task<TModel>>
+        {
+            public Task<TModel> Resolve(ResolveFieldContext context)
+            {
+                // this cast to Schema is gross...
+                var resolver = ((Schema)context.Schema).DependencyResolver.Resolve<IQueryFieldResolver<TModel>>();
+
+                return resolver.Resolve();
+            }
+
+            object IFieldResolver.Resolve(ResolveFieldContext context)
+            {
+                return Resolve(context);
+            }
         }
     }
 }
