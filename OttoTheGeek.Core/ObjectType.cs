@@ -15,6 +15,14 @@ namespace OttoTheGeek.Core
             };
         }
 
+        public static ObjectType ListOf(ObjectType innerType)
+        {
+            return new ObjectType {
+                Kind = ObjectKinds.List,
+                OfType = innerType
+            };
+        }
+
         public string Name { get; set; }
         public string Kind { get; set; }
 
@@ -29,5 +37,6 @@ namespace OttoTheGeek.Core
         public const string Scalar = "SCALAR";
         public const string Object = "OBJECT";
         public const string NonNull = "NON_NULL";
+        public const string List = "LIST";
     }
 }

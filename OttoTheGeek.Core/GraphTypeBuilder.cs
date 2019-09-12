@@ -11,7 +11,10 @@ namespace OttoTheGeek.Core
 
     public abstract class GraphTypeBuilder
     {
+        // prevent funny business
+        internal GraphTypeBuilder() {}
         public abstract void ConfigureScalarQueryField(PropertyInfo prop, ObjectGraphType queryType, IServiceCollection services);
+        public abstract void ConfigureListQueryField(PropertyInfo prop, ObjectGraphType queryType, IServiceCollection services);
     }
 
     public sealed class GraphTypeBuilder<TModel> : GraphTypeBuilder
@@ -51,6 +54,7 @@ namespace OttoTheGeek.Core
         };
 
         private Type _scalarQueryFieldResolver;
+        private Type _listQueryFieldResolver;
 
         public GraphTypeBuilder<TModel> WithScalarQueryFieldResolver<TResolver>()
             where TResolver : IQueryFieldResolver<TModel>
@@ -58,6 +62,16 @@ namespace OttoTheGeek.Core
             var newBuilder = new GraphTypeBuilder<TModel>();
 
             newBuilder._scalarQueryFieldResolver = typeof(TResolver);
+
+            return newBuilder;
+        }
+
+        public GraphTypeBuilder<TModel> WithListQueryFieldResolver<TResolver>()
+            where TResolver : IListQueryFieldResolver<TModel>
+        {
+            var newBuilder = new GraphTypeBuilder<TModel>();
+
+            newBuilder._listQueryFieldResolver = typeof(TResolver);
 
             return newBuilder;
         }
@@ -76,6 +90,21 @@ namespace OttoTheGeek.Core
                 ResolvedType = BuildGraphType(),
                 Type = prop.PropertyType,
                 Resolver = new ScalarQueryFieldResolverProxy()
+            });
+        }
+
+        public override void ConfigureListQueryField(PropertyInfo prop, ObjectGraphType queryType, IServiceCollection services)
+        {
+            services.AddTransient(typeof(IListQueryFieldResolver<TModel>), _listQueryFieldResolver);
+
+            var myGraphType = BuildGraphType();
+            var listType = new ListGraphType(myGraphType);
+
+            queryType.AddField(new FieldType {
+                Name = prop.Name,
+                ResolvedType = listType,
+                Type = prop.PropertyType,
+                Resolver = new ListQueryFieldResolverProxy()
             });
         }
 
@@ -110,6 +139,22 @@ namespace OttoTheGeek.Core
             {
                 // this cast to Schema is gross...
                 var resolver = ((Schema)context.Schema).DependencyResolver.Resolve<IQueryFieldResolver<TModel>>();
+
+                return resolver.Resolve();
+            }
+
+            object IFieldResolver.Resolve(ResolveFieldContext context)
+            {
+                return Resolve(context);
+            }
+        }
+
+        private sealed class ListQueryFieldResolverProxy : IFieldResolver<Task<IEnumerable<TModel>>>
+        {
+            public Task<IEnumerable<TModel>> Resolve(ResolveFieldContext context)
+            {
+                // this cast to Schema is gross...
+                var resolver = ((Schema)context.Schema).DependencyResolver.Resolve<IListQueryFieldResolver<TModel>>();
 
                 return resolver.Resolve();
             }

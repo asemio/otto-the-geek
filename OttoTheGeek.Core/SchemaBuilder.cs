@@ -21,11 +21,18 @@ namespace OttoTheGeek.Core
             _builders = builders;
         }
 
-        public QueryFieldConfigBuilder<TQuery, TProp> QueryField<TProp>(Expression<Func<TQuery, TProp>> expr)
+        public ListQueryFieldBuilder<TQuery, TElem> ListQueryField<TElem>(Expression<Func<TQuery, IEnumerable<TElem>>> expr)
+            where TElem : class
+        {
+            var propInfo = expr.PropertyInfoForSimpleGet();
+            return new ListQueryFieldBuilder<TQuery, TElem>(this, propInfo);
+        }
+
+        public QueryFieldBuilder<TQuery, TProp> QueryField<TProp>(Expression<Func<TQuery, TProp>> expr)
             where TProp : class
         {
             var propInfo = expr.PropertyInfoForSimpleGet();
-            return new QueryFieldConfigBuilder<TQuery, TProp>(this, propInfo);
+            return new QueryFieldBuilder<TQuery, TProp>(this, propInfo);
         }
 
         internal SchemaBuilder<TQuery> WithGraphTypeBuilder<TType>(GraphTypeBuilder<TType> builder)
@@ -45,12 +52,21 @@ namespace OttoTheGeek.Core
             };
             foreach(var prop in typeof(TQuery).GetProperties())
             {
-                if(!_builders.TryGetValue(prop.PropertyType, out var builder))
+                if(_builders.TryGetValue(prop.PropertyType, out var builder))
                 {
-                    throw new UnableToResolveException(prop);
+                    builder.ConfigureScalarQueryField(prop, queryType, services);
+                    continue;
                 }
 
-                builder.ConfigureScalarQueryField(prop, queryType, services);
+                var elemType = prop.PropertyType.GetEnumerableElementType();
+
+                if(elemType != null && _builders.TryGetValue(elemType, out var listElemBuilder))
+                {
+                    listElemBuilder.ConfigureListQueryField(prop, queryType, services);
+                    continue;
+                }
+
+                throw new UnableToResolveException(prop);
             }
             return new OttoSchema(queryType);
         }

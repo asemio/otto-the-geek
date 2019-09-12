@@ -1,0 +1,25 @@
+digraph {
+    nodesep=1
+    ranksep=1
+    node [fontname="Open Sans";shape=box]
+    edge [fontname="Open Sans";fontsize=9]
+
+    schemabuilder [label="SchemaBuilder<TQuery>"]
+    queryfieldbuilder [label="QueryFieldBuilder<TQuery, TProp>"]
+    listqueryfieldbuilder [label="ListQueryFieldBuilder<TQuery, TProp>"]
+    pageablequeryfieldbuilder [label="PageableQueryFieldBuilder<TQuery, TProp>"]
+
+    schemabuilder -> queryfieldbuilder [label="QueryField<TProp>(...expr)              "]
+
+    queryfieldbuilder -> schemabuilder [label="ResolvesVia<TResolver>()"]
+    queryfieldbuilder -> listqueryfieldbuilder [label="AsList()"]
+
+    schemabuilder -> listqueryfieldbuilder [label="ResolvesVia<TResolver>()";dir=back]
+    schemabuilder  -> pageablequeryfieldbuilder[label="ResolvesVia<TResolver>()";dir=back]
+
+    queryfieldbuilder -> pageablequeryfieldbuilder [label="AsPageable()"]
+
+    {
+        rank=same;
+    }
+}
