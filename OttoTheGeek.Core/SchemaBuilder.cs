@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
-using System.Threading.Tasks;
-using GraphQL.Resolvers;
 using GraphQL.Types;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -10,14 +8,13 @@ namespace OttoTheGeek.Core
 {
     public sealed class SchemaBuilder<TQuery>
     {
-        private readonly Dictionary<Type, GraphTypeBuilder> _builders;
+        private readonly Dictionary<Type, IGraphTypeBuilder> _builders;
 
-        public SchemaBuilder() : this(new Dictionary<Type, GraphTypeBuilder>())
+        public SchemaBuilder() : this(new Dictionary<Type, IGraphTypeBuilder>())
         {
         }
-        private SchemaBuilder(Dictionary<Type, GraphTypeBuilder> builders)
+        private SchemaBuilder(Dictionary<Type, IGraphTypeBuilder> builders)
         {
-
             _builders = builders;
         }
 
@@ -25,20 +22,28 @@ namespace OttoTheGeek.Core
             where TElem : class
         {
             var propInfo = expr.PropertyInfoForSimpleGet();
-            return new ListQueryFieldBuilder<TQuery, TElem>(this, propInfo);
+            return new ListQueryFieldBuilder<TQuery, TElem>(this, propInfo, GetGraphTypeBuilder<TElem>());
         }
 
         public QueryFieldBuilder<TQuery, TProp> QueryField<TProp>(Expression<Func<TQuery, TProp>> expr)
             where TProp : class
         {
             var propInfo = expr.PropertyInfoForSimpleGet();
-            return new QueryFieldBuilder<TQuery, TProp>(this, propInfo);
+            return new QueryFieldBuilder<TQuery, TProp>(this, propInfo, GetGraphTypeBuilder<TProp>());
+        }
+
+        public SchemaBuilder<TQuery> GraphType<TType>(Func<GraphTypeBuilder<TType>, GraphTypeBuilder<TType>> configurator)
+            where TType : class
+        {
+            var dict = new Dictionary<Type, IGraphTypeBuilder>(_builders);
+            dict[typeof(TType)] = configurator(GetGraphTypeBuilder<TType>());
+            return new SchemaBuilder<TQuery>(dict);
         }
 
         internal SchemaBuilder<TQuery> WithGraphTypeBuilder<TType>(GraphTypeBuilder<TType> builder)
             where TType : class
         {
-            var dict = new Dictionary<Type, GraphTypeBuilder>(_builders);
+            var dict = new Dictionary<Type, IGraphTypeBuilder>(_builders);
             dict[typeof(TType)] = builder;
 
             return new SchemaBuilder<TQuery>(dict);
@@ -46,6 +51,7 @@ namespace OttoTheGeek.Core
 
         public OttoSchema Build(IServiceCollection services)
         {
+            var graphTypeCache = new GraphTypeCache(_builders);
             var queryType = new ObjectGraphType
             {
                 Name = "Query"
@@ -54,7 +60,7 @@ namespace OttoTheGeek.Core
             {
                 if(_builders.TryGetValue(prop.PropertyType, out var builder))
                 {
-                    builder.ConfigureScalarQueryField(prop, queryType, services);
+                    builder.ConfigureScalarQueryField(prop, queryType, services, graphTypeCache);
                     continue;
                 }
 
@@ -62,7 +68,7 @@ namespace OttoTheGeek.Core
 
                 if(elemType != null && _builders.TryGetValue(elemType, out var listElemBuilder))
                 {
-                    listElemBuilder.ConfigureListQueryField(prop, queryType, services);
+                    listElemBuilder.ConfigureListQueryField(prop, queryType, services, graphTypeCache);
                     continue;
                 }
 
@@ -70,33 +76,16 @@ namespace OttoTheGeek.Core
             }
             return new OttoSchema(queryType);
         }
-    }
 
-    public sealed class OttoSchema
-    {
-        public OttoSchema(IObjectGraphType queryType)
+        private GraphTypeBuilder<TType> GetGraphTypeBuilder<TType>()
+            where TType : class
         {
-            QueryType = queryType;
-        }
-        public IObjectGraphType QueryType { get; }
-    }
+            _builders.TryGetValue(typeof(TType), out var untypedBuilder);
+            var builder =
+                ((GraphTypeBuilder<TType>)untypedBuilder)
+                ?? new GraphTypeBuilder<TType>();
 
-    public sealed class QueryFieldGraphqlResolverProxy<T> : GraphQL.Resolvers.IFieldResolver<Task<T>>
-    {
-        private readonly IQueryFieldResolver<T> _resolver;
-
-        public QueryFieldGraphqlResolverProxy(IQueryFieldResolver<T> resolver)
-        {
-            _resolver = resolver;
-        }
-        public Task<T> Resolve(ResolveFieldContext context)
-        {
-            return _resolver.Resolve();
-        }
-
-        object IFieldResolver.Resolve(ResolveFieldContext context)
-        {
-            return Resolve(context);
+            return builder;
         }
     }
 }

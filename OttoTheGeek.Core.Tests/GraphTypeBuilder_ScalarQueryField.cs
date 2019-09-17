@@ -32,11 +32,11 @@ namespace OttoTheGeek.Core.Tests
         [Fact]
         public void ThrowsForUnconfigured()
         {
-            var testee = new GraphTypeBuilder<Model>();
+            var testee = (IGraphTypeBuilder)new GraphTypeBuilder<Model>();
 
             var prop = typeof(Query).GetProperties().Single();
 
-            new Action(() => testee.ConfigureScalarQueryField(prop, new ObjectGraphType(), new ServiceCollection()))
+            new Action(() => testee.ConfigureScalarQueryField(prop, new ObjectGraphType(), new ServiceCollection(), new GraphTypeCache()))
                 .Should()
                 .Throw<UnableToResolveException>();
         }
@@ -50,7 +50,7 @@ namespace OttoTheGeek.Core.Tests
             var prop = typeof(Query).GetProperties().Single();
             var graphType = new ObjectGraphType();
 
-            testee.ConfigureScalarQueryField(prop, graphType, new ServiceCollection());
+            ((IGraphTypeBuilder)testee).ConfigureScalarQueryField(prop, graphType, new ServiceCollection(), new GraphTypeCache());
 
             graphType.Fields.Single().Should().BeEquivalentTo(new {
                 Name = prop.Name,
@@ -69,7 +69,7 @@ namespace OttoTheGeek.Core.Tests
             var graphType = new ObjectGraphType();
 
             var services = new ServiceCollection();
-            testee.ConfigureScalarQueryField(prop, graphType, services);
+            ((IGraphTypeBuilder)testee).ConfigureScalarQueryField(prop, graphType, services, new GraphTypeCache());
 
             var provider = services.BuildServiceProvider();
 

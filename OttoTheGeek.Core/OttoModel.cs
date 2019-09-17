@@ -1,4 +1,5 @@
 using GraphQL;
+using GraphQL.DataLoader;
 using GraphQL.Types;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -16,6 +17,8 @@ namespace OttoTheGeek.Core
 
             var ottoSchema = builder.Build(services);
             services.AddSingleton<IDocumentExecuter, DocumentExecuter>();
+            services.AddSingleton<IDataLoaderContextAccessor, DataLoaderContextAccessor>();
+            services.AddSingleton<DataLoaderDocumentListener>();
             services.AddTransient(typeof(QueryFieldGraphqlResolverProxy<>));
 
             var provider = services.BuildServiceProvider();

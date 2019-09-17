@@ -1,5 +1,6 @@
 using System;
 using GraphQL;
+using GraphQL.DataLoader;
 using GraphQL.Types;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
@@ -26,6 +27,7 @@ namespace OttoTheGeek.Core
                 Query = queryText,
                 Schema = _schema,
             };
+            opts.Listeners.Add(_provider.GetRequiredService<DataLoaderDocumentListener>());
             var resultAsync = executer.ExecuteAsync(opts);
             var executionResult = resultAsync.Result;
 
