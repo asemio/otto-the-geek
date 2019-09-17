@@ -147,6 +147,10 @@ namespace OttoTheGeek.Core
             {
                 Name = typeof(TModel).Name
             };
+            if(!cache.TryPrime(graphType))
+            {
+                return cache.Resolve<TModel>(services);
+            }
 
             foreach(var prop in typeof(TModel).GetProperties().Except(_propertiesToIgnore))
             {
@@ -164,7 +168,7 @@ namespace OttoTheGeek.Core
 
                     graphType.AddField(new FieldType {
                         Name = prop.Name,
-                        ResolvedType = cache.Resolve(prop.PropertyType),
+                        ResolvedType = cache.Resolve(prop.PropertyType, services),
                         Type = prop.PropertyType,
                         Resolver = (IFieldResolver)(Activator.CreateInstance(typeof(ScalarFieldResolverProxy<>).MakeGenericType(typeof(TModel), prop.PropertyType)))
                     });

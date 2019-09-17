@@ -51,7 +51,8 @@ namespace OttoTheGeek.Core.Tests
         {
             protected override GraphTypeBuilder<GrandchildObject> ConfigureGrandchild(GraphTypeBuilder<GrandchildObject> builder)
             {
-                return builder;//.ScalarField(x => x.CircularRelationship)
+                return builder.ScalarField(x => x.CircularRelationship)
+                    .ResolvesVia<ChildFromGrandchildResolver>();
             }
         }
 
@@ -197,6 +198,44 @@ namespace OttoTheGeek.Core.Tests
             actual
                 .Should()
                 .BeEquivalentTo(GrandchildResolver.Data.Select(x => x.Value));
+        }
+
+        [Fact]
+        public void ReturnsDeeplyNestedData()
+        {
+            var server = new DeepNestedWorkingModel().CreateServer();
+
+            var rawResult = server.Execute<JObject>(@"{
+                children {
+                    id
+                    child {
+                        value1
+                        value2
+                        value3
+                        circularRelationship {
+                            id
+                            child {
+                                value1
+                                value2
+                                value3
+                            }
+                        }
+                    }
+                }
+            }");
+
+            var actual = rawResult["children"]
+                .Select(x => x["child"])
+                .Select(x => x["circularRelationship"])
+                .Select(x => x.ToObject<ChildObject>())
+                .ToArray();
+
+            var expected = GrandchildResolver.Data.Values
+                .Select(x => new ChildObject { Id = x.Value3 });
+
+            actual
+                .Should()
+                .BeEquivalentTo(expected);
         }
     }
 

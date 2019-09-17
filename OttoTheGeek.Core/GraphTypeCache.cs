@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using GraphQL.Types;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace OttoTheGeek.Core
 {
@@ -16,26 +17,13 @@ namespace OttoTheGeek.Core
         {
             _builders = builders;
         }
-        public ObjectGraphType<T> Resolve<T>()
-            where T : class
+
+        public ObjectGraphType<T> Resolve<T>(IServiceCollection services)
         {
-            if(_cache.TryGetValue(typeof(T), out var cached))
-            {
-                return (ObjectGraphType<T>)cached;
-            }
-
-            if(_builders.TryGetValue(typeof(T), out var cachedBuilder))
-            {
-                _cache[typeof(T)] = ((GraphTypeBuilder<T>)cachedBuilder).BuildGraphType();
-            }
-            else {
-                _cache[typeof(T)] = new GraphTypeBuilder<T>().BuildGraphType();
-            }
-
-            return (ObjectGraphType<T>)_cache[typeof(T)];
+            return (ObjectGraphType<T>)Resolve(typeof(T), services);
         }
 
-        public IGraphType Resolve(Type modelType)
+        public IGraphType Resolve(Type modelType, IServiceCollection services)
         {
             if(_cache.TryGetValue(modelType, out var cached))
             {
@@ -44,14 +32,26 @@ namespace OttoTheGeek.Core
 
             if(_builders.TryGetValue(modelType, out var cachedBuilder))
             {
-                _cache[modelType] = ((dynamic)cachedBuilder).BuildGraphType();
+                _cache[modelType] = ((dynamic)cachedBuilder).BuildGraphType(this, services);
             }
             else {
                 dynamic builder = Activator.CreateInstance(typeof(GraphTypeBuilder<>).MakeGenericType(modelType));
-                _cache[modelType] = builder.BuildGraphType();
+                _cache[modelType] = builder.BuildGraphType(cache: this, services: services);
             }
 
             return _cache[modelType];
+        }
+
+        public bool TryPrime<T>(ObjectGraphType<T> graphType)
+        {
+            if(_cache.ContainsKey(typeof(T)))
+            {
+                return false;
+            }
+
+            _cache[typeof(T)] = graphType;
+
+            return true;
         }
     }
 }
