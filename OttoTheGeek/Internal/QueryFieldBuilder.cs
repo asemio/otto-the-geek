@@ -7,20 +7,18 @@ namespace OttoTheGeek.Internal
     {
         private readonly SchemaBuilder<T> _parent;
         private readonly PropertyInfo _propertyInfo;
-        private readonly GraphTypeBuilder<TProp> _builder;
 
-        internal QueryFieldBuilder(SchemaBuilder<T> parent, PropertyInfo propertyInfo, GraphTypeBuilder<TProp> builder)
+        internal QueryFieldBuilder(SchemaBuilder<T> parent, PropertyInfo propertyInfo)
         {
             _parent = parent;
             _propertyInfo = propertyInfo;
-            _builder = builder;
         }
 
         public SchemaBuilder<T> ResolvesVia<TResolver>()
             where TResolver : IQueryFieldResolver<TProp>
         {
-            return _parent.WithGraphTypeBuilder(
-                _builder.WithScalarQueryFieldResolver<TResolver>()
+            return _parent.GraphType<TProp>(
+                b => b.WithScalarQueryFieldResolver<TResolver>()
                 );
         }
     }

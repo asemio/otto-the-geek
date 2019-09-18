@@ -23,6 +23,24 @@ namespace OttoTheGeek.RuntimeSchema
             };
         }
 
+        public static ObjectType ConnectionOf(ObjectType innerType)
+        {
+            return new ObjectType {
+                Kind = ObjectKinds.Object,
+                Name = $"{innerType.Name}Connection",
+                Fields = new[] {
+                    new ObjectField {
+                        Name = "totalCount",
+                        Type = NonNullableOf(ObjectType.Int),
+                    },
+                    new ObjectField {
+                        Name = "records",
+                        Type = ObjectType.ListOf(innerType)
+                    }
+                }
+            };
+        }
+
         public string Name { get; set; }
         public string Kind { get; set; }
 

@@ -4,10 +4,12 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Threading.Tasks;
+using GraphQL;
 using GraphQL.DataLoader;
 using GraphQL.Resolvers;
 using GraphQL.Types;
 using Microsoft.Extensions.DependencyInjection;
+using OttoTheGeek.Connections;
 using OttoTheGeek.Internal;
 
 namespace OttoTheGeek
@@ -47,21 +49,22 @@ namespace OttoTheGeek
             [typeof(uint?)]             = typeof(UIntGraphType),
             // TODO: timespan
         };
-
         private static readonly Dictionary<PropertyInfo, Type> NoResolvers = new Dictionary<PropertyInfo, Type>();
         private readonly Type _scalarQueryFieldResolver;
         private readonly Type _listQueryFieldResolver;
+        private readonly Type _connectionResolver;
         private readonly Dictionary<PropertyInfo, Type> _scalarFieldResolvers;
         private readonly Dictionary<PropertyInfo, Type> _listFieldResolvers;
         private readonly IEnumerable<PropertyInfo> _propertiesToIgnore;
 
-        public GraphTypeBuilder() : this(null, null, NoResolvers, NoResolvers, new PropertyInfo[0])
+        public GraphTypeBuilder() : this(null, null, null, NoResolvers, NoResolvers, new PropertyInfo[0])
         {
 
         }
         private GraphTypeBuilder(
             Type scalarQueryFieldResolver,
             Type listQueryFieldResolver,
+            Type connectionResolver,
             Dictionary<PropertyInfo, Type> scalarFieldResolvers,
             Dictionary<PropertyInfo, Type> listFieldResolvers,
             IEnumerable<PropertyInfo> propertiesToIgnore
@@ -69,6 +72,7 @@ namespace OttoTheGeek
         {
             _scalarQueryFieldResolver = scalarQueryFieldResolver;
             _listQueryFieldResolver = listQueryFieldResolver;
+            _connectionResolver = connectionResolver;
             _scalarFieldResolvers = scalarFieldResolvers;
             _listFieldResolvers = listFieldResolvers;
             _propertiesToIgnore = propertiesToIgnore;
@@ -84,6 +88,11 @@ namespace OttoTheGeek
             where TResolver : IListQueryFieldResolver<TModel>
         {
             return Clone(listQueryFieldResolver: typeof(TResolver));
+        }
+
+        internal GraphTypeBuilder<TModel> WithConnectionResolver<TResolver>() where TResolver : IConnectionResolver<TModel>
+        {
+            return Clone(connectionResolver: typeof(TResolver));
         }
 
         public ScalarFieldBuilder<TModel, TProp> ScalarField<TProp>(Expression<Func<TModel, TProp>> propertyExpression)
@@ -159,6 +168,24 @@ namespace OttoTheGeek
             });
         }
 
+        void IGraphTypeBuilder.ConfigureConnectionField(PropertyInfo prop, ObjectGraphType queryType, IServiceCollection services, GraphTypeCache graphTypeCache)
+        {
+            services.AddTransient(typeof(IConnectionResolver<TModel>), _connectionResolver);
+
+            var connectionType = graphTypeCache.Resolve<Connection<TModel>>(services);
+
+            queryType.AddField(new FieldType {
+                Name = prop.Name,
+                ResolvedType = connectionType,
+                Type = prop.PropertyType,
+                Arguments = new QueryArguments(
+                    new QueryArgument(typeof(NonNullGraphType<IntGraphType>)) { Name = nameof(PagingArgs.Count) },
+                    new QueryArgument(typeof(NonNullGraphType<IntGraphType>)) { Name = nameof(PagingArgs.Offset) }
+                ),
+                Resolver = new ConnectionFieldResolverProxy()
+            });
+        }
+
         // TODO: take away the default args here
         public ObjectGraphType<TModel> BuildGraphType(GraphTypeCache cache = null, IServiceCollection services = null)
         {
@@ -166,7 +193,7 @@ namespace OttoTheGeek
             services = services ?? new ServiceCollection();
             var graphType = new ObjectGraphType<TModel>
             {
-                Name = typeof(TModel).Name
+                Name = GraphTypeName
             };
             if(!cache.TryPrime(graphType))
             {
@@ -179,9 +206,18 @@ namespace OttoTheGeek
                 {
                     graphType.Field(
                         type: graphQlType,
-                        name: prop.Name,
-                        resolve: ctx => prop.GetValue(ctx.Source)
+                        name: prop.Name
                     );
+                }
+                else if(IsConnection && prop.Name == nameof(Connection<object>.Records)) {
+                    var elemType = prop.PropertyType.GetEnumerableElementType();
+                    var elemGraphType = cache.Resolve(elemType, services);
+                    var listType = new ListGraphType(elemGraphType);
+                    graphType.AddField(new FieldType {
+                        Name = prop.Name,
+                        Type = prop.PropertyType,
+                        ResolvedType = listType
+                    });
                 }
                 else if(_scalarFieldResolvers.TryGetValue(prop, out var resolverType))
                 {
@@ -213,7 +249,6 @@ namespace OttoTheGeek
             }
             return graphType;
         }
-
         private abstract class ResolverProxyBase<T> : IFieldResolver<Task<T>>
         {
             public Task<T> Resolve(ResolveFieldContext context)
@@ -273,10 +308,22 @@ namespace OttoTheGeek
                 return loader.LoadAsync(resolver.GetKey((TModel)context.Source));
             }
         }
-
+        private sealed class ConnectionFieldResolverProxy : ResolverProxyBase<Connection<TModel>>
+        {
+            protected override Task<Connection<TModel>> Resolve(ResolveFieldContext context, IDependencyResolver dependencyResolver)
+            {
+                var resolver = dependencyResolver.Resolve<IConnectionResolver<TModel>>();
+                var args = new PagingArgs {
+                    Count = context.GetArgument<int>(nameof(PagingArgs.Count).ToCamelCase()),
+                    Offset = context.GetArgument<int>(nameof(PagingArgs.Offset).ToCamelCase()),
+                };
+                return resolver.Resolve(args);
+            }
+        }
         private GraphTypeBuilder<TModel> Clone(
             Type scalarQueryFieldResolver = null,
             Type listQueryFieldResolver = null,
+            Type connectionResolver = null,
             Dictionary<PropertyInfo, Type> scalarFieldResolvers = null,
             Dictionary<PropertyInfo, Type> listFieldResolvers = null,
             IEnumerable<PropertyInfo> propertiesToIgnore = null
@@ -285,10 +332,24 @@ namespace OttoTheGeek
             return new GraphTypeBuilder<TModel>(
                 scalarQueryFieldResolver: scalarQueryFieldResolver ?? _scalarQueryFieldResolver,
                 listQueryFieldResolver: listQueryFieldResolver ?? _listQueryFieldResolver,
+                connectionResolver: connectionResolver ?? _connectionResolver,
                 scalarFieldResolvers: scalarFieldResolvers ?? _scalarFieldResolvers,
                 listFieldResolvers: listFieldResolvers ?? _listFieldResolvers,
                 propertiesToIgnore: propertiesToIgnore ?? _propertiesToIgnore
             );
+        }
+
+        private string GraphTypeName =>
+            IsConnection
+            ? $"{GetConnectionElemType().Name}Connection"
+            : typeof(TModel).Name;
+
+        private bool IsConnection => typeof(TModel).IsConstructedGenericType
+            && typeof(TModel).GetGenericTypeDefinition() == typeof(Connection<>);
+
+        private Type GetConnectionElemType()
+        {
+            return typeof(TModel).GetGenericArguments().Single();
         }
     }
 }

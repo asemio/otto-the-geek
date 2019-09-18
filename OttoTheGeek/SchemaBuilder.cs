@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Linq.Expressions;
+using System.Reflection;
 using GraphQL.Types;
 using Microsoft.Extensions.DependencyInjection;
 using OttoTheGeek.Internal;
@@ -10,27 +12,41 @@ namespace OttoTheGeek
     public sealed class SchemaBuilder<TQuery>
     {
         private readonly Dictionary<Type, IGraphTypeBuilder> _builders;
+        private readonly IEnumerable<PropertyInfo> _connectionProperties;
 
-        public SchemaBuilder() : this(new Dictionary<Type, IGraphTypeBuilder>())
+        public SchemaBuilder() : this(new Dictionary<Type, IGraphTypeBuilder>(), new PropertyInfo[0])
         {
         }
-        private SchemaBuilder(Dictionary<Type, IGraphTypeBuilder> builders)
+        private SchemaBuilder(Dictionary<Type, IGraphTypeBuilder> builders, IEnumerable<PropertyInfo> connectionProperties)
         {
             _builders = builders;
+            _connectionProperties = connectionProperties;
         }
 
         public ListQueryFieldBuilder<TQuery, TElem> ListQueryField<TElem>(Expression<Func<TQuery, IEnumerable<TElem>>> expr)
             where TElem : class
         {
             var propInfo = expr.PropertyInfoForSimpleGet();
-            return new ListQueryFieldBuilder<TQuery, TElem>(this, propInfo, GetGraphTypeBuilder<TElem>());
+            return new ListQueryFieldBuilder<TQuery, TElem>(this, propInfo);
         }
 
         public QueryFieldBuilder<TQuery, TProp> QueryField<TProp>(Expression<Func<TQuery, TProp>> expr)
             where TProp : class
         {
             var propInfo = expr.PropertyInfoForSimpleGet();
-            return new QueryFieldBuilder<TQuery, TProp>(this, propInfo, GetGraphTypeBuilder<TProp>());
+            return new QueryFieldBuilder<TQuery, TProp>(this, propInfo);
+        }
+
+        public ConnectionFieldBuilder<TQuery, TProp> ConnectionField<TProp>(Expression<Func<TQuery, IEnumerable<TProp>>> expr)
+            where TProp : class
+        {
+            var propInfo = expr.PropertyInfoForSimpleGet();
+            return new ConnectionFieldBuilder<TQuery, TProp>(this, propInfo);
+        }
+
+        internal SchemaBuilder<TQuery> ConnectionProperty(PropertyInfo prop)
+        {
+            return new SchemaBuilder<TQuery>(_builders, _connectionProperties.Concat(new[] { prop }).ToArray());
         }
 
         public SchemaBuilder<TQuery> GraphType<TType>(Func<GraphTypeBuilder<TType>, GraphTypeBuilder<TType>> configurator)
@@ -38,7 +54,7 @@ namespace OttoTheGeek
         {
             var dict = new Dictionary<Type, IGraphTypeBuilder>(_builders);
             dict[typeof(TType)] = configurator(GetGraphTypeBuilder<TType>());
-            return new SchemaBuilder<TQuery>(dict);
+            return new SchemaBuilder<TQuery>(dict, _connectionProperties);
         }
 
         internal SchemaBuilder<TQuery> WithGraphTypeBuilder<TType>(GraphTypeBuilder<TType> builder)
@@ -47,7 +63,7 @@ namespace OttoTheGeek
             var dict = new Dictionary<Type, IGraphTypeBuilder>(_builders);
             dict[typeof(TType)] = builder;
 
-            return new SchemaBuilder<TQuery>(dict);
+            return new SchemaBuilder<TQuery>(dict, _connectionProperties);
         }
 
         public OttoSchema Build(IServiceCollection services)
@@ -69,7 +85,14 @@ namespace OttoTheGeek
 
                 if(elemType != null && _builders.TryGetValue(elemType, out var listElemBuilder))
                 {
-                    listElemBuilder.ConfigureListQueryField(prop, queryType, services, graphTypeCache);
+                    if(_connectionProperties.Contains(prop))
+                    {
+                        listElemBuilder.ConfigureConnectionField(prop, queryType, services, graphTypeCache);
+                    }
+                    else
+                    {
+                        listElemBuilder.ConfigureListQueryField(prop, queryType, services, graphTypeCache);
+                    }
                     continue;
                 }
 

@@ -1,12 +1,9 @@
-using System.Collections.Generic;
-
 namespace OttoTheGeek.RuntimeSchema
 {
-    public sealed class ObjectField
+    public sealed class FieldArgument
     {
         public string Name { get; set; }
         public ObjectType Type { get; set; }
-
-        public IEnumerable<FieldArgument> Args { get; set; }
+        public string DefaultValue { get; set; }
     }
 }
