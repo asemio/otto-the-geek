@@ -2,7 +2,7 @@ using System.Reflection;
 using GraphQL.Types;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace OttoTheGeek
+namespace OttoTheGeek.Internal
 {
     public interface IGraphTypeBuilder
     {

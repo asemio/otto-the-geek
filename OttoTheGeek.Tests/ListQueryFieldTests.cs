@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Newtonsoft.Json.Linq;
+using OttoTheGeek.RuntimeSchema;
 using Xunit;
 
 namespace OttoTheGeek.Tests

@@ -1,6 +1,6 @@
 using System.Reflection;
 
-namespace OttoTheGeek
+namespace OttoTheGeek.Internal
 {
     public sealed class ListQueryFieldBuilder<T, TElem>
         where TElem : class

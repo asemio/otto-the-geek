@@ -1,4 +1,4 @@
-namespace OttoTheGeek
+namespace OttoTheGeek.RuntimeSchema
 {
     public sealed class ObjectField
     {

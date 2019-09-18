@@ -2,7 +2,7 @@ using System.Threading.Tasks;
 using GraphQL.Resolvers;
 using GraphQL.Types;
 
-namespace OttoTheGeek
+namespace OttoTheGeek.Internal
 {
     public sealed class QueryFieldGraphqlResolverProxy<T> : GraphQL.Resolvers.IFieldResolver<Task<T>>
     {

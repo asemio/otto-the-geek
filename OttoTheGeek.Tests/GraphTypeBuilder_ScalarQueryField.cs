@@ -5,6 +5,7 @@ using FluentAssertions;
 using GraphQL;
 using GraphQL.Types;
 using Microsoft.Extensions.DependencyInjection;
+using OttoTheGeek.Internal;
 using Xunit;
 
 namespace OttoTheGeek.Tests

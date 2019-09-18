@@ -1,6 +1,6 @@
 using System.Reflection;
 
-namespace OttoTheGeek
+namespace OttoTheGeek.Internal
 {
     public sealed class ScalarFieldBuilder<TModel, TProp>
         where TModel : class

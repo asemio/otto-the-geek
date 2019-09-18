@@ -1,7 +1,6 @@
-using System.Collections.Generic;
 using System.Reflection;
 
-namespace OttoTheGeek
+namespace OttoTheGeek.Internal
 {
     public class QueryFieldBuilder<T, TProp>
         where TProp : class

@@ -1,6 +1,6 @@
 using System.Reflection;
 
-namespace OttoTheGeek
+namespace OttoTheGeek.Internal
 {
     public sealed class ListFieldBuilder<TModel, TElem>
         where TModel : class

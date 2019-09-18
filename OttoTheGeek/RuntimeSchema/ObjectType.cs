@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace OttoTheGeek
+namespace OttoTheGeek.RuntimeSchema
 {
     public class ObjectType
     {
@@ -30,13 +30,5 @@ namespace OttoTheGeek
 
         public IEnumerable<ObjectField> Fields { get; set; }
 
-    }
-
-    public static class ObjectKinds
-    {
-        public const string Scalar = "SCALAR";
-        public const string Object = "OBJECT";
-        public const string NonNull = "NON_NULL";
-        public const string List = "LIST";
     }
 }

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using GraphQL.Types;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace OttoTheGeek
+namespace OttoTheGeek.Internal
 {
     public sealed class GraphTypeCache
     {

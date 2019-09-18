@@ -8,6 +8,7 @@ using GraphQL.DataLoader;
 using GraphQL.Resolvers;
 using GraphQL.Types;
 using Microsoft.Extensions.DependencyInjection;
+using OttoTheGeek.Internal;
 
 namespace OttoTheGeek
 {
