@@ -47,12 +47,14 @@ namespace OttoTheGeek.Core
             // TODO: timespan
         };
 
+        private static readonly Dictionary<PropertyInfo, Type> NoResolvers = new Dictionary<PropertyInfo, Type>();
         private readonly Type _scalarQueryFieldResolver;
         private readonly Type _listQueryFieldResolver;
         private readonly Dictionary<PropertyInfo, Type> _scalarFieldResolvers;
+        private readonly Dictionary<PropertyInfo, Type> _listFieldResolvers;
         private readonly IEnumerable<PropertyInfo> _propertiesToIgnore;
 
-        public GraphTypeBuilder() : this(null, null, new Dictionary<PropertyInfo, Type>(), new PropertyInfo[0])
+        public GraphTypeBuilder() : this(null, null, NoResolvers, NoResolvers, new PropertyInfo[0])
         {
 
         }
@@ -60,12 +62,14 @@ namespace OttoTheGeek.Core
             Type scalarQueryFieldResolver,
             Type listQueryFieldResolver,
             Dictionary<PropertyInfo, Type> scalarFieldResolvers,
+            Dictionary<PropertyInfo, Type> listFieldResolvers,
             IEnumerable<PropertyInfo> propertiesToIgnore
             )
         {
             _scalarQueryFieldResolver = scalarQueryFieldResolver;
             _listQueryFieldResolver = listQueryFieldResolver;
             _scalarFieldResolvers = scalarFieldResolvers;
+            _listFieldResolvers = listFieldResolvers;
             _propertiesToIgnore = propertiesToIgnore;
         }
 
@@ -88,6 +92,13 @@ namespace OttoTheGeek.Core
             return new ScalarFieldBuilder<TModel, TProp>(this, prop);
         }
 
+        public ListFieldBuilder<TModel, TProp> ListField<TProp>(Expression<Func<TModel, IEnumerable<TProp>>> propertyExpression)
+        {
+            var prop = propertyExpression.PropertyInfoForSimpleGet();
+
+            return new ListFieldBuilder<TModel, TProp>(this, prop);
+        }
+
         public GraphTypeBuilder<TModel> IgnoreProperty<TProp>(Expression<Func<TModel, TProp>> propertyExpression)
         {
             var prop = propertyExpression.PropertyInfoForSimpleGet();
@@ -103,6 +114,15 @@ namespace OttoTheGeek.Core
             dict[prop] = typeof(TResolver);
 
             return Clone(scalarFieldResolvers: dict);
+        }
+
+        internal GraphTypeBuilder<TModel> WithListFieldResolver<TProp, TResolver>(PropertyInfo prop)
+            where TResolver : IListFieldResolver<TModel, TProp>
+        {
+            var dict = new Dictionary<PropertyInfo, Type>(_listFieldResolvers);
+            dict[prop] = typeof(TResolver);
+
+            return Clone(listFieldResolvers: dict);
         }
 
         void IGraphTypeBuilder.ConfigureScalarQueryField(PropertyInfo prop, ObjectGraphType queryType, IServiceCollection services, GraphTypeCache graphTypeCache)
@@ -173,6 +193,18 @@ namespace OttoTheGeek.Core
                         Resolver = (IFieldResolver)(Activator.CreateInstance(typeof(ScalarFieldResolverProxy<>).MakeGenericType(typeof(TModel), prop.PropertyType)))
                     });
                 }
+                else if(_listFieldResolvers.TryGetValue(prop, out var listResolverType))
+                {
+                    var elemType = prop.PropertyType.GetEnumerableElementType();
+                    services.AddTransient(typeof(IListFieldResolver<,>).MakeGenericType(typeof(TModel), elemType), listResolverType);
+
+                    graphType.AddField(new FieldType {
+                        Name = prop.Name,
+                        ResolvedType = new ListGraphType(cache.Resolve(elemType, services)),
+                        Type = prop.PropertyType,
+                        Resolver = (IFieldResolver)(Activator.CreateInstance(typeof(ListFieldResolverProxy<>).MakeGenericType(typeof(TModel), elemType)))
+                    });
+                }
                 else
                 {
                     throw new UnableToResolveException(prop);
@@ -228,11 +260,24 @@ namespace OttoTheGeek.Core
                 return loader.LoadAsync(resolver.GetKey((TModel)context.Source));
             }
         }
+        private sealed class ListFieldResolverProxy<TField> : ResolverProxyBase<IEnumerable<TField>>
+        {
+            protected override Task<IEnumerable<TField>> Resolve(ResolveFieldContext context, GraphQL.IDependencyResolver dependencyResolver)
+            {
+                var loaderContext = dependencyResolver.Resolve<IDataLoaderContextAccessor>().Context;
+                var resolver = dependencyResolver.Resolve<IListFieldResolver<TModel, TField>>();
+
+                var loader = loaderContext.GetOrAddCollectionBatchLoader<object, TField>(resolver.GetType().FullName, async (keys, token) => await resolver.GetData(keys));
+
+                return loader.LoadAsync(resolver.GetKey((TModel)context.Source));
+            }
+        }
 
         private GraphTypeBuilder<TModel> Clone(
             Type scalarQueryFieldResolver = null,
             Type listQueryFieldResolver = null,
             Dictionary<PropertyInfo, Type> scalarFieldResolvers = null,
+            Dictionary<PropertyInfo, Type> listFieldResolvers = null,
             IEnumerable<PropertyInfo> propertiesToIgnore = null
             )
         {
@@ -240,6 +285,7 @@ namespace OttoTheGeek.Core
                 scalarQueryFieldResolver: scalarQueryFieldResolver ?? _scalarQueryFieldResolver,
                 listQueryFieldResolver: listQueryFieldResolver ?? _listQueryFieldResolver,
                 scalarFieldResolvers: scalarFieldResolvers ?? _scalarFieldResolvers,
+                listFieldResolvers: listFieldResolvers ?? _listFieldResolvers,
                 propertiesToIgnore: propertiesToIgnore ?? _propertiesToIgnore
             );
         }

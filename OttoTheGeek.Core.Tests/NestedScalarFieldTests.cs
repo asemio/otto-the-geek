@@ -8,7 +8,8 @@ using Xunit;
 
 namespace OttoTheGeek.Core.Tests
 {
-    public class NestedScalarFieldTests
+
+    public sealed class NestedScalarFieldTests
     {
         public sealed class Query
         {
