@@ -23,7 +23,7 @@ namespace OttoTheGeek.Tests
             }
         }
 
-        public sealed class ChildrenResolver : IListQueryFieldResolver<ChildObject>
+        public sealed class ChildrenResolver : IListFieldResolver<ChildObject>
         {
             public static IEnumerable<ChildObject> Data => new[] {
                 new ChildObject {

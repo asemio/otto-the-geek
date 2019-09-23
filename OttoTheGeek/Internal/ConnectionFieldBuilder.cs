@@ -1,24 +1,35 @@
+using System;
+using System.Collections.Generic;
+using System.Linq.Expressions;
 using System.Reflection;
+using OttoTheGeek.Connections;
 
 namespace OttoTheGeek.Internal
 {
     public sealed class ConnectionFieldBuilder<T, TElem>
         where TElem : class
+        where T : class
     {
         private readonly SchemaBuilder<T> _parent;
-        private readonly PropertyInfo _propertyInfo;
+        private readonly Expression<Func<T, IEnumerable<TElem>>> _propExpr;
 
-        internal ConnectionFieldBuilder(SchemaBuilder<T> parent, PropertyInfo propertyInfo)
+        internal ConnectionFieldBuilder(SchemaBuilder<T> parent, Expression<Func<T, IEnumerable<TElem>>> propExpr)
         {
             _parent = parent;
-            _propertyInfo = propertyInfo;
+            _propExpr = propExpr;
         }
         public SchemaBuilder<T> ResolvesVia<TResolver>()
-            where TResolver : IConnectionResolver<TElem>
+            where TResolver : class, IConnectionResolver<TElem>
         {
-            return _parent.GraphType<TElem>(
-                b => b.WithConnectionResolver<TResolver>()
-                ).ConnectionProperty(_propertyInfo);
+            var prop = _propExpr.PropertyInfoForSimpleGet();
+            return _parent.GraphType<T>(
+                b => b.WithResolverConfiguration(prop, new ConnectionResolverConfiguration<TElem, TResolver>())
+                )
+                .GraphType<Connection<TElem>>(
+                    b => b
+                        .ListField(x => x.Records)
+                        .Preloaded()
+                );
         }
     }
 }

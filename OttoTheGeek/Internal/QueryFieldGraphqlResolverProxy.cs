@@ -6,9 +6,9 @@ namespace OttoTheGeek.Internal
 {
     public sealed class QueryFieldGraphqlResolverProxy<T> : GraphQL.Resolvers.IFieldResolver<Task<T>>
     {
-        private readonly IQueryFieldResolver<T> _resolver;
+        private readonly IScalarFieldResolver<T> _resolver;
 
-        public QueryFieldGraphqlResolverProxy(IQueryFieldResolver<T> resolver)
+        public QueryFieldGraphqlResolverProxy(IScalarFieldResolver<T> resolver)
         {
             _resolver = resolver;
         }

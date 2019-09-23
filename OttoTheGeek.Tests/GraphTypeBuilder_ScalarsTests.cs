@@ -1,6 +1,7 @@
 using System.Linq;
 using FluentAssertions;
 using GraphQL.Types;
+using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
 namespace OttoTheGeek.Tests
@@ -16,7 +17,7 @@ namespace OttoTheGeek.Tests
             public long? NullableLongVal { get; set; }
         }
 
-        private static readonly ObjectGraphType<Model> GraphType = new GraphTypeBuilder<Model>().BuildGraphType();
+        private static readonly ObjectGraphType<Model> GraphType = new GraphTypeBuilder<Model>().BuildGraphType(new Internal.GraphTypeCache(), new ServiceCollection());
 
         [Fact]
         public void BuildsStringField()

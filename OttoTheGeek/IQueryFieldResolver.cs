@@ -2,7 +2,7 @@ using System.Threading.Tasks;
 
 namespace OttoTheGeek
 {
-    public interface IQueryFieldResolver<TProp>
+    public interface IScalarFieldResolver<TProp>
     {
         Task<TProp> Resolve();
     }

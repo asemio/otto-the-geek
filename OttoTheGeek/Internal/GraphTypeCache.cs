@@ -18,12 +18,12 @@ namespace OttoTheGeek.Internal
             _builders = builders;
         }
 
-        public ObjectGraphType<T> Resolve<T>(IServiceCollection services)
+        public ObjectGraphType<T> GetOrCreate<T>(IServiceCollection services)
         {
-            return (ObjectGraphType<T>)Resolve(typeof(T), services);
+            return (ObjectGraphType<T>)GetOrCreate(typeof(T), services);
         }
 
-        public IGraphType Resolve(Type modelType, IServiceCollection services)
+        public IGraphType GetOrCreate(Type modelType, IServiceCollection services)
         {
             if(_cache.TryGetValue(modelType, out var cached))
             {

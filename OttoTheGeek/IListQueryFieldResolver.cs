@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 
 namespace OttoTheGeek
 {
-    public interface IListQueryFieldResolver<TElem>
+    public interface IListFieldResolver<TElem>
     {
         Task<IEnumerable<TElem>> Resolve();
     }

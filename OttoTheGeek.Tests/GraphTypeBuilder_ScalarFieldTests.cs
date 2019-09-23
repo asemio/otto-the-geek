@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using FluentAssertions;
+using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
 namespace OttoTheGeek.Tests
@@ -58,7 +59,7 @@ namespace OttoTheGeek.Tests
                 .ScalarField(x => x.Child1)
                 .ResolvesVia<ChildModel1.Resolver>();
 
-            new Action(() => builder.BuildGraphType())
+            new Action(() => builder.BuildGraphType(new Internal.GraphTypeCache(), new ServiceCollection()))
                 .Should()
                 .Throw<UnableToResolveException>()
                 .WithMessage("Unable to resolve property Child1a on class Model");
@@ -75,7 +76,7 @@ namespace OttoTheGeek.Tests
                 .ScalarField(x => x.Child2)
                 .ResolvesVia<ChildModel2.Resolver>();
 
-            builder.BuildGraphType().Should().NotBeNull();
+            builder.BuildGraphType(new Internal.GraphTypeCache(), new ServiceCollection()).Should().NotBeNull();
         }
     }
 }

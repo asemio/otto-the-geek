@@ -39,7 +39,7 @@ namespace OttoTheGeek.Tests
             }
         }
 
-        public sealed class ChildrenResolver : IListQueryFieldResolver<ChildObject>
+        public sealed class ChildrenResolver : IListFieldResolver<ChildObject>
         {
             public async Task<IEnumerable<ChildObject>> Resolve()
             {

@@ -10,6 +10,7 @@ using OttoTheGeek.Internal;
 namespace OttoTheGeek
 {
     public sealed class SchemaBuilder<TQuery>
+        where TQuery : class
     {
         private readonly Dictionary<Type, IGraphTypeBuilder> _builders;
         private readonly IEnumerable<PropertyInfo> _connectionProperties;
@@ -26,22 +27,19 @@ namespace OttoTheGeek
         public ListQueryFieldBuilder<TQuery, TElem> ListQueryField<TElem>(Expression<Func<TQuery, IEnumerable<TElem>>> expr)
             where TElem : class
         {
-            var propInfo = expr.PropertyInfoForSimpleGet();
-            return new ListQueryFieldBuilder<TQuery, TElem>(this, propInfo);
+            return new ListQueryFieldBuilder<TQuery, TElem>(this, expr);
         }
 
         public QueryFieldBuilder<TQuery, TProp> QueryField<TProp>(Expression<Func<TQuery, TProp>> expr)
             where TProp : class
         {
-            var propInfo = expr.PropertyInfoForSimpleGet();
-            return new QueryFieldBuilder<TQuery, TProp>(this, propInfo);
+            return new QueryFieldBuilder<TQuery, TProp>(this, expr);
         }
 
         public ConnectionFieldBuilder<TQuery, TProp> ConnectionField<TProp>(Expression<Func<TQuery, IEnumerable<TProp>>> expr)
             where TProp : class
         {
-            var propInfo = expr.PropertyInfoForSimpleGet();
-            return new ConnectionFieldBuilder<TQuery, TProp>(this, propInfo);
+            return new ConnectionFieldBuilder<TQuery, TProp>(this, expr);
         }
 
         internal SchemaBuilder<TQuery> ConnectionProperty(PropertyInfo prop)
@@ -57,47 +55,11 @@ namespace OttoTheGeek
             return new SchemaBuilder<TQuery>(dict, _connectionProperties);
         }
 
-        internal SchemaBuilder<TQuery> WithGraphTypeBuilder<TType>(GraphTypeBuilder<TType> builder)
-            where TType : class
-        {
-            var dict = new Dictionary<Type, IGraphTypeBuilder>(_builders);
-            dict[typeof(TType)] = builder;
-
-            return new SchemaBuilder<TQuery>(dict, _connectionProperties);
-        }
-
         public OttoSchema Build(IServiceCollection services)
         {
             var graphTypeCache = new GraphTypeCache(_builders);
-            var queryType = new ObjectGraphType
-            {
-                Name = "Query"
-            };
-            foreach(var prop in typeof(TQuery).GetProperties())
-            {
-                if(_builders.TryGetValue(prop.PropertyType, out var builder))
-                {
-                    builder.ConfigureScalarQueryField(prop, queryType, services, graphTypeCache);
-                    continue;
-                }
+            var queryType = graphTypeCache.GetOrCreate<TQuery>(services);
 
-                var elemType = prop.PropertyType.GetEnumerableElementType();
-
-                if(elemType != null && _builders.TryGetValue(elemType, out var listElemBuilder))
-                {
-                    if(_connectionProperties.Contains(prop))
-                    {
-                        listElemBuilder.ConfigureConnectionField(prop, queryType, services, graphTypeCache);
-                    }
-                    else
-                    {
-                        listElemBuilder.ConfigureListQueryField(prop, queryType, services, graphTypeCache);
-                    }
-                    continue;
-                }
-
-                throw new UnableToResolveException(prop);
-            }
             return new OttoSchema(queryType);
         }
 

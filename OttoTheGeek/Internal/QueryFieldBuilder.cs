@@ -1,25 +1,29 @@
+using System;
+using System.Linq.Expressions;
 using System.Reflection;
 
 namespace OttoTheGeek.Internal
 {
-    public class QueryFieldBuilder<T, TProp>
+    public sealed class QueryFieldBuilder<T, TProp>
         where TProp : class
+        where T : class
     {
-        private readonly SchemaBuilder<T> _parent;
-        private readonly PropertyInfo _propertyInfo;
+        internal SchemaBuilder<T> Parent { get; }
+        internal Expression<Func<T, TProp>> PropExpr { get; }
 
-        internal QueryFieldBuilder(SchemaBuilder<T> parent, PropertyInfo propertyInfo)
+        internal QueryFieldBuilder(SchemaBuilder<T> parent, Expression<Func<T, TProp>> propExpr)
         {
-            _parent = parent;
-            _propertyInfo = propertyInfo;
+            Parent = parent;
+            PropExpr = propExpr;
         }
 
         public SchemaBuilder<T> ResolvesVia<TResolver>()
-            where TResolver : IQueryFieldResolver<TProp>
+            where TResolver : class, IScalarFieldResolver<TProp>
         {
-            return _parent.GraphType<TProp>(
-                b => b.WithScalarQueryFieldResolver<TResolver>()
-                );
+            return Parent.GraphType<T>(
+                b => b.LooseScalarField(PropExpr)
+                    .ResolvesVia<TResolver>()
+            );
         }
     }
 }

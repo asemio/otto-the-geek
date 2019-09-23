@@ -2,23 +2,22 @@ using System.Reflection;
 
 namespace OttoTheGeek.Internal
 {
-    public sealed class ScalarFieldBuilder<TModel, TProp>
+    public sealed class LooseScalarFieldBuilder<TModel, TProp>
         where TModel : class
     {
         private readonly GraphTypeBuilder<TModel> _parentBuilder;
         private readonly PropertyInfo _prop;
 
-        internal ScalarFieldBuilder(GraphTypeBuilder<TModel> parentBuilder, PropertyInfo prop)
+        internal LooseScalarFieldBuilder(GraphTypeBuilder<TModel> parentBuilder, PropertyInfo prop)
         {
             _parentBuilder = parentBuilder;
             _prop = prop;
         }
 
         public GraphTypeBuilder<TModel> ResolvesVia<TResolver>()
-            where TResolver : class, IScalarFieldResolver<TModel, TProp>
+            where TResolver : class, IScalarFieldResolver<TProp>
         {
-            return _parentBuilder.WithResolverConfiguration(_prop, new ScalarContextResolverConfiguration<TResolver, TModel, TProp>());
+            return _parentBuilder.WithResolverConfiguration(_prop, new ScalarResolverConfiguration<TResolver, TProp>());
         }
-
     }
 }

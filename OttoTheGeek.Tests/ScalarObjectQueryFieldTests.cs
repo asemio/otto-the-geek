@@ -29,7 +29,7 @@ namespace OttoTheGeek.Tests
             }
         }
 
-        public sealed class ChildResolver : IQueryFieldResolver<ChildObject>
+        public sealed class ChildResolver : IScalarFieldResolver<ChildObject>
         {
             public Task<ChildObject> Resolve()
             {
