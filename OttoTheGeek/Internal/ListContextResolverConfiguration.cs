@@ -7,20 +7,20 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace OttoTheGeek.Internal
 {
-    internal sealed class ListContextResolverConfiguration<TResolver, TModel, TField> : ResolverConfiguration
+    internal sealed class ListContextResolverConfiguration<TResolver, TModel, TField> : FieldResolverConfiguration
         where TResolver : class, IListFieldResolver<TModel, TField>
     {
-        public override IFieldResolver CreateGraphQLResolver()
+        protected override IFieldResolver CreateGraphQLResolver()
         {
             return new ResolverProxy();
         }
 
-        public override IGraphType GetGraphType(GraphTypeCache cache, IServiceCollection services)
+        protected override IGraphType GetGraphType(GraphTypeCache cache, IServiceCollection services)
         {
             return new ListGraphType(cache.GetOrCreate<TField>(services));
         }
 
-        public override void RegisterResolver(IServiceCollection services)
+        protected override void RegisterResolver(IServiceCollection services)
         {
             services.AddTransient<TResolver>();
         }

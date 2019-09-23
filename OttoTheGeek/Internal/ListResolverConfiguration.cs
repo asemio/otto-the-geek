@@ -6,20 +6,20 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace OttoTheGeek.Internal
 {
-    public sealed class ListResolverConfiguration<TResolver, TElem> : ResolverConfiguration
+    public sealed class ListResolverConfiguration<TResolver, TElem> : FieldResolverConfiguration
         where TResolver : class, IListFieldResolver<TElem>
     {
-        public override IFieldResolver CreateGraphQLResolver()
+        protected override IFieldResolver CreateGraphQLResolver()
         {
             return new ResolverProxy();
         }
 
-        public override IGraphType GetGraphType(GraphTypeCache cache, IServiceCollection services)
+        protected override IGraphType GetGraphType(GraphTypeCache cache, IServiceCollection services)
         {
             return new ListGraphType(cache.GetOrCreate<TElem>(services));
         }
 
-        public override void RegisterResolver(IServiceCollection services)
+        protected override void RegisterResolver(IServiceCollection services)
         {
             services.AddTransient<TResolver>();
         }

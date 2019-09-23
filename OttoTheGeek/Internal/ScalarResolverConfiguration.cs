@@ -5,20 +5,20 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace OttoTheGeek.Internal
 {
-    public sealed class ScalarResolverConfiguration<TResolver, TProp> : ResolverConfiguration
+    public sealed class ScalarResolverConfiguration<TResolver, TProp> : FieldResolverConfiguration
         where TResolver : class, IScalarFieldResolver<TProp>
     {
-        public override IFieldResolver CreateGraphQLResolver()
+        protected override IFieldResolver CreateGraphQLResolver()
         {
             return new ScalarQueryFieldResolverProxy();
         }
 
-        public override IGraphType GetGraphType(GraphTypeCache cache, IServiceCollection services)
+        protected override IGraphType GetGraphType(GraphTypeCache cache, IServiceCollection services)
         {
             return cache.GetOrCreate<TProp>(services);
         }
 
-        public override void RegisterResolver(IServiceCollection services)
+        protected override void RegisterResolver(IServiceCollection services)
         {
             services.AddTransient<TResolver>();
         }

@@ -49,16 +49,16 @@ namespace OttoTheGeek
         };
         private static readonly Dictionary<PropertyInfo, Type> NoResolvers = new Dictionary<PropertyInfo, Type>();
         private readonly Type _connectionResolver;
-        private readonly Dictionary<PropertyInfo, ResolverConfiguration> _fieldResolvers;
+        private readonly Dictionary<PropertyInfo, FieldResolverConfiguration> _fieldResolvers;
         private readonly IEnumerable<PropertyInfo> _propertiesToIgnore;
 
-        public GraphTypeBuilder() : this(null, new Dictionary<PropertyInfo, ResolverConfiguration>(), new PropertyInfo[0])
+        public GraphTypeBuilder() : this(null, new Dictionary<PropertyInfo, FieldResolverConfiguration>(), new PropertyInfo[0])
         {
 
         }
         private GraphTypeBuilder(
             Type connectionResolver,
-            Dictionary<PropertyInfo, ResolverConfiguration> scalarFieldResolvers,
+            Dictionary<PropertyInfo, FieldResolverConfiguration> scalarFieldResolvers,
             IEnumerable<PropertyInfo> propertiesToIgnore
             )
         {
@@ -106,9 +106,9 @@ namespace OttoTheGeek
             return Clone(propertiesToIgnore: props);
         }
 
-        internal GraphTypeBuilder<TModel> WithResolverConfiguration(PropertyInfo prop, ResolverConfiguration config)
+        internal GraphTypeBuilder<TModel> WithResolverConfiguration(PropertyInfo prop, FieldResolverConfiguration config)
         {
-            var dict = new Dictionary<PropertyInfo, ResolverConfiguration>(_fieldResolvers);
+            var dict = new Dictionary<PropertyInfo, FieldResolverConfiguration>(_fieldResolvers);
             dict[prop] = config;
 
             return Clone(fieldResolvers: dict);
@@ -137,15 +137,7 @@ namespace OttoTheGeek
                 }
                 else if(_fieldResolvers.TryGetValue(prop, out var resolverConfig))
                 {
-                    resolverConfig.RegisterResolver(services);
-
-                    graphType.AddField(new FieldType {
-                        Name = prop.Name,
-                        ResolvedType = resolverConfig.GetGraphType(cache, services),
-                        Type = prop.PropertyType,
-                        Resolver = resolverConfig.CreateGraphQLResolver(),
-                        Arguments = resolverConfig.GetQueryArguments()
-                    });
+                    graphType.AddField(resolverConfig.ConfigureField(prop, cache, services));
                 }
                 else
                 {
@@ -154,21 +146,9 @@ namespace OttoTheGeek
             }
             return graphType;
         }
-        private sealed class ConnectionFieldResolverProxy : ResolverProxyBase<Connection<TModel>>
-        {
-            protected override Task<Connection<TModel>> Resolve(ResolveFieldContext context, IDependencyResolver dependencyResolver)
-            {
-                var resolver = dependencyResolver.Resolve<IConnectionResolver<TModel>>();
-                var args = new PagingArgs {
-                    Count = context.GetArgument<int>(nameof(PagingArgs.Count).ToCamelCase()),
-                    Offset = context.GetArgument<int>(nameof(PagingArgs.Offset).ToCamelCase()),
-                };
-                return resolver.Resolve(args);
-            }
-        }
         private GraphTypeBuilder<TModel> Clone(
             Type connectionResolver = null,
-            Dictionary<PropertyInfo, ResolverConfiguration> fieldResolvers = null,
+            Dictionary<PropertyInfo, FieldResolverConfiguration> fieldResolvers = null,
             IEnumerable<PropertyInfo> propertiesToIgnore = null
             )
         {

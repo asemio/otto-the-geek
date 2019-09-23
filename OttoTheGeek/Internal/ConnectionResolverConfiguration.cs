@@ -7,39 +7,25 @@ using OttoTheGeek.Connections;
 
 namespace OttoTheGeek.Internal
 {
-    public abstract class ResolverConfiguration
-    {
-        public abstract void RegisterResolver(IServiceCollection services);
-
-        public abstract IFieldResolver CreateGraphQLResolver();
-
-        public abstract IGraphType GetGraphType(GraphTypeCache cache, IServiceCollection services);
-
-        public virtual QueryArguments GetQueryArguments()
-        {
-            return null;
-        }
-    }
-
-    public sealed class ConnectionResolverConfiguration<TModel, TResolver> : ResolverConfiguration
+    public sealed class ConnectionResolverConfiguration<TModel, TResolver> : FieldResolverConfiguration
         where TResolver : class, IConnectionResolver<TModel>
     {
-        public override IFieldResolver CreateGraphQLResolver()
+        protected override IFieldResolver CreateGraphQLResolver()
         {
             return new ResolverProxy();
         }
 
-        public override IGraphType GetGraphType(GraphTypeCache cache, IServiceCollection services)
+        protected override IGraphType GetGraphType(GraphTypeCache cache, IServiceCollection services)
         {
             return cache.GetOrCreate<Connection<TModel>>(services);
         }
 
-        public override void RegisterResolver(IServiceCollection services)
+        protected override void RegisterResolver(IServiceCollection services)
         {
             services.AddTransient<TResolver>();
         }
 
-        public override QueryArguments GetQueryArguments()
+        protected override QueryArguments GetQueryArguments()
         {
             return new QueryArguments(
                 new QueryArgument(typeof(NonNullGraphType<IntGraphType>)) { Name = nameof(PagingArgs.Count) },
