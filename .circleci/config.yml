@@ -8,4 +8,4 @@ jobs:
      - run:
          name: Tests
          command:
-           dotnet test
+           dotnet test OttoTheGeek.Tests
