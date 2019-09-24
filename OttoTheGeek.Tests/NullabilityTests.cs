@@ -58,11 +58,9 @@ namespace OttoTheGeek.Tests
                 new Child(),
                 new Child(),
             };
-            public async Task<IEnumerable<Child>> Resolve(Args args)
+            public Task<IEnumerable<Child>> Resolve(Args args)
             {
-                await Task.CompletedTask;
-
-                return args.OrderBy?.ApplyOrdering(Data) ?? Data;
+                throw new System.NotImplementedException();
             }
         }
 

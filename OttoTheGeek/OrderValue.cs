@@ -15,23 +15,22 @@ namespace OttoTheGeek
 
     public sealed class OrderValue<T> : OrderValue
     {
-        public OrderValue(PropertyInfo prop, bool descending)
+        internal OrderValue(PropertyInfo prop, bool descending)
         {
             Prop = prop;
+            Name = prop.Name;
             Descending = descending;
         }
 
+        internal OrderValue(string name, bool descending)
+        {
+            Name = name;
+            Descending = descending;
+        }
+
+        public string Name { get; }
         public PropertyInfo Prop { get; }
         public bool Descending { get; }
 
-        public IEnumerable<T> ApplyOrdering(IEnumerable<T> items)
-        {
-            if(Descending)
-            {
-                return items.OrderByDescending(x => Prop.GetValue(x));
-            }
-
-            return items.OrderBy(x => Prop.GetValue(x));
-        }
     }
 }

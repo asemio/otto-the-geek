@@ -41,6 +41,7 @@ namespace OttoTheGeek
             return new ConnectionFieldBuilder<TQuery, TProp>(this, expr);
         }
 
+
         internal SchemaBuilder<TQuery> ConnectionProperty(PropertyInfo prop)
         {
             return new SchemaBuilder<TQuery>(_builders, _connectionProperties.Concat(new[] { prop }).ToArray());

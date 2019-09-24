@@ -47,12 +47,14 @@ namespace OttoTheGeek
         };
         private readonly Dictionary<PropertyInfo, FieldResolverConfiguration> _fieldResolvers;
         private readonly Dictionary<PropertyInfo, Nullability> _nullabilityOverrides;
+        private readonly Dictionary<PropertyInfo, OrderByBuilder> _orderByBuilders;
         private enum Nullability { NonNull, Nullable }
         private readonly IEnumerable<PropertyInfo> _propertiesToIgnore;
 
         public GraphTypeBuilder() : this(
             new Dictionary<PropertyInfo, FieldResolverConfiguration>(),
             new Dictionary<PropertyInfo, Nullability>(),
+            new Dictionary<PropertyInfo, OrderByBuilder>(),
             new PropertyInfo[0])
         {
 
@@ -60,12 +62,14 @@ namespace OttoTheGeek
         private GraphTypeBuilder(
             Dictionary<PropertyInfo, FieldResolverConfiguration> scalarFieldResolvers,
             Dictionary<PropertyInfo, Nullability> nullabilityOverrides,
+            Dictionary<PropertyInfo, OrderByBuilder> orderByBuilders,
             IEnumerable<PropertyInfo> propertiesToIgnore
             )
         {
             _fieldResolvers = scalarFieldResolvers;
             _propertiesToIgnore = propertiesToIgnore;
             _nullabilityOverrides = nullabilityOverrides;
+            _orderByBuilders = orderByBuilders;
         }
 
         public ScalarFieldBuilder<TModel, TProp> ScalarField<TProp>(Expression<Func<TModel, TProp>> propertyExpression)
@@ -118,6 +122,17 @@ namespace OttoTheGeek
             dict[prop] = Nullability.Nullable;
 
             return Clone(nullabilityOverrides: dict);
+        }
+
+        public GraphTypeBuilder<TModel> ConfigureOrderBy<TEntity>(
+            Expression<Func<TModel, OrderValue<TEntity>>> propSelector, Func<OrderByBuilder<TEntity>, OrderByBuilder<TEntity>> configurator
+            )
+        {
+            var prop = propSelector.PropertyInfoForSimpleGet();
+            var dict = new Dictionary<PropertyInfo, OrderByBuilder>(_orderByBuilders);
+            dict[prop] = configurator(GetOrderByBuilder<TEntity>(prop));
+
+            return Clone(orderByBuilders: dict);
         }
 
         internal GraphTypeBuilder<TModel> WithResolverConfiguration(PropertyInfo prop, FieldResolverConfiguration config)
@@ -174,12 +189,14 @@ namespace OttoTheGeek
         private GraphTypeBuilder<TModel> Clone(
             Dictionary<PropertyInfo, FieldResolverConfiguration> fieldResolvers = null,
             Dictionary<PropertyInfo, Nullability> nullabilityOverrides = null,
+            Dictionary<PropertyInfo, OrderByBuilder> orderByBuilders = null,
             IEnumerable<PropertyInfo> propertiesToIgnore = null
             )
         {
             return new GraphTypeBuilder<TModel>(
                 scalarFieldResolvers: fieldResolvers ?? _fieldResolvers,
                 nullabilityOverrides: nullabilityOverrides ?? _nullabilityOverrides,
+                orderByBuilders: orderByBuilders ?? _orderByBuilders,
                 propertiesToIgnore: propertiesToIgnore ?? _propertiesToIgnore
             );
         }
@@ -209,7 +226,9 @@ namespace OttoTheGeek
 
             if(typeof(OrderValue).IsAssignableFrom(prop.PropertyType))
             {
-                var enumGraphType = OrderValueGraphType.FromOrderValueType(prop.PropertyType);
+                _orderByBuilders.TryGetValue(prop, out var builder);
+                builder = builder ?? OrderByBuilder.FromPropertyInfo(prop);
+                var enumGraphType = builder.BuildGraphType();
                 if(_nullabilityOverrides.TryGetValue(prop, out var nullability) && nullability == Nullability.NonNull)
                 {
                     enumGraphType = new NonNullGraphType(enumGraphType);
@@ -248,6 +267,13 @@ namespace OttoTheGeek
                 type = graphType.UnwrapNonNullable();
             }
             return true;
+        }
+
+        private OrderByBuilder<TEntity> GetOrderByBuilder<TEntity>(PropertyInfo prop)
+        {
+            _orderByBuilders.TryGetValue(prop, out var builder);
+
+            return ((OrderByBuilder<TEntity>)builder) ?? new OrderByBuilder<TEntity>();
         }
     }
 }
