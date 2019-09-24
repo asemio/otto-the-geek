@@ -9,6 +9,8 @@ namespace OttoTheGeek.Internal
     {
         private readonly Dictionary<Type, IGraphTypeBuilder> _builders;
         private readonly Dictionary<Type, IGraphType> _cache = new Dictionary<Type, IGraphType>();
+        private readonly Dictionary<Type, QueryArguments> _argsCache = new Dictionary<Type, QueryArguments>();
+
         public GraphTypeCache() : this(new Dictionary<Type, IGraphTypeBuilder>())
         {
 
@@ -40,6 +42,26 @@ namespace OttoTheGeek.Internal
             }
 
             return _cache[modelType];
+        }
+
+        public QueryArguments GetOrCreateArguments<T>(IServiceCollection services)
+        {
+            var modelType = typeof(T);
+            if(_argsCache.TryGetValue(modelType, out var args))
+            {
+                return args;
+            }
+
+            if(_builders.TryGetValue(modelType, out var cachedBuilder))
+            {
+                _argsCache[modelType] = ((dynamic)cachedBuilder).BuildQueryArguments(this, services);
+            }
+            else {
+                dynamic builder = Activator.CreateInstance(typeof(GraphTypeBuilder<>).MakeGenericType(modelType));
+                _argsCache[modelType] = builder.BuildQueryArguments(cache: this, services: services);
+            }
+
+            return _argsCache[modelType];
         }
 
         public bool TryPrime<T>(ObjectGraphType<T> graphType)

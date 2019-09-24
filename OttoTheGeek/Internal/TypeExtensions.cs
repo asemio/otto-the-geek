@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using GraphQL.Types;
 
 namespace OttoTheGeek.Internal
 {
@@ -21,6 +22,31 @@ namespace OttoTheGeek.Internal
             }
 
             return t.GetGenericArguments().Single();
+        }
+
+        public static Type UnwrapNonNullable(this Type t)
+        {
+            if(t.IsNonNullGraphType())
+            {
+                return t.GetGenericArguments().Single();
+            }
+
+            return t;
+        }
+
+        public static Type MakeNonNullable(this Type t)
+        {
+            if(t.IsNonNullGraphType())
+            {
+                return t;
+            }
+
+            return typeof(NonNullGraphType<>).MakeGenericType(t);
+        }
+
+        private static bool IsNonNullGraphType(this Type t)
+        {
+            return (t.IsConstructedGenericType && t.GetGenericTypeDefinition() == typeof(NonNullGraphType<>));
         }
     }
 }

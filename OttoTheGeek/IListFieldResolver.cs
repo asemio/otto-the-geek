@@ -9,4 +9,9 @@ namespace OttoTheGeek
         object GetKey(TContext context);
         Task<ILookup<object, TField>> GetData(IEnumerable<object> keys);
     }
+
+    public interface IListFieldResolver<TElem>
+    {
+        Task<IEnumerable<TElem>> Resolve();
+    }
 }

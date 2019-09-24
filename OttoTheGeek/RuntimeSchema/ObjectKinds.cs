@@ -6,5 +6,6 @@ namespace OttoTheGeek.RuntimeSchema
         public const string Object = "OBJECT";
         public const string NonNull = "NON_NULL";
         public const string List = "LIST";
+        public const string Enum = "ENUM";
     }
 }

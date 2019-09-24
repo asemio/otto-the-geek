@@ -8,4 +8,9 @@ namespace OttoTheGeek
         object GetKey(TContext context);
         Task<Dictionary<object, TField>> GetData(IEnumerable<object> keys);
     }
+
+    public interface IScalarFieldResolver<TProp>
+    {
+        Task<TProp> Resolve();
+    }
 }

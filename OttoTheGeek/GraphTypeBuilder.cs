@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-using System.Threading.Tasks;
-using GraphQL;
 using GraphQL.Types;
 using Microsoft.Extensions.DependencyInjection;
 using OttoTheGeek.Connections;
@@ -47,29 +45,27 @@ namespace OttoTheGeek
             [typeof(uint?)]             = typeof(UIntGraphType),
             // TODO: timespan
         };
-        private static readonly Dictionary<PropertyInfo, Type> NoResolvers = new Dictionary<PropertyInfo, Type>();
-        private readonly Type _connectionResolver;
         private readonly Dictionary<PropertyInfo, FieldResolverConfiguration> _fieldResolvers;
+        private readonly Dictionary<PropertyInfo, Nullability> _nullabilityOverrides;
+        private enum Nullability { NonNull, Nullable }
         private readonly IEnumerable<PropertyInfo> _propertiesToIgnore;
 
-        public GraphTypeBuilder() : this(null, new Dictionary<PropertyInfo, FieldResolverConfiguration>(), new PropertyInfo[0])
+        public GraphTypeBuilder() : this(
+            new Dictionary<PropertyInfo, FieldResolverConfiguration>(),
+            new Dictionary<PropertyInfo, Nullability>(),
+            new PropertyInfo[0])
         {
 
         }
         private GraphTypeBuilder(
-            Type connectionResolver,
             Dictionary<PropertyInfo, FieldResolverConfiguration> scalarFieldResolvers,
+            Dictionary<PropertyInfo, Nullability> nullabilityOverrides,
             IEnumerable<PropertyInfo> propertiesToIgnore
             )
         {
-            _connectionResolver = connectionResolver;
             _fieldResolvers = scalarFieldResolvers;
             _propertiesToIgnore = propertiesToIgnore;
-        }
-
-        internal GraphTypeBuilder<TModel> WithConnectionResolver<TResolver>() where TResolver : IConnectionResolver<TModel>
-        {
-            return Clone(connectionResolver: typeof(TResolver));
+            _nullabilityOverrides = nullabilityOverrides;
         }
 
         public ScalarFieldBuilder<TModel, TProp> ScalarField<TProp>(Expression<Func<TModel, TProp>> propertyExpression)
@@ -106,14 +102,32 @@ namespace OttoTheGeek
             return Clone(propertiesToIgnore: props);
         }
 
+        public GraphTypeBuilder<TModel> NonNullable<TProp>(Expression<Func<TModel, TProp>> propertyExpression)
+        {
+            var prop = propertyExpression.PropertyInfoForSimpleGet();
+            var dict = new Dictionary<PropertyInfo, Nullability>(_nullabilityOverrides);
+            dict[prop] = Nullability.NonNull;
+
+            return Clone(nullabilityOverrides: dict);
+        }
+
+        public GraphTypeBuilder<TModel> Nullable<TProp>(Expression<Func<TModel, TProp>> propertyExpression)
+        {
+            var prop = propertyExpression.PropertyInfoForSimpleGet();
+            var dict = new Dictionary<PropertyInfo, Nullability>(_nullabilityOverrides);
+            dict[prop] = Nullability.Nullable;
+
+            return Clone(nullabilityOverrides: dict);
+        }
+
         internal GraphTypeBuilder<TModel> WithResolverConfiguration(PropertyInfo prop, FieldResolverConfiguration config)
         {
             var dict = new Dictionary<PropertyInfo, FieldResolverConfiguration>(_fieldResolvers);
             dict[prop] = config;
 
             return Clone(fieldResolvers: dict);
-
         }
+
 
         public ObjectGraphType<TModel> BuildGraphType(GraphTypeCache cache, IServiceCollection services)
         {
@@ -128,7 +142,7 @@ namespace OttoTheGeek
 
             foreach(var prop in typeof(TModel).GetProperties().Except(_propertiesToIgnore))
             {
-                if(CSharpToGraphqlTypeMapping.TryGetValue(prop.PropertyType, out var graphQlType))
+                if(TryGetScalarGraphType(prop, out var graphQlType))
                 {
                     graphType.Field(
                         type: graphQlType,
@@ -137,7 +151,7 @@ namespace OttoTheGeek
                 }
                 else if(_fieldResolvers.TryGetValue(prop, out var resolverConfig))
                 {
-                    graphType.AddField(resolverConfig.ConfigureField(prop, cache, services));
+                    graphType.AddField(fieldType: resolverConfig.ConfigureField(prop, cache, services));
                 }
                 else
                 {
@@ -146,15 +160,26 @@ namespace OttoTheGeek
             }
             return graphType;
         }
+
+        public QueryArguments BuildQueryArguments(GraphTypeCache cache, IServiceCollection services)
+        {
+            var args = typeof(TModel)
+                .GetProperties()
+                .Except(_propertiesToIgnore)
+                .Select(prop => ToQueryArgument(prop));
+
+            return new QueryArguments(args);
+        }
+
         private GraphTypeBuilder<TModel> Clone(
-            Type connectionResolver = null,
             Dictionary<PropertyInfo, FieldResolverConfiguration> fieldResolvers = null,
+            Dictionary<PropertyInfo, Nullability> nullabilityOverrides = null,
             IEnumerable<PropertyInfo> propertiesToIgnore = null
             )
         {
             return new GraphTypeBuilder<TModel>(
-                connectionResolver: connectionResolver ?? _connectionResolver,
                 scalarFieldResolvers: fieldResolvers ?? _fieldResolvers,
+                nullabilityOverrides: nullabilityOverrides ?? _nullabilityOverrides,
                 propertiesToIgnore: propertiesToIgnore ?? _propertiesToIgnore
             );
         }
@@ -170,6 +195,59 @@ namespace OttoTheGeek
         private Type GetConnectionElemType()
         {
             return typeof(TModel).GetGenericArguments().Single();
+        }
+
+        private QueryArgument ToQueryArgument(PropertyInfo prop)
+        {
+            if(TryGetScalarGraphType(prop, out var graphType))
+            {
+                return new QueryArgument(graphType)
+                {
+                    Name = prop.Name
+                };
+            }
+
+            if(typeof(OrderValue).IsAssignableFrom(prop.PropertyType))
+            {
+                var enumGraphType = OrderValueGraphType.FromOrderValueType(prop.PropertyType);
+                if(_nullabilityOverrides.TryGetValue(prop, out var nullability) && nullability == Nullability.NonNull)
+                {
+                    enumGraphType = new NonNullGraphType(enumGraphType);
+                }
+                return new QueryArgument(enumGraphType)
+                {
+                    Name = prop.Name
+                };
+            }
+
+            throw new UnableToResolveException(prop);
+        }
+
+        private bool TryGetScalarGraphType(PropertyInfo prop, out Type type)
+        {
+            type = null;
+
+            if(!CSharpToGraphqlTypeMapping.TryGetValue(prop.PropertyType, out var graphType))
+            {
+                return false;
+            }
+
+            type = graphType;
+
+            if(!_nullabilityOverrides.TryGetValue(prop, out var nullability))
+            {
+                return true;
+            }
+
+            if(nullability == Nullability.NonNull)
+            {
+                type = graphType.MakeNonNullable();
+            }
+            else if(nullability == Nullability.Nullable)
+            {
+                type = graphType.UnwrapNonNullable();
+            }
+            return true;
         }
     }
 }

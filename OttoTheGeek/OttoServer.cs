@@ -19,13 +19,19 @@ namespace OttoTheGeek
             _provider = provider;
         }
 
-        public T Execute<T>(string queryText)
+        public T Execute<T>(string queryText, object inputData = null)
         {
+            var inputs = new Inputs();
+            if(inputData != null)
+            {
+                inputs = JsonConvert.SerializeObject(inputData).ToInputs();
+            }
             var executer = _provider.GetRequiredService<IDocumentExecuter>();
             var opts = new ExecutionOptions
             {
                 Query = queryText,
                 Schema = _schema,
+                Inputs = inputs
             };
             opts.Listeners.Add(_provider.GetRequiredService<DataLoaderDocumentListener>());
             var resultAsync = executer.ExecuteAsync(opts);

@@ -13,7 +13,7 @@ namespace OttoTheGeek.Internal
 
         protected abstract IGraphType GetGraphType(GraphTypeCache cache, IServiceCollection services);
 
-        protected virtual QueryArguments GetQueryArguments()
+        protected virtual QueryArguments GetQueryArguments(GraphTypeCache cache, IServiceCollection services)
         {
             return null;
         }
@@ -27,7 +27,7 @@ namespace OttoTheGeek.Internal
                 ResolvedType = GetGraphType(cache, services),
                 Type = prop.PropertyType,
                 Resolver = CreateGraphQLResolver(),
-                Arguments = GetQueryArguments()
+                Arguments = GetQueryArguments(cache, services)
             };
         }
     }

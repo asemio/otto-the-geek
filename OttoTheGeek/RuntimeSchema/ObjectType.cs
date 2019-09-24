@@ -2,7 +2,7 @@ using System.Collections.Generic;
 
 namespace OttoTheGeek.RuntimeSchema
 {
-    public class ObjectType
+    public sealed class ObjectType
     {
         public static readonly ObjectType String = new ObjectType { Name = "String", Kind = ObjectKinds.Scalar };
         public static readonly ObjectType Int = new ObjectType { Name = "Int", Kind = ObjectKinds.Scalar };
@@ -47,6 +47,14 @@ namespace OttoTheGeek.RuntimeSchema
         public ObjectType OfType { get; set; }
 
         public IEnumerable<ObjectField> Fields { get; set; }
+
+        public IEnumerable<EnumValue> EnumValues { get; set; }
+    }
+
+    public sealed class EnumValue
+    {
+        public string Name { get; set; }
+        public string Description { get; set; }
 
     }
 }
