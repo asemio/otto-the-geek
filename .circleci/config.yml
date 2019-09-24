@@ -9,3 +9,34 @@ jobs:
          name: Tests
          command:
            dotnet test OttoTheGeek.Tests
+ publish:
+   docker:
+     - image: mcr.microsoft.com/dotnet/core/sdk:2.1
+   steps:
+     - checkout
+     - run:
+         name: Pack
+         command:
+           dotnet pack OttoTheGeek -p:PackageVersion=$CIRCLE_TAG -o .
+    - run:
+        name: Publish
+        command:
+          dotnet nuget push OttoTheGeek.${CIRCLE_TAG}.nupkg -k $CIRCLE_SHA1
+          # key from env?
+
+
+workflows:
+  version: 2
+  build:
+    jobs:
+      - build
+  publish:
+    jobs:
+      - build
+      - publish:
+          requires:
+            - build
+          filters:
+            tags:
+              only: [0-9]+.[0-9]+.[0-9]+
+

@@ -3,6 +3,9 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <PackageId>OttoTheGeek</PackageId>
+    <Authors>Asemio, LLC</Authors>
+    <Company>Asemio, LLC</Company>
   </PropertyGroup>
 
   <ItemGroup>
