@@ -1,28 +1,29 @@
 version: 2.0
 jobs:
- build:
-   docker:
-     - image: mcr.microsoft.com/dotnet/core/sdk:2.1
-   steps:
-     - checkout
-     - run:
-         name: Tests
-         command:
-           dotnet test OttoTheGeek.Tests
- publish:
-   docker:
-     - image: mcr.microsoft.com/dotnet/core/sdk:2.1
-   steps:
-     - checkout
-     - run:
-         name: Pack
-         command:
-           dotnet pack OttoTheGeek -p:PackageVersion=$CIRCLE_TAG -o .
-     - run:
-         name: Publish
-         command:
-           dotnet nuget push OttoTheGeek.${CIRCLE_TAG}.nupkg -k $CIRCLE_SHA1
-           # key from env?
+  build:
+    docker:
+      - image: mcr.microsoft.com/dotnet/core/sdk:2.1
+        steps:
+          - checkout
+          - run:
+              name: Tests
+              command:
+                dotnet test OttoTheGeek.Tests
+  publish:
+    docker:
+      - image: mcr.microsoft.com/dotnet/core/sdk:2.1
+        steps:
+          - checkout
+          - run: echo $CIRCLE_TAG
+          - run:
+              name: Pack
+              command:
+                dotnet pack OttoTheGeek -p:PackageVersion=$CIRCLE_TAG -p:Version=$CIRCLE_TAG -o .
+          - run:
+              name: Publish
+              command:
+                dotnet nuget push OttoTheGeek.${CIRCLE_TAG}.nupkg -k $CIRCLE_SHA1
+                # key from env?
 
 
 workflows:
