@@ -14,7 +14,6 @@ jobs:
       - image: mcr.microsoft.com/dotnet/core/sdk:2.1
     steps:
       - checkout
-      - run: echo $CIRCLE_TAG
       - run:
           name: Pack
           command:
@@ -22,7 +21,7 @@ jobs:
       - run:
           name: Publish
           command:
-            dotnet nuget push OttoTheGeek.${CIRCLE_TAG}.nupkg -k $CIRCLE_SHA1 -s https://api.nuget.org/v3/index.json
+            dotnet nuget push OttoTheGeek/OttoTheGeek.${CIRCLE_TAG}.nupkg -k $CIRCLE_SHA1 -s https://api.nuget.org/v3/index.json
             # key from env?
 
 
