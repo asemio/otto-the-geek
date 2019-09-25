@@ -62,5 +62,21 @@ namespace OttoTheGeek.Tests
                     Type = typeof(IntGraphType),
                 });
         }
+
+        [Fact]
+        public void OverrideToId()
+        {
+            var graphType =  new GraphTypeBuilder<Model>()
+                .ScalarField(x => x.StringVal)
+                    .AsGraphType<IdGraphType>()
+                .BuildGraphType(new Internal.GraphTypeCache(), new ServiceCollection());
+
+            graphType.Fields
+                .SingleOrDefault(x => x.Name == nameof(Model.StringVal))
+                .Should()
+                .BeEquivalentTo(new {
+                    Type = typeof(IdGraphType),
+                });
+        }
     }
 }

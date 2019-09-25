@@ -49,6 +49,7 @@ namespace OttoTheGeek
         private readonly Dictionary<PropertyInfo, FieldResolverConfiguration> _fieldResolvers;
         private readonly Dictionary<PropertyInfo, Nullability> _nullabilityOverrides;
         private readonly Dictionary<PropertyInfo, OrderByBuilder> _orderByBuilders;
+        private readonly Dictionary<PropertyInfo, Type> _graphTypeOverrides;
         private enum Nullability { NonNull, Nullable }
         private readonly IEnumerable<PropertyInfo> _propertiesToIgnore;
         private readonly IEnumerable<Type> _interfaces;
@@ -57,6 +58,7 @@ namespace OttoTheGeek
             new Dictionary<PropertyInfo, FieldResolverConfiguration>(),
             new Dictionary<PropertyInfo, Nullability>(),
             new Dictionary<PropertyInfo, OrderByBuilder>(),
+            new Dictionary<PropertyInfo, Type>(),
             new PropertyInfo[0],
             new Type[0])
         {
@@ -66,6 +68,7 @@ namespace OttoTheGeek
             Dictionary<PropertyInfo, FieldResolverConfiguration> scalarFieldResolvers,
             Dictionary<PropertyInfo, Nullability> nullabilityOverrides,
             Dictionary<PropertyInfo, OrderByBuilder> orderByBuilders,
+            Dictionary<PropertyInfo, Type> graphTypeOverrides,
             IEnumerable<PropertyInfo> propertiesToIgnore,
             IEnumerable<Type> interfaces
             )
@@ -74,6 +77,7 @@ namespace OttoTheGeek
             _propertiesToIgnore = propertiesToIgnore;
             _nullabilityOverrides = nullabilityOverrides;
             _orderByBuilders = orderByBuilders;
+            _graphTypeOverrides = graphTypeOverrides;
             _interfaces = interfaces;
         }
 
@@ -165,6 +169,13 @@ namespace OttoTheGeek
             return Clone(fieldResolvers: dict);
         }
 
+        internal GraphTypeBuilder<TModel> WithGraphTypeOverride(PropertyInfo prop, Type graphType)
+        {
+            var dict = new Dictionary<PropertyInfo, Type>(_graphTypeOverrides);
+            dict[prop] = graphType;
+
+            return Clone(graphTypeOverrides: dict);
+        }
 
         IComplexGraphType IGraphTypeBuilder.BuildGraphType(GraphTypeCache cache, IServiceCollection services)
         {
@@ -215,6 +226,7 @@ namespace OttoTheGeek
             Dictionary<PropertyInfo, FieldResolverConfiguration> fieldResolvers = null,
             Dictionary<PropertyInfo, Nullability> nullabilityOverrides = null,
             Dictionary<PropertyInfo, OrderByBuilder> orderByBuilders = null,
+            Dictionary<PropertyInfo, Type> graphTypeOverrides = null,
             IEnumerable<PropertyInfo> propertiesToIgnore = null,
             IEnumerable<Type> interfaces = null
             )
@@ -224,6 +236,7 @@ namespace OttoTheGeek
                 nullabilityOverrides: nullabilityOverrides ?? _nullabilityOverrides,
                 orderByBuilders: orderByBuilders ?? _orderByBuilders,
                 propertiesToIgnore: propertiesToIgnore ?? _propertiesToIgnore,
+                graphTypeOverrides: graphTypeOverrides ?? _graphTypeOverrides,
                 interfaces: interfaces ?? _interfaces
             );
         }
@@ -272,6 +285,11 @@ namespace OttoTheGeek
         private bool TryGetScalarGraphType(PropertyInfo prop, out Type type)
         {
             type = null;
+
+            if(_graphTypeOverrides.TryGetValue(prop, out type))
+            {
+                return true;
+            }
 
             if(!CSharpToGraphqlTypeMapping.TryGetValue(prop.PropertyType, out var graphType))
             {

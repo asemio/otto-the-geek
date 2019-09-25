@@ -1,4 +1,5 @@
 using System.Reflection;
+using GraphQL.Types;
 
 namespace OttoTheGeek.Internal
 {
@@ -23,6 +24,12 @@ namespace OttoTheGeek.Internal
         public GraphTypeBuilder<TModel> Preloaded()
         {
             return _parentBuilder.WithResolverConfiguration(_prop, new PreloadedScalarResolverConfiguration<TProp>());
+        }
+
+        public GraphTypeBuilder<TModel> AsGraphType<TGraphType>()
+            where TGraphType : IGraphType
+        {
+            return _parentBuilder.WithGraphTypeOverride(_prop, typeof(TGraphType));
         }
     }
 }
