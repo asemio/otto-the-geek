@@ -7,7 +7,7 @@ using OttoTheGeek.Internal;
 
 namespace OttoTheGeek
 {
-    public class OttoModel<TQuery>
+    public abstract class OttoModel<TQuery>
         where TQuery : class
     {
         protected virtual SchemaBuilder<TQuery> ConfigureSchema(SchemaBuilder<TQuery> builder) => builder;
@@ -23,7 +23,7 @@ namespace OttoTheGeek
             return new OttoServer(schema, provider);
         }
 
-        public Schema BuildGraphQLSchema(ServiceCollection services)
+        public Schema BuildGraphQLSchema(IServiceCollection services)
         {
             var builder = ConfigureSchema(new SchemaBuilder<TQuery>());
             var ottoSchema = builder.Build(services);
