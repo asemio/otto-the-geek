@@ -28,6 +28,7 @@ namespace OttoTheGeek
             [typeof(ushort)]            = typeof(NonNullGraphType<UShortGraphType>),
             [typeof(ulong)]             = typeof(NonNullGraphType<ULongGraphType>),
             [typeof(uint)]              = typeof(NonNullGraphType<UIntGraphType>),
+            [typeof(TimeSpan)]          = typeof(NonNullGraphType<TimeSpanGraphType>),
 
             [typeof(long?)]             = typeof(IntGraphType),
             [typeof(int?)]              = typeof(IntGraphType),
@@ -43,19 +44,21 @@ namespace OttoTheGeek
             [typeof(ushort?)]           = typeof(UShortGraphType),
             [typeof(ulong?)]            = typeof(ULongGraphType),
             [typeof(uint?)]             = typeof(UIntGraphType),
-            // TODO: timespan
+            [typeof(TimeSpan?)]         = typeof(TimeSpanGraphType),
         };
         private readonly Dictionary<PropertyInfo, FieldResolverConfiguration> _fieldResolvers;
         private readonly Dictionary<PropertyInfo, Nullability> _nullabilityOverrides;
         private readonly Dictionary<PropertyInfo, OrderByBuilder> _orderByBuilders;
         private enum Nullability { NonNull, Nullable }
         private readonly IEnumerable<PropertyInfo> _propertiesToIgnore;
+        private readonly IEnumerable<Type> _interfaces;
 
         public GraphTypeBuilder() : this(
             new Dictionary<PropertyInfo, FieldResolverConfiguration>(),
             new Dictionary<PropertyInfo, Nullability>(),
             new Dictionary<PropertyInfo, OrderByBuilder>(),
-            new PropertyInfo[0])
+            new PropertyInfo[0],
+            new Type[0])
         {
 
         }
@@ -63,14 +66,18 @@ namespace OttoTheGeek
             Dictionary<PropertyInfo, FieldResolverConfiguration> scalarFieldResolvers,
             Dictionary<PropertyInfo, Nullability> nullabilityOverrides,
             Dictionary<PropertyInfo, OrderByBuilder> orderByBuilders,
-            IEnumerable<PropertyInfo> propertiesToIgnore
+            IEnumerable<PropertyInfo> propertiesToIgnore,
+            IEnumerable<Type> interfaces
             )
         {
             _fieldResolvers = scalarFieldResolvers;
             _propertiesToIgnore = propertiesToIgnore;
             _nullabilityOverrides = nullabilityOverrides;
             _orderByBuilders = orderByBuilders;
+            _interfaces = interfaces;
         }
+
+        public bool NeedsRegistration => _interfaces.Any();
 
         public ScalarFieldBuilder<TModel, TProp> ScalarField<TProp>(Expression<Func<TModel, TProp>> propertyExpression)
         {
@@ -135,6 +142,21 @@ namespace OttoTheGeek
             return Clone(orderByBuilders: dict);
         }
 
+        public GraphTypeBuilder<TModel> Interface<TInterface>()
+        {
+            var tIface = typeof(TInterface);
+            var tModel = typeof(TModel);
+
+            if(!tIface.IsAssignableFrom(tModel))
+            {
+                throw new ArgumentException($"{tModel.Name} does not implement {tIface.Name}");
+            }
+
+            var interfaces = _interfaces.Concat(new[] {tIface}).Distinct().ToArray();
+
+            return Clone(interfaces: interfaces);
+        }
+
         internal GraphTypeBuilder<TModel> WithResolverConfiguration(PropertyInfo prop, FieldResolverConfiguration config)
         {
             var dict = new Dictionary<PropertyInfo, FieldResolverConfiguration>(_fieldResolvers);
@@ -144,12 +166,15 @@ namespace OttoTheGeek
         }
 
 
-        public ObjectGraphType<TModel> BuildGraphType(GraphTypeCache cache, IServiceCollection services)
+        IComplexGraphType IGraphTypeBuilder.BuildGraphType(GraphTypeCache cache, IServiceCollection services)
         {
-            var graphType = new ObjectGraphType<TModel>
-            {
-                Name = GraphTypeName
-            };
+            return BuildGraphType(cache, services);
+        }
+        public ComplexGraphType<TModel> BuildGraphType(GraphTypeCache cache, IServiceCollection services)
+        {
+            var graphType = CreateGraphTypeCore(cache, services);
+            graphType.Name = GraphTypeName;
+
             if(!cache.TryPrime(graphType))
             {
                 return cache.GetOrCreate<TModel>(services);
@@ -190,14 +215,16 @@ namespace OttoTheGeek
             Dictionary<PropertyInfo, FieldResolverConfiguration> fieldResolvers = null,
             Dictionary<PropertyInfo, Nullability> nullabilityOverrides = null,
             Dictionary<PropertyInfo, OrderByBuilder> orderByBuilders = null,
-            IEnumerable<PropertyInfo> propertiesToIgnore = null
+            IEnumerable<PropertyInfo> propertiesToIgnore = null,
+            IEnumerable<Type> interfaces = null
             )
         {
             return new GraphTypeBuilder<TModel>(
                 scalarFieldResolvers: fieldResolvers ?? _fieldResolvers,
                 nullabilityOverrides: nullabilityOverrides ?? _nullabilityOverrides,
                 orderByBuilders: orderByBuilders ?? _orderByBuilders,
-                propertiesToIgnore: propertiesToIgnore ?? _propertiesToIgnore
+                propertiesToIgnore: propertiesToIgnore ?? _propertiesToIgnore,
+                interfaces: interfaces ?? _interfaces
             );
         }
 
@@ -274,6 +301,22 @@ namespace OttoTheGeek
             _orderByBuilders.TryGetValue(prop, out var builder);
 
             return ((OrderByBuilder<TEntity>)builder) ?? new OrderByBuilder<TEntity>();
+        }
+
+        private ComplexGraphType<TModel> CreateGraphTypeCore(GraphTypeCache cache, IServiceCollection services)
+        {
+            if(typeof(TModel).IsInterface)
+            {
+                return new InterfaceGraphType<TModel>();
+            }
+
+            var objectGraphType = new ObjectGraphType<TModel>();
+            foreach(var iFace in _interfaces)
+            {
+                objectGraphType.AddResolvedInterface((IInterfaceGraphType)cache.GetOrCreate(iFace, services));
+            }
+
+            return objectGraphType;
         }
     }
 }

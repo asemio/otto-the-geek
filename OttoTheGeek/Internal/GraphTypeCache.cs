@@ -20,9 +20,9 @@ namespace OttoTheGeek.Internal
             _builders = builders;
         }
 
-        public ObjectGraphType<T> GetOrCreate<T>(IServiceCollection services)
+        public ComplexGraphType<T> GetOrCreate<T>(IServiceCollection services)
         {
-            return (ObjectGraphType<T>)GetOrCreate(typeof(T), services);
+            return (ComplexGraphType<T>)GetOrCreate(typeof(T), services);
         }
 
         public IGraphType GetOrCreate(Type modelType, IServiceCollection services)
@@ -64,7 +64,7 @@ namespace OttoTheGeek.Internal
             return _argsCache[modelType];
         }
 
-        public bool TryPrime<T>(ObjectGraphType<T> graphType)
+        public bool TryPrime<T>(ComplexGraphType<T> graphType)
         {
             if(_cache.ContainsKey(typeof(T)))
             {

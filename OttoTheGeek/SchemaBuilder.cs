@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using GraphQL.Types;
 using Microsoft.Extensions.DependencyInjection;
 using OttoTheGeek.Internal;
 
@@ -54,13 +55,18 @@ namespace OttoTheGeek
             dict[typeof(TType)] = configurator(GetGraphTypeBuilder<TType>());
             return new SchemaBuilder<TQuery>(dict, _connectionProperties);
         }
-
         public OttoSchema Build(IServiceCollection services)
         {
-            var graphTypeCache = new GraphTypeCache(_builders);
-            var queryType = graphTypeCache.GetOrCreate<TQuery>(services);
+            var cache = new GraphTypeCache(_builders);
+            var queryType = cache.GetOrCreate<TQuery>(services);
+            var otherTypes = _builders.Values
+                .Where(x => x.NeedsRegistration)
+                .Select(x => x.BuildGraphType(cache, services))
+                .ToArray();
 
-            return new OttoSchema(queryType);
+            var schema = new OttoSchema((IObjectGraphType)queryType, otherTypes);
+
+            return schema;
         }
 
         private GraphTypeBuilder<TType> GetGraphTypeBuilder<TType>()

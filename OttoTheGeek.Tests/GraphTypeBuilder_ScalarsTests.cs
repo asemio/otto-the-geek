@@ -17,7 +17,7 @@ namespace OttoTheGeek.Tests
             public long? NullableLongVal { get; set; }
         }
 
-        private static readonly ObjectGraphType<Model> GraphType = new GraphTypeBuilder<Model>().BuildGraphType(new Internal.GraphTypeCache(), new ServiceCollection());
+        private static readonly ComplexGraphType<Model> GraphType = new GraphTypeBuilder<Model>().BuildGraphType(new Internal.GraphTypeCache(), new ServiceCollection());
 
         [Fact]
         public void BuildsStringField()

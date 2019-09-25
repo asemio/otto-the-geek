@@ -1,3 +1,4 @@
+using System.Linq;
 using GraphQL;
 using GraphQL.DataLoader;
 using GraphQL.Types;
@@ -14,21 +15,31 @@ namespace OttoTheGeek
         public OttoServer CreateServer()
         {
             var services = new ServiceCollection();
-            var builder = ConfigureSchema(new SchemaBuilder<TQuery>());
 
+            Schema schema = BuildGraphQLSchema(services);
+
+            var provider = services.BuildServiceProvider();
+            schema.DependencyResolver = provider.GetRequiredService<IDependencyResolver>();
+            return new OttoServer(schema, provider);
+        }
+
+        public Schema BuildGraphQLSchema(ServiceCollection services)
+        {
+            var builder = ConfigureSchema(new SchemaBuilder<TQuery>());
             var ottoSchema = builder.Build(services);
+
             services.AddSingleton<IDocumentExecuter, DocumentExecuter>();
             services.AddSingleton<IDataLoaderContextAccessor, DataLoaderContextAccessor>();
             services.AddSingleton<DataLoaderDocumentListener>();
             services.AddTransient(typeof(QueryFieldGraphqlResolverProxy<>));
+            services.AddTransient<IDependencyResolver>(x => new FuncDependencyResolver(x.GetRequiredService));
 
-            var provider = services.BuildServiceProvider();
-            var schema = new Schema {
-                Query = ottoSchema.QueryType,
-                DependencyResolver = new FuncDependencyResolver(t => provider.GetRequiredService(t))
+            var schema = new Schema
+            {
+                Query = ottoSchema.QueryType
             };
-
-            return new OttoServer(schema, provider);
+            schema.RegisterTypes(ottoSchema.OtherTypes.ToArray());
+            return schema;
         }
     }
 }
