@@ -9,7 +9,6 @@ using Xunit;
 
 namespace OttoTheGeek.Tests
 {
-
     public sealed class NestedScalarFieldTests
     {
         public sealed class Query

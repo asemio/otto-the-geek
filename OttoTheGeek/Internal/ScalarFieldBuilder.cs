@@ -20,5 +20,9 @@ namespace OttoTheGeek.Internal
             return _parentBuilder.WithResolverConfiguration(_prop, new ScalarContextResolverConfiguration<TResolver, TModel, TProp>());
         }
 
+        public GraphTypeBuilder<TModel> Preloaded()
+        {
+            return _parentBuilder.WithResolverConfiguration(_prop, new PreloadedScalarResolverConfiguration<TProp>());
+        }
     }
 }
