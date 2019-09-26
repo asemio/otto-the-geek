@@ -293,11 +293,10 @@ namespace OttoTheGeek
 
             if(!CSharpToGraphqlTypeMapping.TryGetValue(prop.PropertyType, out type))
             {
-                if(!prop.PropertyType.IsEnum)
+                if(!TryGetEnumType(prop, out type))
                 {
                     return false;
                 }
-                type = typeof(OttoEnumGraphType<>).MakeGenericType(prop.PropertyType);
             }
 
             if(!_nullabilityOverrides.TryGetValue(prop, out var nullability))
@@ -337,6 +336,39 @@ namespace OttoTheGeek
             }
 
             return objectGraphType;
+        }
+
+        private bool TryGetEnumType(PropertyInfo prop, out Type type)
+        {
+            var propType = prop.PropertyType;
+            type = null;
+            if(propType.IsEnum)
+            {
+                type = typeof(NonNullGraphType<>).MakeGenericType(
+                    typeof(OttoEnumGraphType<>).MakeGenericType(propType)
+                );
+                return true;
+            }
+
+            if(!propType.IsConstructedGenericType)
+            {
+                return false;
+            }
+
+            if(propType.GetGenericTypeDefinition() != typeof(Nullable<>))
+            {
+                return false;
+            }
+
+            var innerType = propType.GetGenericArguments().Single();
+
+            if(!innerType.IsEnum)
+            {
+                return false;
+            }
+
+            type = typeof(OttoEnumGraphType<>).MakeGenericType(innerType);
+            return true;
         }
     }
 }

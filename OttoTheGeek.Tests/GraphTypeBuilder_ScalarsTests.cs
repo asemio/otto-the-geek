@@ -3,6 +3,7 @@ using System.Linq;
 using FluentAssertions;
 using GraphQL.Types;
 using Microsoft.Extensions.DependencyInjection;
+using OttoTheGeek.Internal;
 using Xunit;
 
 namespace OttoTheGeek.Tests
@@ -17,7 +18,7 @@ namespace OttoTheGeek.Tests
             public long LongVal { get; set; }
             public long? NullableLongVal { get; set; }
             public ExampleEnum EnumVal { get; set; }
-            //public ExampleEnum? NullableEnumVal { get; set; }
+            public ExampleEnum? NullableEnumVal { get; set; }
         }
 
         public enum ExampleEnum
@@ -79,8 +80,9 @@ namespace OttoTheGeek.Tests
             var fieldDefinition = GraphType.Fields
                 .SingleOrDefault(x => x.Name == nameof(Model.EnumVal));
 
-            fieldDefinition.Type.Should().BeAssignableTo<EnumerationGraphType>();
-            var enumGraphType = (EnumerationGraphType)Activator.CreateInstance(fieldDefinition.Type);
+            var enumType = fieldDefinition.Type.GetGenericArguments().First();
+            enumType.Should().BeAssignableTo<EnumerationGraphType>();
+            var enumGraphType = (EnumerationGraphType)Activator.CreateInstance(enumType);
 
             enumGraphType.Name.Should().Be(nameof(ExampleEnum));
             enumGraphType.Values.Should().BeEquivalentTo(
@@ -90,6 +92,15 @@ namespace OttoTheGeek.Tests
                     new EnumValueDefinition { Name = nameof(ExampleEnum.Value3), Value = ExampleEnum.Value3 },
                 }
             );
+        }
+
+        [Fact]
+        public void BuildsNullableEnumField()
+        {
+            var fieldDefinition = GraphType.Fields
+                .SingleOrDefault(x => x.Name == nameof(Model.NullableEnumVal));
+
+            fieldDefinition.Type.Should().Be<OttoEnumGraphType<ExampleEnum>>();
         }
 
         [Fact]
