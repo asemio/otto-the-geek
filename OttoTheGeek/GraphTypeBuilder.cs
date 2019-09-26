@@ -291,12 +291,14 @@ namespace OttoTheGeek
                 return true;
             }
 
-            if(!CSharpToGraphqlTypeMapping.TryGetValue(prop.PropertyType, out var graphType))
+            if(!CSharpToGraphqlTypeMapping.TryGetValue(prop.PropertyType, out type))
             {
-                return false;
+                if(!prop.PropertyType.IsEnum)
+                {
+                    return false;
+                }
+                type = typeof(OttoEnumGraphType<>).MakeGenericType(prop.PropertyType);
             }
-
-            type = graphType;
 
             if(!_nullabilityOverrides.TryGetValue(prop, out var nullability))
             {
@@ -305,11 +307,11 @@ namespace OttoTheGeek
 
             if(nullability == Nullability.NonNull)
             {
-                type = graphType.MakeNonNullable();
+                type = type.MakeNonNullable();
             }
             else if(nullability == Nullability.Nullable)
             {
-                type = graphType.UnwrapNonNullable();
+                type = type.UnwrapNonNullable();
             }
             return true;
         }
