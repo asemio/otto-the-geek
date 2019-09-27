@@ -1,7 +1,6 @@
 using System;
 using GraphQL;
 using GraphQL.Types;
-using Newtonsoft.Json;
 
 namespace OttoTheGeek.Internal
 {
@@ -18,7 +17,8 @@ namespace OttoTheGeek.Internal
                     continue;
                 }
 
-                prop.SetValue(args, propValue);
+                // this GetPropertyValue is from GraphQL
+                prop.SetValue(args, propValue.GetPropertyValue(prop.PropertyType));
             }
 
             return args;
