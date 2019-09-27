@@ -13,46 +13,14 @@ namespace OttoTheGeek
     public sealed class GraphTypeBuilder<TModel> : IGraphTypeBuilder
         where TModel : class
     {
-        private static readonly IReadOnlyDictionary<Type, Type> CSharpToGraphqlTypeMapping = new Dictionary<Type, Type>{
-            [typeof(string)]            = typeof(NonNullGraphType<StringGraphType>),
-            [typeof(int)]               = typeof(NonNullGraphType<IntGraphType>),
-            [typeof(long)]              = typeof(NonNullGraphType<IntGraphType>),
-            [typeof(double)]            = typeof(NonNullGraphType<FloatGraphType>),
-            [typeof(float)]             = typeof(NonNullGraphType<FloatGraphType>),
-            [typeof(decimal)]           = typeof(NonNullGraphType<DecimalGraphType>),
-            [typeof(bool)]              = typeof(NonNullGraphType<BooleanGraphType>),
-            [typeof(DateTime)]          = typeof(NonNullGraphType<DateGraphType>),
-            [typeof(DateTimeOffset)]    = typeof(NonNullGraphType<DateTimeOffsetGraphType>),
-            [typeof(Guid)]              = typeof(NonNullGraphType<IdGraphType>),
-            [typeof(short)]             = typeof(NonNullGraphType<ShortGraphType>),
-            [typeof(ushort)]            = typeof(NonNullGraphType<UShortGraphType>),
-            [typeof(ulong)]             = typeof(NonNullGraphType<ULongGraphType>),
-            [typeof(uint)]              = typeof(NonNullGraphType<UIntGraphType>),
-            [typeof(TimeSpan)]          = typeof(NonNullGraphType<TimeSpanGraphType>),
-
-            [typeof(long?)]             = typeof(IntGraphType),
-            [typeof(int?)]              = typeof(IntGraphType),
-            [typeof(long?)]             = typeof(IntGraphType),
-            [typeof(double?)]           = typeof(FloatGraphType),
-            [typeof(float?)]            = typeof(FloatGraphType),
-            [typeof(decimal?)]          = typeof(DecimalGraphType),
-            [typeof(bool?)]             = typeof(BooleanGraphType),
-            [typeof(DateTime?)]         = typeof(DateGraphType),
-            [typeof(DateTimeOffset?)]   = typeof(DateTimeOffsetGraphType),
-            [typeof(Guid?)]             = typeof(IdGraphType),
-            [typeof(short?)]            = typeof(ShortGraphType),
-            [typeof(ushort?)]           = typeof(UShortGraphType),
-            [typeof(ulong?)]            = typeof(ULongGraphType),
-            [typeof(uint?)]             = typeof(UIntGraphType),
-            [typeof(TimeSpan?)]         = typeof(TimeSpanGraphType),
-        };
-        private readonly Dictionary<PropertyInfo, FieldResolverConfiguration> _fieldResolvers;
-        private readonly Dictionary<PropertyInfo, Nullability> _nullabilityOverrides;
-        private readonly Dictionary<PropertyInfo, OrderByBuilder> _orderByBuilders;
-        private readonly Dictionary<PropertyInfo, Type> _graphTypeOverrides;
+        private readonly IReadOnlyDictionary<PropertyInfo, FieldResolverConfiguration> _fieldResolvers;
+        private readonly IReadOnlyDictionary<PropertyInfo, Nullability> _nullabilityOverrides;
+        private readonly IReadOnlyDictionary<PropertyInfo, OrderByBuilder> _orderByBuilders;
+        private readonly IReadOnlyDictionary<PropertyInfo, Type> _graphTypeOverrides;
         private enum Nullability { NonNull, Nullable }
         private readonly IEnumerable<PropertyInfo> _propertiesToIgnore;
         private readonly IEnumerable<Type> _interfaces;
+        private readonly string _customName;
 
         public GraphTypeBuilder() : this(
             new Dictionary<PropertyInfo, FieldResolverConfiguration>(),
@@ -60,17 +28,19 @@ namespace OttoTheGeek
             new Dictionary<PropertyInfo, OrderByBuilder>(),
             new Dictionary<PropertyInfo, Type>(),
             new PropertyInfo[0],
-            new Type[0])
+            new Type[0],
+            null)
         {
 
         }
         private GraphTypeBuilder(
-            Dictionary<PropertyInfo, FieldResolverConfiguration> scalarFieldResolvers,
-            Dictionary<PropertyInfo, Nullability> nullabilityOverrides,
-            Dictionary<PropertyInfo, OrderByBuilder> orderByBuilders,
-            Dictionary<PropertyInfo, Type> graphTypeOverrides,
+            IReadOnlyDictionary<PropertyInfo, FieldResolverConfiguration> scalarFieldResolvers,
+            IReadOnlyDictionary<PropertyInfo, Nullability> nullabilityOverrides,
+            IReadOnlyDictionary<PropertyInfo, OrderByBuilder> orderByBuilders,
+            IReadOnlyDictionary<PropertyInfo, Type> graphTypeOverrides,
             IEnumerable<PropertyInfo> propertiesToIgnore,
-            IEnumerable<Type> interfaces
+            IEnumerable<Type> interfaces,
+            string customName
             )
         {
             _fieldResolvers = scalarFieldResolvers;
@@ -79,6 +49,7 @@ namespace OttoTheGeek
             _orderByBuilders = orderByBuilders;
             _graphTypeOverrides = graphTypeOverrides;
             _interfaces = interfaces;
+            _customName = customName;
         }
 
         public bool NeedsRegistration => _interfaces.Any();
@@ -120,8 +91,7 @@ namespace OttoTheGeek
         public GraphTypeBuilder<TModel> NonNullable<TProp>(Expression<Func<TModel, TProp>> propertyExpression)
         {
             var prop = propertyExpression.PropertyInfoForSimpleGet();
-            var dict = new Dictionary<PropertyInfo, Nullability>(_nullabilityOverrides);
-            dict[prop] = Nullability.NonNull;
+            var dict = _nullabilityOverrides.CopyAndAdd(prop, Nullability.NonNull);
 
             return Clone(nullabilityOverrides: dict);
         }
@@ -129,8 +99,7 @@ namespace OttoTheGeek
         public GraphTypeBuilder<TModel> Nullable<TProp>(Expression<Func<TModel, TProp>> propertyExpression)
         {
             var prop = propertyExpression.PropertyInfoForSimpleGet();
-            var dict = new Dictionary<PropertyInfo, Nullability>(_nullabilityOverrides);
-            dict[prop] = Nullability.Nullable;
+            var dict = _nullabilityOverrides.CopyAndAdd(prop, Nullability.Nullable);
 
             return Clone(nullabilityOverrides: dict);
         }
@@ -140,8 +109,7 @@ namespace OttoTheGeek
             )
         {
             var prop = propSelector.PropertyInfoForSimpleGet();
-            var dict = new Dictionary<PropertyInfo, OrderByBuilder>(_orderByBuilders);
-            dict[prop] = configurator(GetOrderByBuilder<TEntity>(prop));
+            var dict = _orderByBuilders.CopyAndAdd(prop, configurator(GetOrderByBuilder<TEntity>(prop)));
 
             return Clone(orderByBuilders: dict);
         }
@@ -161,18 +129,21 @@ namespace OttoTheGeek
             return Clone(interfaces: interfaces);
         }
 
+        public GraphTypeBuilder<TModel> Named(string name)
+        {
+            return Clone(customName: name);
+        }
+
         internal GraphTypeBuilder<TModel> WithResolverConfiguration(PropertyInfo prop, FieldResolverConfiguration config)
         {
-            var dict = new Dictionary<PropertyInfo, FieldResolverConfiguration>(_fieldResolvers);
-            dict[prop] = config;
+            var dict = _fieldResolvers.CopyAndAdd(prop, config);
 
             return Clone(fieldResolvers: dict);
         }
 
         internal GraphTypeBuilder<TModel> WithGraphTypeOverride(PropertyInfo prop, Type graphType)
         {
-            var dict = new Dictionary<PropertyInfo, Type>(_graphTypeOverrides);
-            dict[prop] = graphType;
+            var dict = _graphTypeOverrides.CopyAndAdd(prop, graphType);
 
             return Clone(graphTypeOverrides: dict);
         }
@@ -223,12 +194,13 @@ namespace OttoTheGeek
         }
 
         private GraphTypeBuilder<TModel> Clone(
-            Dictionary<PropertyInfo, FieldResolverConfiguration> fieldResolvers = null,
-            Dictionary<PropertyInfo, Nullability> nullabilityOverrides = null,
-            Dictionary<PropertyInfo, OrderByBuilder> orderByBuilders = null,
-            Dictionary<PropertyInfo, Type> graphTypeOverrides = null,
+            IReadOnlyDictionary<PropertyInfo, FieldResolverConfiguration> fieldResolvers = null,
+            IReadOnlyDictionary<PropertyInfo, Nullability> nullabilityOverrides = null,
+            IReadOnlyDictionary<PropertyInfo, OrderByBuilder> orderByBuilders = null,
+            IReadOnlyDictionary<PropertyInfo, Type> graphTypeOverrides = null,
             IEnumerable<PropertyInfo> propertiesToIgnore = null,
-            IEnumerable<Type> interfaces = null
+            IEnumerable<Type> interfaces = null,
+            string customName = null
             )
         {
             return new GraphTypeBuilder<TModel>(
@@ -237,14 +209,15 @@ namespace OttoTheGeek
                 orderByBuilders: orderByBuilders ?? _orderByBuilders,
                 propertiesToIgnore: propertiesToIgnore ?? _propertiesToIgnore,
                 graphTypeOverrides: graphTypeOverrides ?? _graphTypeOverrides,
-                interfaces: interfaces ?? _interfaces
+                interfaces: interfaces ?? _interfaces,
+                customName: customName ?? _customName
             );
         }
 
         private string GraphTypeName =>
             IsConnection
             ? $"{GetConnectionElemType().Name}Connection"
-            : typeof(TModel).Name;
+            : _customName ?? typeof(TModel).Name;
 
         private bool IsConnection => typeof(TModel).IsConstructedGenericType
             && typeof(TModel).GetGenericTypeDefinition() == typeof(Connection<>);
@@ -291,7 +264,7 @@ namespace OttoTheGeek
                 return true;
             }
 
-            if(!CSharpToGraphqlTypeMapping.TryGetValue(prop.PropertyType, out type))
+            if(!ScalarTypeMap.TryGetGraphType(prop.PropertyType, out type))
             {
                 if(!TryGetEnumType(prop, out type))
                 {
