@@ -6,6 +6,7 @@
     <PackageId>OttoTheGeek</PackageId>
     <Authors>Asemio, LLC</Authors>
     <Company>Asemio, LLC</Company>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
 
   <ItemGroup>
