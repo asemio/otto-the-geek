@@ -25,6 +25,18 @@ namespace OttoTheGeek
 
         public Schema BuildGraphQLSchema(IServiceCollection services)
         {
+            var ottoSchema = BuildOttoSchema(services);
+
+            var schema = new Schema
+            {
+                Query = ottoSchema.QueryType
+            };
+            schema.RegisterTypes(ottoSchema.OtherTypes.ToArray());
+            return schema;
+        }
+
+        public OttoSchema BuildOttoSchema(IServiceCollection services)
+        {
             var builder = ConfigureSchema(new SchemaBuilder<TQuery>());
             var ottoSchema = builder.Build(services);
 
@@ -34,12 +46,7 @@ namespace OttoTheGeek
             services.AddTransient(typeof(QueryFieldGraphqlResolverProxy<>));
             services.AddTransient<IDependencyResolver>(x => new FuncDependencyResolver(x.GetRequiredService));
 
-            var schema = new Schema
-            {
-                Query = ottoSchema.QueryType
-            };
-            schema.RegisterTypes(ottoSchema.OtherTypes.ToArray());
-            return schema;
+            return ottoSchema;
         }
     }
 }
