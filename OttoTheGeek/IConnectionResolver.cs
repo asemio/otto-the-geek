@@ -3,8 +3,13 @@ using OttoTheGeek.Connections;
 
 namespace OttoTheGeek
 {
-    public interface IConnectionResolver<TElem>
+    public interface IConnectionResolver<TElem, TArgs>
+        where TArgs : PagingArgs<TElem>
     {
-        Task<Connection<TElem>> Resolve(PagingArgs args);
+        Task<Connection<TElem>> Resolve(TArgs args);
+    }
+
+    public interface IConnectionResolver<TElem> : IConnectionResolver<TElem, PagingArgs<TElem>>
+    {
     }
 }

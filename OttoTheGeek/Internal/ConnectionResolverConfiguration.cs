@@ -7,8 +7,9 @@ using OttoTheGeek.Connections;
 
 namespace OttoTheGeek.Internal
 {
-    public sealed class ConnectionResolverConfiguration<TModel, TResolver> : FieldWithArgsResolverConfiguration<PagingArgs>
-        where TResolver : class, IConnectionResolver<TModel>
+    public sealed class ConnectionResolverConfiguration<TModel, TArgs, TResolver> : FieldWithArgsResolverConfiguration<TArgs>
+        where TResolver : class, IConnectionResolver<TModel, TArgs>
+        where TArgs : PagingArgs<TModel>
     {
         protected override IFieldResolver CreateGraphQLResolver()
         {
@@ -31,7 +32,7 @@ namespace OttoTheGeek.Internal
             {
                 var resolver = dependencyResolver.Resolve<TResolver>();
 
-                return resolver.Resolve(context.DeserializeArgs<PagingArgs>());
+                return resolver.Resolve(context.DeserializeArgs<TArgs>());
             }
         }
     }

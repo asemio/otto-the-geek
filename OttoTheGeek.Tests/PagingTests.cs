@@ -16,7 +16,7 @@ namespace OttoTheGeek.Tests
             public IEnumerable<ChildObject> Children { get; set; }
         }
 
-        public sealed class Model : OttoModel<Query>
+        public class Model : OttoModel<Query>
         {
             protected override SchemaBuilder<Query> ConfigureSchema(SchemaBuilder<Query> builder)
             {
@@ -25,18 +25,34 @@ namespace OttoTheGeek.Tests
             }
         }
 
+        public sealed class CustomConnectionArgsModel : OttoModel<Query>
+        {
+            protected override SchemaBuilder<Query> ConfigureSchema(SchemaBuilder<Query> builder)
+            {
+                return builder
+                    .ConnectionField(x => x.Children)
+                        .WithArgs<CustomArgs>()
+                        .ResolvesVia<CustomChildrenResolver>();
+            }
+        }
+
+        public sealed class CustomArgs : PagingArgs<ChildObject>
+        {
+            public string SearchText { get; set; }
+        }
+
         public sealed class ChildrenResolver : IConnectionResolver<ChildObject>
         {
-            public async Task<Connection<ChildObject>> Resolve(PagingArgs args)
+            public async Task<Connection<ChildObject>> Resolve(PagingArgs<ChildObject> args)
             {
                 await Task.CompletedTask;
 
                 var offset = args.Offset;
                 var count = args.Count;
-                return GenerateData(offset, count);
+                return GenerateData(offset, count, null);
             }
 
-            public static Connection<ChildObject> GenerateData(int offset, int count)
+            public static Connection<ChildObject> GenerateData(int offset, int count, string searchText)
             {
                 return new Connection<ChildObject>
                 {
@@ -45,6 +61,7 @@ namespace OttoTheGeek.Tests
                         {
                             Value1 = $"Thing{x}",
                             Value2 = $"Cosa{x}",
+                            SearchText = searchText,
                             Value3 = x
                         }),
                     TotalCount = 100
@@ -52,10 +69,24 @@ namespace OttoTheGeek.Tests
             }
         }
 
+        public sealed class CustomChildrenResolver : IConnectionResolver<ChildObject, CustomArgs>
+        {
+
+            public async Task<Connection<ChildObject>> Resolve(CustomArgs args)
+            {
+                await Task.CompletedTask;
+
+                var offset = args.Offset;
+                var count = args.Count;
+                return ChildrenResolver.GenerateData(offset, count, args.SearchText);
+            }
+        }
+
         public sealed class ChildObject
         {
             public string Value1 { get; set; }
             public string Value2 { get; set; }
+            public string SearchText { get; set; }
             public int Value3 { get; set; }
         }
 
@@ -122,6 +153,13 @@ namespace OttoTheGeek.Tests
                                 Name = "count",
                                 Type = ObjectType.NonNullableOf(ObjectType.Int)
                             },
+                            new FieldArgument {
+                                Name = "orderBy",
+                                Type = new ObjectType {
+                                    Name = "ChildObjectOrderBy",
+                                    Kind = ObjectKinds.Enum
+                                }
+                            },
                         }
                     }
                 }
@@ -150,7 +188,29 @@ namespace OttoTheGeek.Tests
 
             var result = rawResult["children"].ToObject<Connection<ChildObject>>();
 
-            result.Should().BeEquivalentTo(ChildrenResolver.GenerateData(22, 11));
+            result.Should().BeEquivalentTo(ChildrenResolver.GenerateData(22, 11, null));
+        }
+
+        [Fact]
+        public void ReturnsObjectValuesFromCustomArgs()
+        {
+            var server = new CustomConnectionArgsModel().CreateServer();
+
+            var rawResult = server.Execute<JObject>(@"{
+                children(offset: 22, count: 11, searchText: ""derp"") {
+                    totalCount
+                    records {
+                        value1
+                        value2
+                        value3
+                        searchText
+                    }
+                }
+            }");
+
+            var result = rawResult["children"].ToObject<Connection<ChildObject>>();
+
+            result.Should().BeEquivalentTo(ChildrenResolver.GenerateData(22, 11, "derp"));
         }
     }
 }
