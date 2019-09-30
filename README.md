@@ -183,7 +183,6 @@ public sealed class ThingArgs
     public int Id { get; set; }
 }
 
-public sealed class Model : OttoModel<Query> {}
 public sealed class Model : OttoModel<Query>
 {
     protected override SchemaBuilder<Query> ConfigureSchema(SchemaBuilder<Query> builder)
