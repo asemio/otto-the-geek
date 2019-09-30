@@ -71,7 +71,7 @@ result.Should().Be(JObject.Parse(@"{
 }").ToString());
 ```
 
-## Resolver Interfaces
+## Resolver Interfaces and the N + 1 Problem
 
 There are a handful of different resolver interfaces. The simplest one we saw above. It lets you resolve a scalar object anywhere. It's most useful on the query object, where there isn't a parent object that you're resolving from. There's another interface, `IListFieldResolver<TElem>` that works similarly, but for an `IEnumerable<TElem>`, mapping appropriately to the proper `LIST` type in GraphQL.
 
@@ -90,12 +90,15 @@ public sealed class Child
 
 public sealed class Grandchild
 {
+    public int ParentId { get; set; }
     public int AnInt { get; set; }
     public string AString { get; set; }
 }
 ```
 
-Ideally, we'd only want to go to our data store twice to get `Child` and `Grandchild` information via GraphQL; once for `Child` objects and once for `Grandchild` objects. For nested fields like this, there are the `IScalarFieldResolver<TContext, TModel>` and `IListFieldResolver<TContext, TElem>` interfaces that will automatically mitigate only resolving deeply-nested properties via a single call to load data rather than one call per "parent" object.
+It would be really unfortunate if, for 100 `Child` objects and 1000 `Grandchild` objects, it required issuing 101 queries; one for the 100 `Child` objects, and one query each to fetch the `Granchild` objects for each `Child`.
+Ideally, we'd only want to go to our data store twice to get `Child` and `Grandchild` information via GraphQL; once for `Child` objects and once for `Grandchild` objects.
+For nested fields like this, there are the `IScalarFieldResolver<TContext, TModel>` and `IListFieldResolver<TContext, TElem>` interfaces that will automatically mitigate only resolving deeply-nested properties via a single call to load data rather than one call per "parent" object.
 For our scenario above, this resolver will resolve `Grandchild` objects once, regardless of how many different `Child` objects they pertain to:
 
 ```cs
@@ -108,8 +111,16 @@ public sealed class GrandchildResolver : IListFieldResolver<ChildObject, Grandch
         return keys
             .Cast<long>()
             .SelectMany(key => new[]{
-                new GrandchildObject { AnInt = key * 1000 + 1, AString = "hi" },
-                new GrandchildObject { AnInt = key * 1000 + 2, AString = "hi" }
+                new GrandchildObject {
+                    ParentId = key,
+                    AnInt = key * 1000 + 1,
+                    AString = "hi"
+                },
+                new GrandchildObject {
+                    ParentId = key,
+                    AnInt = key * 1000 + 2,
+                    AString = "hi"
+                },
             }, (key, child) => (key, child))
             .ToLookup(x => (object)x.Item1, x => x.Item2);
     }
@@ -127,24 +138,115 @@ public class Model : OttoModel<Query>
     protected override SchemaBuilder<Query> ConfigureSchema(SchemaBuilder<Query> builder)
     {
         return builder
+            .ListQueryField(x => x.Children)
+                .ResolvesVia<ChildrenResolver>()
             .GraphType<ChildObject>(b =>
                 b.ListField(x => x.Children)
                     .ResolvesVia<GrandchildResolver>()
             )
-            .ListQueryField(x => x.Children)
-            .ResolvesVia<ChildrenResolver>();
+            ;
     }
 }
 ```
 
 ## Field Arguments
 
-TODO: explain field arguments
+Some GraphQL fields require arguments. For instance, if you have a query like this:
+```graphql
+{
+    thing(id: 224) {
+        name
+        location
+        price
+    }
+}
+```
+that `id` is an _argument_. OttoTheGeek models field arguments using an _args type_. An instance of your args type is passed to the resolver when resolving the field.
+
+Representing the schema that would satisfy the above query might look something like this:
+
+```csharp
+public sealed class Query
+{
+    public Thing Thing { get; set; }
+}
+
+public sealed class Thing
+{
+    public string Name { get; set; }
+    public string Location { get; set; }
+    public decimal Price { get; set; }
+}
+
+public sealed class ThingArgs
+{
+    public int Id { get; set; }
+}
+
+public sealed class Model : OttoModel<Query> {}
+public sealed class Model : OttoModel<Query>
+{
+    protected override SchemaBuilder<Query> ConfigureSchema(SchemaBuilder<Query> builder)
+    {
+        return builder.QueryField(x => x.Thing)
+            .WithArgs<ThingArgs>()
+            .ResolvesVia<Resolver>();
+    }
+}
+
+public sealed class Resolver : IScalarFieldWithArgsResolver<Child, ThingArgs>
+{
+    public Task<Child> Resolve(ThingArgs args)
+    {
+        return Task.FromResult(new Thing {
+            Name = $"Thing {args.Id}",
+            Location = "Stockroom",
+            Price = 200m
+        });
+    }
+}
+
+```
+
+*Note: The args type itself doesn't get represented in the GraphQL schema, but its fields do.*
 
 ## Configuring Each Type
 
-TODO: explain GraphTypeBuilder\<T>
+For each C# type that's represented as some value that's returned (or as a field argument), that type has a corresponding GraphQL. For simple scalars like `int`, `string`, `DateTime`, and so on, the GraphQL type is automatically generated for you. For complex object types (classes, interfaces) OttoTheGeek must inspect the type and build a GraphQL representation of that type. You can control elements of how that type is built via the `GraphType<T>(...)` method of `SchemaBuilder<TQuery>`. For situations where only a small tweak is needed, you can make these adjustments inline:
+
+```csharp
+public sealed class Model : OttoModel<Query>
+{
+    protected override SchemaBuilder<Query> ConfigureSchema(SchemaBuilder<Query> builder)
+    {
+        return builder
+            .GraphType<Thing>(thingBuilder => thingBuilder.Named("ThingType"));
+    }
+}
+```
+
+For more complex scenarios, consider factoring out a helper method:
+
+```csharp
+public sealed class Model : OttoModel<Query>
+{
+    protected override SchemaBuilder<Query> ConfigureSchema(SchemaBuilder<Query> builder)
+    {
+        return builder
+            .GraphType<Thing>(ConfigureThing);
+    }
+
+    private GraphTypeBuilder<Thing> ConfigureThing(GraphTypeBuilder<Thing> builder)
+    {
+        return builder.Named("ThingType")
+            .ScalarField(x => x.Parent)
+                .ResolvesVia<ThingParentResolver>()
+            .Nullable(x => x.Price)
+            ;
+    }
+}
+```
 
 ## Dependency Injection and Integrating
 
-TODO: show example of integrating this into an aspnet core app
+TODO: show example of integrating OttoTheGeek into an aspnet core app
