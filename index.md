@@ -85,6 +85,7 @@ For further reading:
 * [Model Validation](docs/ModelValidation)
 * [Field Arguments](docs/FieldArguments)
 * [Configuring Each Type](docs/ConfiguringEachType)
+* [Paging and Sorting](docs/Paging)
 
 ## Dependency Injection and Integrating
 
