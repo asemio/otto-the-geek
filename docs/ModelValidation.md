@@ -32,20 +32,18 @@ For values that aren't seen as scalars, `OttoTheGeek` requires you to configure 
 | ulong | NonNullGraphType\<ULongGraphType> |
 | uint | NonNullGraphType\<UIntGraphType> |
 | TimeSpan | NonNullGraphType\<TimeSpanGraphType> |
-| long | IntGraphType |
-| int | IntGraphType |
-| long | IntGraphType |
-| double | FloatGraphType |
-| float | FloatGraphType |
-| decimal | DecimalGraphType |
-| bool | BooleanGraphType |
-| DateTime | DateGraphType |
-| DateTimeOffset | DateTimeOffsetGraphType |
-| Guid | IdGraphType |
-| short | ShortGraphType |
-| ushort | UShortGraphType |
-| ulong | ULongGraphType |
-| uint | UIntGraphType |
-| TimeSpan | TimeSpanGraphType |
-
-However, for fields th
+| long? | IntGraphType |
+| int? | IntGraphType |
+| long? | IntGraphType |
+| double? | FloatGraphType |
+| float? | FloatGraphType |
+| decimal? | DecimalGraphType |
+| bool? | BooleanGraphType |
+| DateTime? | DateGraphType |
+| DateTimeOffset? | DateTimeOffsetGraphType |
+| Guid? | IdGraphType |
+| short? | ShortGraphType |
+| ushort? | UShortGraphType |
+| ulong? | ULongGraphType |
+| uint? | UIntGraphType |
+| TimeSpan? | TimeSpanGraphType |

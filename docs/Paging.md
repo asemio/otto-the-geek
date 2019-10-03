@@ -135,3 +135,33 @@ public sealed class ProductConnectionResolver : IConnectionResolver<Product>
     }
 }
 ```
+
+## Custom `PagingArgs<T>`
+
+In some cases, you may need to pass additional arguments for a connection field, such as filtering criteria. In this case, you can define a custom `PagingArgs<T>` class that contains your additional arguments. For example, let's say we want to add a search text argument to our `Products` field. We define our subclass:
+
+```csharp
+public sealed class ProductArgs : PagingArgs<Product>
+{
+    public string SearchText { get; set; }
+}
+```
+
+Then register it when we define our connection field:
+
+```csharp
+builder.ConnectionField(x => x.Products)
+    .WithArgs<ProductArgs>()
+    .ResolvesVia<ProductConnectionResolver>()
+```
+And update our resolver to implement `IConnectionResolver<Product, ProductArgs>`:
+
+```csharp
+public sealed class ProductConnectionResolver : IConnectionResolver<Product, ProductArgs>
+{
+
+    public async Task<Connection<Product>> Resolve(ProductArgs args)
+    {
+        // implementation here; use args.SearchText as needed
+    }
+```
