@@ -115,4 +115,23 @@ This will yield the following enum values:
 * `ManufacturerName_ASC`
 * `ManufacturerName_DESC`
 
-If the user chooses to sort using the manufacturer name, the `Prop` value of the `PagingArgs<Product>` will be null, since it doesn't correspond to a property of the `Product` class.
+If the user chooses to sort using the manufacturer name, the `Prop` value of the `PagingArgs<Product>` will be null, since it doesn't correspond to a property of the `Product` class:
+
+```csharp
+public sealed class ProductConnectionResolver : IConnectionResolver<Product>
+{
+
+    public async Task<Connection<Product>> Resolve(PagingArgs<Product> args)
+    {
+        if(args.OrderBy.Name == "ManufacturerName")
+        {
+            // sort differently since this is a custom sort value
+        }
+        else
+        {
+            // sort based on args.OrderBy.Prop
+        }
+        // use args.Offset, args.Count to select page
+    }
+}
+```
