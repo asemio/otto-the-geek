@@ -1,9 +1,11 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using FluentAssertions;
 using GraphQL;
 using Newtonsoft.Json.Linq;
+using OttoTheGeek.Connections;
 using OttoTheGeek.RuntimeSchema;
 using Xunit;
 
@@ -44,9 +46,37 @@ namespace OttoTheGeek.Tests
             private OrderByBuilder<Child> ConfigureOrderBy(OrderByBuilder<Child> builder)
             {
                 return builder
-                    .Ignore(x => x.Irrelevant)
                     .AddValue("custom", descending: false)
                     .AddValue("custom", descending: true)
+                    .Ignore(x => x.Irrelevant)
+                    ;
+            }
+        }
+
+        public sealed class ConnectionModel : OttoModel<Query>
+        {
+            protected override SchemaBuilder<Query> ConfigureSchema(SchemaBuilder<Query> builder)
+            {
+                return builder
+                    .ConnectionField(x => x.Children)
+                    .WithArgs<ConnectionArgs>()
+                    .ResolvesVia<ChildConnectionResolver>()
+                    .GraphType<ConnectionArgs>(ConfigureArgs);
+            }
+
+            private GraphTypeBuilder<ConnectionArgs> ConfigureArgs(GraphTypeBuilder<ConnectionArgs> builder)
+            {
+                return builder.ConfigureOrderBy(
+                    x => x.OrderBy,
+                    ConfigureOrderBy);
+            }
+
+            private OrderByBuilder<Child> ConfigureOrderBy(OrderByBuilder<Child> builder)
+            {
+                return builder
+                    .AddValue("custom", descending: false)
+                    .AddValue("custom", descending: true)
+                    .Ignore(x => x.Irrelevant)
                     ;
             }
         }
@@ -54,6 +84,10 @@ namespace OttoTheGeek.Tests
         public sealed class Args
         {
             public OrderValue<Child> OrderBy { get; set; }
+        }
+        public sealed class ConnectionArgs : Connections.PagingArgs<Child>
+        {
+            public string SearchText { get; set; }
         }
 
         public sealed class ChildResolver : IListFieldWithArgsResolver<Child, Args>
@@ -118,26 +152,32 @@ namespace OttoTheGeek.Tests
             }
         }
 
-        [Fact]
-        public void ReadsPropertyDefinitions()
+        public sealed class ChildConnectionResolver : IConnectionResolver<Child, ConnectionArgs>
         {
-            var server = new Model().CreateServer();
+            public Task<Connection<Child>> Resolve(ConnectionArgs args)
+            {
+                throw new NotImplementedException();
+            }
+        }
 
+        public static IEnumerable<object[]> ReadsPropertyDefinitionsData()
+        {
+            yield return new object[] { new Model().CreateServer(), nameof(Model) };
+            yield return new object[] { new ConnectionModel().CreateServer(), nameof(ConnectionModel) };
+        }
+
+        [Theory]
+        [MemberData(nameof(ReadsPropertyDefinitionsData))]
+        public void ReadsPropertyDefinitions(OttoServer server, string name)
+        {
+            GC.KeepAlive(name);
             var rawResult = server.Execute<JObject>(@"{
-                __type(name:""Query"") {
-                    fields {
+                __type(name:""ChildOrderBy"") {
+                    name
+                    kind
+                    enumValues {
                         name
-                        args {
-                            name
-                            type {
-                                name
-                                kind
-                                enumValues {
-                                    name
-                                    description
-                                }
-                            }
-                        }
+                        description
                     }
                 }
             }");
@@ -178,28 +218,10 @@ namespace OttoTheGeek.Tests
                     },
                 }
             };
-            var expectedType = new ObjectType
-            {
-                Fields = new [] {
-                    new ObjectField {
-                        Name = "children",
-                        Args = new[] {
-                            new FieldArgument {
-                                Name = "orderBy",
-                                Type = expectedEnumType
-                            }
-
-                        }
-                    }
-                }
-
-            };
 
             var result = rawResult["__type"].ToObject<ObjectType>();
 
-            result.Should().BeEquivalentTo(expectedType);
-            var enumType = result.Fields.Single().Args.Single().Type;
-            result.Fields.Single().Args.Single().Type.Should().BeEquivalentTo(expectedEnumType);
+            result.Should().BeEquivalentTo(expectedEnumType);
         }
 
         public static IEnumerable<object[]> OrderingTestData() => new object[][] {
