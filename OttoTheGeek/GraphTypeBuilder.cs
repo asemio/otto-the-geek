@@ -13,20 +13,20 @@ namespace OttoTheGeek
     public sealed class GraphTypeBuilder<TModel> : IGraphTypeBuilder
         where TModel : class
     {
-        private readonly IReadOnlyDictionary<PropertyInfo, FieldResolverConfiguration> _fieldResolvers;
-        private readonly IReadOnlyDictionary<PropertyInfo, Nullability> _nullabilityOverrides;
-        private readonly IReadOnlyDictionary<PropertyInfo, OrderByBuilder> _orderByBuilders;
-        private readonly IReadOnlyDictionary<PropertyInfo, Type> _graphTypeOverrides;
-        private enum Nullability { NonNull, Nullable }
+        private readonly PropertyMap<FieldResolverConfiguration> _fieldResolvers;
+        private readonly PropertyMap<Nullability> _nullabilityOverrides;
+        private readonly PropertyMap<OrderByBuilder> _orderByBuilders;
+        private readonly PropertyMap<Type> _graphTypeOverrides;
+        private enum Nullability { Unspecified = 0, NonNull, Nullable }
         private readonly IEnumerable<PropertyInfo> _propertiesToIgnore;
         private readonly IEnumerable<Type> _interfaces;
         private readonly string _customName;
 
         public GraphTypeBuilder() : this(
-            new Dictionary<PropertyInfo, FieldResolverConfiguration>(),
-            new Dictionary<PropertyInfo, Nullability>(),
-            new Dictionary<PropertyInfo, OrderByBuilder>(),
-            new Dictionary<PropertyInfo, Type>(),
+            new PropertyMap<FieldResolverConfiguration>(),
+            new PropertyMap<Nullability>(),
+            new PropertyMap<OrderByBuilder>(),
+            new PropertyMap<Type>(),
             new PropertyInfo[0],
             new Type[0],
             null)
@@ -34,10 +34,10 @@ namespace OttoTheGeek
 
         }
         private GraphTypeBuilder(
-            IReadOnlyDictionary<PropertyInfo, FieldResolverConfiguration> scalarFieldResolvers,
-            IReadOnlyDictionary<PropertyInfo, Nullability> nullabilityOverrides,
-            IReadOnlyDictionary<PropertyInfo, OrderByBuilder> orderByBuilders,
-            IReadOnlyDictionary<PropertyInfo, Type> graphTypeOverrides,
+            PropertyMap<FieldResolverConfiguration> scalarFieldResolvers,
+            PropertyMap<Nullability> nullabilityOverrides,
+            PropertyMap<OrderByBuilder> orderByBuilders,
+            PropertyMap<Type> graphTypeOverrides,
             IEnumerable<PropertyInfo> propertiesToIgnore,
             IEnumerable<Type> interfaces,
             string customName
@@ -91,7 +91,7 @@ namespace OttoTheGeek
         public GraphTypeBuilder<TModel> NonNullable<TProp>(Expression<Func<TModel, TProp>> propertyExpression)
         {
             var prop = propertyExpression.PropertyInfoForSimpleGet();
-            var dict = _nullabilityOverrides.CopyAndAdd(prop, Nullability.NonNull);
+            var dict = _nullabilityOverrides.Add(prop, Nullability.NonNull);
 
             return Clone(nullabilityOverrides: dict);
         }
@@ -99,7 +99,7 @@ namespace OttoTheGeek
         public GraphTypeBuilder<TModel> Nullable<TProp>(Expression<Func<TModel, TProp>> propertyExpression)
         {
             var prop = propertyExpression.PropertyInfoForSimpleGet();
-            var dict = _nullabilityOverrides.CopyAndAdd(prop, Nullability.Nullable);
+            var dict = _nullabilityOverrides.Add(prop, Nullability.Nullable);
 
             return Clone(nullabilityOverrides: dict);
         }
@@ -109,9 +109,9 @@ namespace OttoTheGeek
             )
         {
             var prop = propSelector.PropertyInfoForSimpleGet();
-            var dict = _orderByBuilders.CopyAndAdd(prop, configurator(GetOrderByBuilder<TEntity>(prop)));
+            var map = _orderByBuilders.Add(prop, configurator(GetOrderByBuilder<TEntity>(prop)));
 
-            return Clone(orderByBuilders: dict);
+            return Clone(orderByBuilders: map);
         }
 
         public GraphTypeBuilder<TModel> Interface<TInterface>()
@@ -136,14 +136,14 @@ namespace OttoTheGeek
 
         internal GraphTypeBuilder<TModel> WithResolverConfiguration(PropertyInfo prop, FieldResolverConfiguration config)
         {
-            var dict = _fieldResolvers.CopyAndAdd(prop, config);
+            var dict = _fieldResolvers.Add(prop, config);
 
             return Clone(fieldResolvers: dict);
         }
 
         internal GraphTypeBuilder<TModel> WithGraphTypeOverride(PropertyInfo prop, Type graphType)
         {
-            var dict = _graphTypeOverrides.CopyAndAdd(prop, graphType);
+            var dict = _graphTypeOverrides.Add(prop, graphType);
 
             return Clone(graphTypeOverrides: dict);
         }
@@ -171,13 +171,15 @@ namespace OttoTheGeek
                         name: prop.Name
                     );
                 }
-                else if(_fieldResolvers.TryGetValue(prop, out var resolverConfig))
-                {
-                    graphType.AddField(fieldType: resolverConfig.ConfigureField(prop, cache, services));
-                }
                 else
                 {
-                    throw new UnableToResolveException(prop);
+                    var resolverConfig = _fieldResolvers.Get(prop);
+                    if(resolverConfig == null)
+                    {
+                        throw new UnableToResolveException(prop);
+                    }
+
+                    graphType.AddField(fieldType: resolverConfig.ConfigureField(prop, cache, services));
                 }
             }
             return graphType;
@@ -194,10 +196,10 @@ namespace OttoTheGeek
         }
 
         private GraphTypeBuilder<TModel> Clone(
-            IReadOnlyDictionary<PropertyInfo, FieldResolverConfiguration> fieldResolvers = null,
-            IReadOnlyDictionary<PropertyInfo, Nullability> nullabilityOverrides = null,
-            IReadOnlyDictionary<PropertyInfo, OrderByBuilder> orderByBuilders = null,
-            IReadOnlyDictionary<PropertyInfo, Type> graphTypeOverrides = null,
+            PropertyMap<FieldResolverConfiguration> fieldResolvers = null,
+            PropertyMap<Nullability> nullabilityOverrides = null,
+            PropertyMap<OrderByBuilder> orderByBuilders = null,
+            PropertyMap<Type> graphTypeOverrides = null,
             IEnumerable<PropertyInfo> propertiesToIgnore = null,
             IEnumerable<Type> interfaces = null,
             string customName = null
@@ -243,10 +245,11 @@ namespace OttoTheGeek
 
             if(typeof(OrderValue).IsAssignableFrom(prop.PropertyType))
             {
-                _orderByBuilders.TryGetValue(prop, out var builder);
-                builder = builder ?? OrderByBuilder.FromPropertyInfo(prop);
+                var builder = _orderByBuilders.Get(prop)
+                    ?? OrderByBuilder.FromPropertyInfo(prop);
+
                 var enumGraphType = builder.BuildGraphType();
-                if(_nullabilityOverrides.TryGetValue(prop, out var nullability) && nullability == Nullability.NonNull)
+                if(_nullabilityOverrides.Get(prop) == Nullability.NonNull)
                 {
                     enumGraphType = new NonNullGraphType(enumGraphType);
                 }
@@ -261,9 +264,9 @@ namespace OttoTheGeek
 
         private bool TryGetScalarGraphType(PropertyInfo prop, out Type type)
         {
-            type = null;
+            type = _graphTypeOverrides.Get(prop);
 
-            if(_graphTypeOverrides.TryGetValue(prop, out type))
+            if(type != null)
             {
                 return true;
             }
@@ -276,7 +279,8 @@ namespace OttoTheGeek
                 }
             }
 
-            if(!_nullabilityOverrides.TryGetValue(prop, out var nullability))
+            var nullability = _nullabilityOverrides.Get(prop);
+            if(nullability == Nullability.Unspecified)
             {
                 return true;
             }
@@ -294,7 +298,7 @@ namespace OttoTheGeek
 
         private OrderByBuilder<TEntity> GetOrderByBuilder<TEntity>(PropertyInfo prop)
         {
-            _orderByBuilders.TryGetValue(prop, out var builder);
+            var builder = _orderByBuilders.Get(prop);
 
             return ((OrderByBuilder<TEntity>)builder) ?? new OrderByBuilder<TEntity>();
         }
