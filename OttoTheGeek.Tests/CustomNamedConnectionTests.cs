@@ -5,6 +5,7 @@ using FluentAssertions;
 using Newtonsoft.Json.Linq;
 using OttoTheGeek.Connections;
 using OttoTheGeek.RuntimeSchema;
+using Xunit;
 
 namespace OttoTheGeek.Tests
 {
@@ -40,6 +41,7 @@ namespace OttoTheGeek.Tests
             public string Value1 { get; set; }
         }
 
+        [Fact]
         public void HasCustomName()
         {
             var server = new Model().CreateServer();
