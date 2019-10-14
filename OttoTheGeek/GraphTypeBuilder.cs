@@ -215,9 +215,13 @@ namespace OttoTheGeek
         }
 
         private string GraphTypeName =>
-            IsConnection
-            ? $"{GetConnectionElemType().Name}Connection"
-            : _customName ?? typeof(TModel).Name;
+            _customName
+            ??
+            (
+                IsConnection
+                ? $"{GetConnectionElemType().Name}Connection"
+                : typeof(TModel).Name
+            );
 
         private bool IsConnection => typeof(TModel).IsConstructedGenericType
             && typeof(TModel).GetGenericTypeDefinition() == typeof(Connection<>);
