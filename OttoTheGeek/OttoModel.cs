@@ -1,4 +1,3 @@
-using System.Linq;
 using GraphQL;
 using GraphQL.DataLoader;
 using GraphQL.Types;
@@ -23,16 +22,11 @@ namespace OttoTheGeek
             return new OttoServer(schema, provider);
         }
 
-        public Schema BuildGraphQLSchema(IServiceCollection services)
+        public ModelSchema<TQuery> BuildGraphQLSchema(IServiceCollection services)
         {
             var ottoSchema = BuildOttoSchema(services);
 
-            var schema = new Schema
-            {
-                Query = ottoSchema.QueryType
-            };
-            schema.RegisterTypes(ottoSchema.OtherTypes.ToArray());
-            return schema;
+            return new ModelSchema<TQuery>(ottoSchema);
         }
 
         public OttoSchema BuildOttoSchema(IServiceCollection services)
