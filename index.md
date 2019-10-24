@@ -86,6 +86,7 @@ For further reading:
 * [Field Arguments](docs/FieldArguments)
 * [Configuring Each Type](docs/ConfiguringEachType)
 * [Paging and Sorting](docs/Paging)
+* [ASP.Net Core Sample](https://github.com/asemio/otto-the-geek/tree/master/OttoTheGeek.Sample)
 
 ## Dependency Injection and Integrating
 
