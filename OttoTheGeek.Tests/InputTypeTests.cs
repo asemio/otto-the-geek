@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using FluentAssertions;
 using GraphQL;
@@ -18,6 +19,16 @@ namespace OttoTheGeek.Tests
         {
             public int AnInt { get; set; }
             public int? ANullableInt { get; set; }
+            public string IgnoredString { get; set; }
+            public Texture? Texture { get; set; }
+        }
+
+        public enum Texture
+        {
+            Crunchy,
+            Smooth,
+            Chunky,
+            Grainy
         }
 
         public sealed class Args
@@ -25,6 +36,7 @@ namespace OttoTheGeek.Tests
             public int AnInt { get; set; }
             public int? ANullableInt { get; set; }
             public string IgnoredString { get; set; }
+            public Texture? Texture { get; set; }
         }
 
         public sealed class Resolver : IScalarFieldWithArgsResolver<Child, Args>
@@ -34,7 +46,8 @@ namespace OttoTheGeek.Tests
                 await Task.CompletedTask;
                 return new Child {
                     AnInt = args.AnInt,
-                    ANullableInt = args.ANullableInt
+                    ANullableInt = args.ANullableInt,
+                    Texture = args.Texture
                 };
             }
         }
@@ -93,7 +106,15 @@ namespace OttoTheGeek.Tests
                             {
                                 Name = nameof(Args.ANullableInt).ToCamelCase(),
                                 Type = ObjectType.Int
-                            }
+                            },
+                            new FieldArgument
+                            {
+                                Name = nameof(Args.Texture).ToCamelCase(),
+                                Type = new ObjectType {
+                                    Name = "Texture",
+                                    Kind = ObjectKinds.Enum
+                                }
+                            },
                         }
                     },
                 },
@@ -105,21 +126,67 @@ namespace OttoTheGeek.Tests
         }
 
         [Fact]
-        public void DeserializesArgs()
+        public void ConfiguresEnumValues()
         {
             var server = new Model().CreateServer();
 
             var rawResult = server.Execute<JObject>(@"{
-                child(anInt: 7) {
-                    anInt
+                __type(name:""Texture"") {
+                    name
+                    kind
+                    enumValues {
+                        name
+                    }
                 }
             }");
 
+            var expectedType = new ObjectType {
+                Kind = ObjectKinds.Enum,
+                Name = "Texture",
+                EnumValues = new [] {
+                    new EnumValue { Name = "Crunchy" },
+                    new EnumValue { Name = "Smooth" },
+                    new EnumValue { Name = "Chunky" },
+                    new EnumValue { Name = "Grainy" }
+                }
+            };
+
+            var queryType = rawResult["__type"].ToObject<ObjectType>();
+
+            queryType.Should().BeEquivalentTo(expectedType);
+        }
+
+        public static IEnumerable<object[]> DeserializesArgsData()
+        {
+            yield return new object[] { new Args { AnInt = 4, ANullableInt = null } };
+
+            yield return new object[] { new Args { AnInt = 7, ANullableInt = 20 } };
+
+            yield return new object[] { new Args { AnInt = 4, Texture = Texture.Chunky } };
+        }
+
+        [Theory]
+        [MemberData(nameof(DeserializesArgsData))]
+        public void DeserializesArgs(Args args)
+        {
+            var server = new Model().CreateServer();
+
+            var rawResult = server.Execute<JObject>(@"
+            query ($anInt: Int!, $aNullableInt: Int, $texture: Texture) {
+                child(anInt: $anInt, aNullableInt: $aNullableInt, texture: $texture) {
+                    anInt
+                    aNullableInt
+                    texture
+                }
+            }", new {
+                anInt = args.AnInt,
+                aNullableInt = args.ANullableInt,
+                texture = args.Texture?.ToString()
+            });
+
             var result = rawResult["child"].ToObject<Child>();
 
-            result.Should().BeEquivalentTo(new Child {
-                AnInt = 7
-            });
+            result.Should().BeEquivalentTo(args);
         }
     }
 }
