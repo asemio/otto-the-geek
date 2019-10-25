@@ -1,18 +1,19 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 
 namespace OttoTheGeek.Internal
 {
     internal sealed class GraphTypeConfiguration<T>
     {
-        private readonly PropertyMap<FieldResolverConfiguration> _fieldResolvers;
-        private readonly PropertyMap<Nullability> _nullabilityOverrides;
-        private readonly PropertyMap<OrderByBuilder> _orderByBuilders;
-        private readonly PropertyMap<Type> _graphTypeOverrides;
-        private readonly IEnumerable<PropertyInfo> _propertiesToIgnore;
-        private readonly IEnumerable<Type> _interfaces;
-        private readonly string _customName;
+        public PropertyMap<FieldResolverConfiguration> FieldResolvers { get; }
+        public PropertyMap<Nullability> NullabilityOverrides { get; }
+        public PropertyMap<OrderByBuilder> OrderByBuilders { get; }
+        public PropertyMap<Type> GraphTypeOverrides { get; }
+        public IEnumerable<PropertyInfo> PropsToIgnore { get; }
+        public IEnumerable<Type> Interfaces { get; }
+        public string CustomName { get; }
 
         public GraphTypeConfiguration() : this(
             new PropertyMap<FieldResolverConfiguration>(),
@@ -36,14 +37,15 @@ namespace OttoTheGeek.Internal
             string customName
             )
         {
-            _fieldResolvers = scalarFieldResolvers;
-            _propertiesToIgnore = propertiesToIgnore;
-            _nullabilityOverrides = nullabilityOverrides;
-            _orderByBuilders = orderByBuilders;
-            _graphTypeOverrides = graphTypeOverrides;
-            _interfaces = interfaces;
-            _customName = customName;
+            FieldResolvers = scalarFieldResolvers;
+            PropsToIgnore = propertiesToIgnore;
+            NullabilityOverrides = nullabilityOverrides;
+            OrderByBuilders = orderByBuilders;
+            GraphTypeOverrides = graphTypeOverrides;
+            Interfaces = interfaces;
+            CustomName = customName;
         }
+        public bool NeedsRegistration => Interfaces.Any();
 
         public GraphTypeConfiguration<T> Clone(
             PropertyMap<FieldResolverConfiguration> fieldResolvers = null,
@@ -56,13 +58,13 @@ namespace OttoTheGeek.Internal
             )
         {
             return new GraphTypeConfiguration<T>(
-                scalarFieldResolvers: fieldResolvers ?? _fieldResolvers,
-                nullabilityOverrides: nullabilityOverrides ?? _nullabilityOverrides,
-                orderByBuilders: orderByBuilders ?? _orderByBuilders,
-                propertiesToIgnore: propertiesToIgnore ?? _propertiesToIgnore,
-                graphTypeOverrides: graphTypeOverrides ?? _graphTypeOverrides,
-                interfaces: interfaces ?? _interfaces,
-                customName: customName ?? _customName
+                scalarFieldResolvers: fieldResolvers ?? FieldResolvers,
+                nullabilityOverrides: nullabilityOverrides ?? NullabilityOverrides,
+                orderByBuilders: orderByBuilders ?? OrderByBuilders,
+                propertiesToIgnore: propertiesToIgnore ?? PropsToIgnore,
+                graphTypeOverrides: graphTypeOverrides ?? GraphTypeOverrides,
+                interfaces: interfaces ?? Interfaces,
+                customName: customName ?? CustomName
             );
         }
     }

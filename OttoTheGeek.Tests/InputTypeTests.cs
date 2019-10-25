@@ -15,14 +15,6 @@ namespace OttoTheGeek.Tests
             public Child Child { get; set; }
         }
 
-        public sealed class Child
-        {
-            public int AnInt { get; set; }
-            public int? ANullableInt { get; set; }
-            public string IgnoredString { get; set; }
-            public Texture? Texture { get; set; }
-        }
-
         public enum Texture
         {
             Crunchy,
@@ -31,12 +23,22 @@ namespace OttoTheGeek.Tests
             Grainy
         }
 
+        public sealed class Child
+        {
+            public int AnInt { get; set; }
+            public int? ANullableInt { get; set; }
+            public string IgnoredString { get; set; }
+            public Texture? Texture { get; set; }
+            public IEnumerable<int> ListOfInts { get; set; }
+        }
+
         public sealed class Args
         {
             public int AnInt { get; set; }
             public int? ANullableInt { get; set; }
             public string IgnoredString { get; set; }
             public Texture? Texture { get; set; }
+            public IEnumerable<int> ListOfInts { get; set; }
         }
 
         public sealed class Resolver : IScalarFieldWithArgsResolver<Child, Args>
@@ -47,7 +49,8 @@ namespace OttoTheGeek.Tests
                 return new Child {
                     AnInt = args.AnInt,
                     ANullableInt = args.ANullableInt,
-                    Texture = args.Texture
+                    Texture = args.Texture,
+                    ListOfInts = args.ListOfInts
                 };
             }
         }
@@ -59,7 +62,9 @@ namespace OttoTheGeek.Tests
                 return builder.QueryField(x => x.Child)
                     .WithArgs<Args>()
                     .ResolvesVia<Resolver>()
-                    .GraphType<Args>(b => b.IgnoreProperty(p => p.IgnoredString));
+                    .GraphType<Args>(b => b.IgnoreProperty(p => p.IgnoredString))
+                    .GraphType<Child>(b => b.ListField(x => x.ListOfInts).Preloaded())
+                    ;
             }
         }
 

@@ -13,7 +13,7 @@ namespace OttoTheGeek.Internal
 
         protected override IGraphType GetGraphType(GraphTypeCache cache, IServiceCollection services)
         {
-            return new ListGraphType(cache.GetOrCreate<TRecord>(services));
+            return new ListGraphType(cache.GetOrCreate(typeof(TRecord), services));
         }
 
         protected override void RegisterResolver(IServiceCollection services)
