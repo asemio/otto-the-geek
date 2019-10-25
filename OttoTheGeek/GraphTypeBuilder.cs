@@ -17,7 +17,6 @@ namespace OttoTheGeek
         private readonly PropertyMap<Nullability> _nullabilityOverrides;
         private readonly PropertyMap<OrderByBuilder> _orderByBuilders;
         private readonly PropertyMap<Type> _graphTypeOverrides;
-        private enum Nullability { Unspecified = 0, NonNull, Nullable }
         private readonly IEnumerable<PropertyInfo> _propertiesToIgnore;
         private readonly IEnumerable<Type> _interfaces;
         private readonly string _customName;
@@ -190,7 +189,7 @@ namespace OttoTheGeek
             var args = typeof(TModel)
                 .GetProperties()
                 .Except(_propertiesToIgnore)
-                .Select(prop => ToQueryArgument(prop));
+                .Select(prop => ToQueryArgument(prop, cache, services));
 
             return new QueryArguments(args);
         }
@@ -233,7 +232,7 @@ namespace OttoTheGeek
             return typeof(TModel).GetGenericArguments().Single();
         }
 
-        private QueryArgument ToQueryArgument(PropertyInfo prop)
+        private QueryArgument ToQueryArgument(PropertyInfo prop, GraphTypeCache cache, IServiceCollection services)
         {
             if(TryGetScalarGraphType(prop, out var graphType))
             {
