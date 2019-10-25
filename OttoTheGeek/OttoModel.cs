@@ -39,6 +39,7 @@ namespace OttoTheGeek
             services.AddSingleton<DataLoaderDocumentListener>();
             services.AddTransient(typeof(QueryFieldGraphqlResolverProxy<>));
             services.AddTransient<TimeSpanGraphType>();
+            services.AddTransient(typeof(OttoEnumGraphType<>));
             services.AddTransient<IDependencyResolver>(x => new FuncDependencyResolver(x.GetRequiredService));
 
             return ottoSchema;
