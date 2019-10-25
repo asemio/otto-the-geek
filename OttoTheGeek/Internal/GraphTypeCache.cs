@@ -27,10 +27,6 @@ namespace OttoTheGeek.Internal
 
         public IGraphType GetOrCreate(Type modelType, IServiceCollection services)
         {
-            if(ScalarTypeMap.TryGetGraphType(modelType, out var scalarGraphType))
-            {
-                return (IGraphType)Activator.CreateInstance(scalarGraphType);
-            }
             if(_cache.TryGetValue(modelType, out var cached))
             {
                 return cached;

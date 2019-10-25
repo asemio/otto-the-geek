@@ -87,6 +87,10 @@ namespace OttoTheGeek.Tests
                                 ofType {
                                     name
                                     kind
+                                    ofType {
+                                        name
+                                        kind
+                                    }
                                 }
                             }
                         }
@@ -119,6 +123,13 @@ namespace OttoTheGeek.Tests
                                     Name = "Texture",
                                     Kind = ObjectKinds.Enum
                                 }
+                            },
+                            new FieldArgument
+                            {
+                                Name = nameof(Args.ListOfInts).ToCamelCase(),
+                                Type = ObjectType.ListOf(
+                                            ObjectType.NonNullableOf(
+                                                ObjectType.Int))
                             },
                         }
                     },
@@ -156,16 +167,16 @@ namespace OttoTheGeek.Tests
                 }
             };
 
-            var queryType = rawResult["__type"].ToObject<ObjectType>();
+            var fieldType = rawResult["__type"].ToObject<ObjectType>();
 
-            queryType.Should().BeEquivalentTo(expectedType);
+            fieldType.Should().BeEquivalentTo(expectedType);
         }
 
         public static IEnumerable<object[]> DeserializesArgsData()
         {
             yield return new object[] { new Args { AnInt = 4, ANullableInt = null } };
 
-            yield return new object[] { new Args { AnInt = 7, ANullableInt = 20 } };
+            yield return new object[] { new Args { AnInt = 7, ANullableInt = 20, ListOfInts = new[] { 4, 5, 6, 0 } } };
 
             yield return new object[] { new Args { AnInt = 4, Texture = Texture.Chunky } };
         }
@@ -177,16 +188,18 @@ namespace OttoTheGeek.Tests
             var server = new Model().CreateServer();
 
             var rawResult = server.Execute<JObject>(@"
-            query ($anInt: Int!, $aNullableInt: Int, $texture: Texture) {
-                child(anInt: $anInt, aNullableInt: $aNullableInt, texture: $texture) {
+            query ($anInt: Int!, $aNullableInt: Int, $texture: Texture, $listOfInts: [Int!]) {
+                child(anInt: $anInt, aNullableInt: $aNullableInt, texture: $texture, listOfInts: $listOfInts) {
                     anInt
                     aNullableInt
                     texture
+                    listOfInts
                 }
             }", new {
                 anInt = args.AnInt,
                 aNullableInt = args.ANullableInt,
-                texture = args.Texture?.ToString()
+                texture = args.Texture?.ToString(),
+                listOfInts = args.ListOfInts
             });
 
             var result = rawResult["child"].ToObject<Child>();
