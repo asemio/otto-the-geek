@@ -142,6 +142,38 @@ namespace OttoTheGeek {
             return graphType;
         }
 
+        public InputObjectGraphType<TModel> BuildInputGraphType (GraphTypeCache cache) {
+            var graphType = new InputObjectGraphType<TModel>
+            {
+                Name = GraphTypeName + "Input"
+            };
+
+            if (!cache.TryPrimeInput (graphType)) {
+                return (InputObjectGraphType<TModel>)cache.GetOrCreateInputType(typeof(TModel));
+            }
+
+            foreach (var prop in typeof (TModel).GetProperties ().Except (_config.PropsToIgnore)) {
+                if (TryGetScalarGraphType (prop, out var graphQlType)) {
+                    graphType.Field (
+                        type: graphQlType,
+                        name: prop.Name
+                    );
+                } else
+                {
+                    var inputType = cache.GetOrCreateInputType(prop.PropertyType);
+                    inputType = TryWrapNonNull(prop, inputType);
+
+                    graphType.AddField(new FieldType
+                    {
+                        ResolvedType = inputType,
+                        Type = prop.PropertyType,
+                        Name = prop.Name
+                    });
+                }
+            }
+            return graphType;
+        }
+
         public QueryArguments BuildQueryArguments (GraphTypeCache cache, IServiceCollection services) {
             var args = typeof (TModel)
                 .GetProperties ()
@@ -217,7 +249,12 @@ namespace OttoTheGeek {
                 };
             }
 
-            throw new UnableToResolveException (prop);
+            var inputType = cache.GetOrCreateInputType(prop.PropertyType);
+
+            return new QueryArgument(TryWrapNonNull(prop, inputType))
+            {
+                Name = prop.Name
+            };
         }
 
         private bool TryGetScalarGraphType (PropertyInfo prop, out Type type)
@@ -294,5 +331,14 @@ namespace OttoTheGeek {
             type = typeof (OttoEnumGraphType<>).MakeGenericType (innerType);
             return true;
         }
+
+        private IGraphType TryWrapNonNull(PropertyInfo prop, IGraphType inputType)
+        {
+            if (_config.NullabilityOverrides.Get(prop) == Nullability.Nullable)
+                return inputType;
+
+            return new NonNullGraphType(inputType);
+        }
+
     }
 }
