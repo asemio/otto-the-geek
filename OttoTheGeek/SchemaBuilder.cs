@@ -34,15 +34,18 @@ namespace OttoTheGeek
         }
         public OttoSchemaInfo Build(IServiceCollection services)
         {
-            var queryNetType = _schemaType.GetProperty(nameof(OttoTheGeek.Schema<object>.Query)).PropertyType;
             var cache = new GraphTypeCache(_builders);
-            var queryType = cache.GetOrCreate(queryNetType, services);
+            var queryType = _schemaType.GetGenericArguments().First();
+            var mutationType = _schemaType.GetGenericArguments().Skip(1).First();
+            var queryGraphType = cache.GetOrCreate(queryType, services);
+            var mutationGraphType = cache.GetOrCreate(mutationType, services);
+
             var otherTypes = _builders.Values
                 .Where(x => x.NeedsRegistration)
                 .Select(x => x.BuildGraphType(cache, services))
                 .ToArray();
 
-            var schema = new OttoSchemaInfo((IObjectGraphType)queryType, null, null, otherTypes);
+            var schema = new OttoSchemaInfo((IObjectGraphType)queryGraphType, (IObjectGraphType)mutationGraphType, null, otherTypes);
 
             return schema;
         }

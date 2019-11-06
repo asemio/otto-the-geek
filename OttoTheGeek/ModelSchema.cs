@@ -3,7 +3,7 @@ using GraphQL.Types;
 
 namespace OttoTheGeek
 {
-    public sealed class ModelSchema<TQuery> : Schema
+    public sealed class ModelSchema : Schema
     {
         public ModelSchema(OttoSchemaInfo schema)
         {
