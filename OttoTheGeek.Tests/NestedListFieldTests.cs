@@ -27,15 +27,17 @@ namespace OttoTheGeek.Tests
         }
         public class Model : OttoModel<Query>
         {
-            protected override SchemaBuilder<Query> ConfigureSchema(SchemaBuilder<Query> builder)
+            protected override SchemaBuilder ConfigureSchema(SchemaBuilder builder)
             {
                 return builder
                     .GraphType<ChildObject>(b =>
                         b.ListField(x => x.Children)
                             .ResolvesVia<GrandchildResolver>()
                     )
-                    .ListQueryField(x => x.Children)
-                    .ResolvesVia<ChildrenResolver>();
+                    .GraphType<Query>(b =>
+                        b.LooseListField(x => x.Children)
+                            .ResolvesVia<ChildrenResolver>()
+                    );
             }
         }
 

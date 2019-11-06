@@ -16,10 +16,12 @@ namespace OttoTheGeek.Tests
 
         public sealed class Model : OttoModel<Query>
         {
-            protected override SchemaBuilder<Query> ConfigureSchema(SchemaBuilder<Query> builder)
+            protected override SchemaBuilder ConfigureSchema(SchemaBuilder builder)
             {
-                return builder.ListQueryField(x => x.Children)
-                    .ResolvesVia<ChildrenResolver>();
+                return builder.GraphType<Query>(
+                    b => b.LooseListField(x => x.Children)
+                        .ResolvesVia<ChildrenResolver>()
+                        );
             }
         }
 

@@ -32,10 +32,13 @@ namespace OttoTheGeek.Tests
 
         public sealed class WorkingModel : Model
         {
-            protected override SchemaBuilder<Query> ConfigureSchema(SchemaBuilder<Query> builder)
+            protected override SchemaBuilder ConfigureSchema(SchemaBuilder builder)
             {
-                return builder.QueryField(x => x.Child)
-                    .ResolvesVia<ChildResolver>()
+                return builder
+                    .GraphType<Query>(b =>
+                        b.LooseScalarField(x => x.Child)
+                            .ResolvesVia<ChildResolver>()
+                    )
                     .GraphType<ChildObject>(b => b.Interface<IChild>());
             }
         }

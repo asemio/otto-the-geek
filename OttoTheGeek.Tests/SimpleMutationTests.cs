@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading.Tasks;
 using FluentAssertions;
 using FluentAssertions.Json;
@@ -8,14 +8,21 @@ using Xunit;
 
 namespace OttoTheGeek.Tests
 {
-    public sealed class ScalarObjectQueryResolverTests
+    public sealed class SimpleMutationTests
     {
-        public sealed class Query
+        public sealed class Mutation
         {
             public ChildObject Child { get; set; }
         }
+        public sealed class ChildObject
+        {
+            public string Value1 => "hello";
+            public string Value2 => "world";
+            public int Value3 => 654;
+        }
 
-        public class Model : OttoModel<Query>
+        /*
+        public class Model : OttoModel<object, Mutation>
         {
 
         }
@@ -39,12 +46,6 @@ namespace OttoTheGeek.Tests
             }
         }
 
-        public sealed class ChildObject
-        {
-            public string Value1 => "hello";
-            public string Value2 => "world";
-            public int Value3 => 654;
-        }
 
         [Fact]
         public void ThrowsUnableToResolveForChildProp()
@@ -110,6 +111,7 @@ namespace OttoTheGeek.Tests
 
             result.Should().BeEquivalentTo(expectedData);
         }
+        */
 
     }
 }

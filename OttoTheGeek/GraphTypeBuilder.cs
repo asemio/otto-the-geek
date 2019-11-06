@@ -7,17 +7,21 @@ using GraphQL.Types;
 using Microsoft.Extensions.DependencyInjection;
 using OttoTheGeek.Connections;
 using OttoTheGeek.Internal;
+using SchemaBuilderCallback = System.Func<OttoTheGeek.SchemaBuilder, OttoTheGeek.SchemaBuilder>;
 
 namespace OttoTheGeek {
     public sealed class GraphTypeBuilder<TModel> : IGraphTypeBuilder
     where TModel : class {
         private GraphTypeConfiguration<TModel> _config;
 
-        public GraphTypeBuilder () : this (new GraphTypeConfiguration<TModel> ()) {
+        private IEnumerable<SchemaBuilderCallback> _schemaBuilderCallbacks;
+
+        public GraphTypeBuilder () : this (new GraphTypeConfiguration<TModel> (), new SchemaBuilderCallback[0]) {
 
         }
-        private GraphTypeBuilder (GraphTypeConfiguration<TModel> config) {
+        private GraphTypeBuilder (GraphTypeConfiguration<TModel> config, IEnumerable<SchemaBuilderCallback> schemaBuilderCallbacks) {
             _config = config;
+            _schemaBuilderCallbacks = schemaBuilderCallbacks;
         }
 
         public bool NeedsRegistration => _config.NeedsRegistration;
@@ -38,6 +42,12 @@ namespace OttoTheGeek {
             var prop = propertyExpression.PropertyInfoForSimpleGet ();
 
             return new ListFieldBuilder<TModel, TProp> (this, prop);
+        }
+
+        public ConnectionFieldBuilder<TModel, TProp> ConnectionField<TProp>(Expression<Func<TModel, IEnumerable<TProp>>> propertyExpression)
+            where TProp : class
+        {
+            return new ConnectionFieldBuilder<TModel, TProp>(this, propertyExpression);
         }
 
         public LooseListFieldBuilder<TModel, TProp> LooseListField<TProp> (Expression<Func<TModel, IEnumerable<TProp>>> propertyExpression) {
@@ -141,8 +151,25 @@ namespace OttoTheGeek {
             return new QueryArguments (args);
         }
 
+        internal GraphTypeBuilder<TModel> WithSchemaBuilderCallback(SchemaBuilderCallback callback)
+        {
+            return new GraphTypeBuilder<TModel>(_config, _schemaBuilderCallbacks.Concat(new[] { callback }).ToArray());
+        }
+
+        internal (SchemaBuilder, GraphTypeBuilder<TModel>) RunSchemaBuilderCallbacks(SchemaBuilder builder)
+        {
+            if(!_schemaBuilderCallbacks.Any())
+            {
+                return (builder, this);
+            }
+
+            builder = _schemaBuilderCallbacks.Aggregate(builder, (b, func) => func(b));
+
+            return (builder, new GraphTypeBuilder<TModel>(_config, new SchemaBuilderCallback[0]));
+        }
+
         private GraphTypeBuilder<TModel> Clone (GraphTypeConfiguration<TModel> config) {
-            return new GraphTypeBuilder<TModel> (config);
+            return new GraphTypeBuilder<TModel> (config, _schemaBuilderCallbacks);
         }
 
         private string GraphTypeName =>

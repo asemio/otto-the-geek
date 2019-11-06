@@ -37,8 +37,11 @@ public sealed class Model : OttoModel<Query>
 {
     protected override SchemaBuilder<Query> ConfigureSchema(SchemaBuilder<Query> builder)
     {
-        return builder.QueryField(x => x.Child)
-            .ResolvesVia<Resolver>();
+        return builder
+            .GraphType<Query>(b =>
+                b.LooseScalarField(x => x.Child)
+                    .ResolvesVia<Resolver>()
+        );
     }
 }
 
