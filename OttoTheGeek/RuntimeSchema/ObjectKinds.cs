@@ -4,6 +4,7 @@ namespace OttoTheGeek.RuntimeSchema
     {
         public const string Scalar = "SCALAR";
         public const string Object = "OBJECT";
+        public const string InputObject = "INPUT_OBJECT";
         public const string NonNull = "NON_NULL";
         public const string List = "LIST";
         public const string Enum = "ENUM";

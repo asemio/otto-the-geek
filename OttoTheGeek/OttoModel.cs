@@ -6,10 +6,14 @@ using OttoTheGeek.Internal;
 
 namespace OttoTheGeek
 {
-    public abstract class OttoModel<TQuery>
-        where TQuery : class
+    public abstract class OttoModel<TQuery> : OttoModel<TQuery, object, object> {}
+    public abstract class OttoModel<TQuery, TMutation> : OttoModel<TQuery, TMutation, object> {}
+    public abstract class OttoModel<TQuery, TMutation, TSubscription>
     {
-        protected virtual SchemaBuilder<TQuery> ConfigureSchema(SchemaBuilder<TQuery> builder) => builder;
+        public OttoModel()
+        {
+        }
+        protected virtual SchemaBuilder ConfigureSchema(SchemaBuilder builder) => builder;
 
         public OttoServer CreateServer()
         {
@@ -22,16 +26,16 @@ namespace OttoTheGeek
             return new OttoServer(schema, provider);
         }
 
-        public ModelSchema<TQuery> BuildGraphQLSchema(IServiceCollection services)
+        public ModelSchema BuildGraphQLSchema(IServiceCollection services)
         {
             var ottoSchema = BuildOttoSchema(services);
 
-            return new ModelSchema<TQuery>(ottoSchema);
+            return new ModelSchema(ottoSchema);
         }
 
-        public OttoSchema BuildOttoSchema(IServiceCollection services)
+        public OttoSchemaInfo BuildOttoSchema(IServiceCollection services)
         {
-            var builder = ConfigureSchema(new SchemaBuilder<TQuery>());
+            var builder = ConfigureSchema(new SchemaBuilder(typeof(Schema<TQuery, TMutation, TSubscription>)));
             var ottoSchema = builder.Build(services);
 
             services.AddSingleton<IDocumentExecuter, DocumentExecuter>();

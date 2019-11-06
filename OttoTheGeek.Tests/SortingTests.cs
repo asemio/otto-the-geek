@@ -27,12 +27,14 @@ namespace OttoTheGeek.Tests
 
         public sealed class Model : OttoModel<Query>
         {
-            protected override SchemaBuilder<Query> ConfigureSchema(SchemaBuilder<Query> builder)
+            protected override SchemaBuilder ConfigureSchema(SchemaBuilder builder)
             {
                 return builder
-                    .ListQueryField(x => x.Children)
-                    .WithArgs<Args>()
-                    .ResolvesVia<ChildResolver>()
+                    .GraphType<Query>(b =>
+                        b.LooseListField(x => x.Children)
+                            .WithArgs<Args>()
+                            .ResolvesVia<ChildResolver>()
+                    )
                     .GraphType<Args>(ConfigureArgs);
             }
 
@@ -55,12 +57,13 @@ namespace OttoTheGeek.Tests
 
         public sealed class ConnectionModel : OttoModel<Query>
         {
-            protected override SchemaBuilder<Query> ConfigureSchema(SchemaBuilder<Query> builder)
+            protected override SchemaBuilder ConfigureSchema(SchemaBuilder builder)
             {
-                return builder
-                    .ConnectionField(x => x.Children)
-                    .WithArgs<ConnectionArgs>()
-                    .ResolvesVia<ChildConnectionResolver>()
+                return builder.GraphType<Query>(b =>
+                    b.ConnectionField(x => x.Children)
+                        .WithArgs<ConnectionArgs>()
+                        .ResolvesVia<ChildConnectionResolver>()
+                    )
                     .GraphType<ConnectionArgs>(ConfigureArgs);
             }
 

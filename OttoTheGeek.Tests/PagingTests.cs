@@ -18,21 +18,25 @@ namespace OttoTheGeek.Tests
 
         public class Model : OttoModel<Query>
         {
-            protected override SchemaBuilder<Query> ConfigureSchema(SchemaBuilder<Query> builder)
+            protected override SchemaBuilder ConfigureSchema(SchemaBuilder builder)
             {
-                return builder.ConnectionField(x => x.Children)
-                    .ResolvesVia<ChildrenResolver>();
+                return builder.GraphType<Query>(b =>
+                    b.ConnectionField(x => x.Children)
+                        .ResolvesVia<ChildrenResolver>()
+                )
+;
             }
         }
 
         public sealed class CustomConnectionArgsModel : OttoModel<Query>
         {
-            protected override SchemaBuilder<Query> ConfigureSchema(SchemaBuilder<Query> builder)
+            protected override SchemaBuilder ConfigureSchema(SchemaBuilder builder)
             {
-                return builder
-                    .ConnectionField(x => x.Children)
+                return builder.GraphType<Query>(b =>
+                    b.ConnectionField(x => x.Children)
                         .WithArgs<CustomArgs>()
-                        .ResolvesVia<CustomChildrenResolver>();
+                        .ResolvesVia<CustomChildrenResolver>()
+                );
             }
         }
 

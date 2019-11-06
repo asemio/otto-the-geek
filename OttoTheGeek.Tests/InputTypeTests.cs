@@ -57,11 +57,14 @@ namespace OttoTheGeek.Tests
 
         public sealed class Model : OttoModel<Query>
         {
-            protected override SchemaBuilder<Query> ConfigureSchema(SchemaBuilder<Query> builder)
+            protected override SchemaBuilder ConfigureSchema(SchemaBuilder builder)
             {
-                return builder.QueryField(x => x.Child)
-                    .WithArgs<Args>()
-                    .ResolvesVia<Resolver>()
+                return builder
+                    .GraphType<Query>(b =>
+                        b.LooseScalarField(x => x.Child)
+                            .WithArgs<Args>()
+                            .ResolvesVia<Resolver>()
+                    )
                     .GraphType<Args>(b => b.IgnoreProperty(p => p.IgnoredString))
                     .GraphType<Child>(b => b.ListField(x => x.ListOfInts).Preloaded())
                     ;

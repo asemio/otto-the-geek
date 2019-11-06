@@ -9,25 +9,27 @@ namespace OttoTheGeek.Internal
         where TElem : class
         where T : class
     {
-        private readonly SchemaBuilder<T> _parent;
+        private readonly GraphTypeBuilder<T> _parent;
         private readonly Expression<Func<T, IEnumerable<TElem>>> _propExpr;
 
-        internal ConnectionFieldBuilder(SchemaBuilder<T> parent, Expression<Func<T, IEnumerable<TElem>>> propExpr)
+        internal ConnectionFieldBuilder(GraphTypeBuilder<T> parent, Expression<Func<T, IEnumerable<TElem>>> propExpr)
         {
             _parent = parent;
             _propExpr = propExpr;
         }
-        public SchemaBuilder<T> ResolvesVia<TResolver>()
+        public GraphTypeBuilder<T> ResolvesVia<TResolver>()
             where TResolver : class, IConnectionResolver<TElem>
         {
             var prop = _propExpr.PropertyInfoForSimpleGet();
-            return _parent.GraphType<T>(
-                b => b.WithResolverConfiguration(prop, new ConnectionResolverConfiguration<TElem, PagingArgs<TElem>, TResolver>())
-                )
-                .GraphType<Connection<TElem>>(
-                    b => b
-                        .ListField(x => x.Records)
-                        .Preloaded()
+            var config = new ConnectionResolverConfiguration<TElem, PagingArgs<TElem>, TResolver>();
+            return _parent
+                .WithResolverConfiguration(prop, config)
+                .WithSchemaBuilderCallback(b =>
+                    b.GraphType<Connection<TElem>>(
+                        b2 => b2
+                            .ListField(x => x.Records)
+                            .Preloaded()
+                    )
                 );
         }
 
@@ -43,25 +45,27 @@ namespace OttoTheGeek.Internal
         where T : class
         where TArgs : PagingArgs<TElem>
     {
-        private readonly SchemaBuilder<T> _parent;
+        private readonly GraphTypeBuilder<T> _parent;
         private readonly Expression<Func<T, IEnumerable<TElem>>> _propExpr;
 
-        internal ConnectionFieldWithArgsBuilder(SchemaBuilder<T> parent, Expression<Func<T, IEnumerable<TElem>>> propExpr)
+        internal ConnectionFieldWithArgsBuilder(GraphTypeBuilder<T> parent, Expression<Func<T, IEnumerable<TElem>>> propExpr)
         {
             _parent = parent;
             _propExpr = propExpr;
         }
-        public SchemaBuilder<T> ResolvesVia<TResolver>()
+        public GraphTypeBuilder<T> ResolvesVia<TResolver>()
             where TResolver : class, IConnectionResolver<TElem, TArgs>
         {
             var prop = _propExpr.PropertyInfoForSimpleGet();
-            return _parent.GraphType<T>(
-                b => b.WithResolverConfiguration(prop, new ConnectionResolverConfiguration<TElem, TArgs, TResolver>())
-                )
-                .GraphType<Connection<TElem>>(
-                    b => b
-                        .ListField(x => x.Records)
-                        .Preloaded()
+            var config = new ConnectionResolverConfiguration<TElem, TArgs, TResolver>();
+            return _parent
+                .WithResolverConfiguration(prop, config)
+                .WithSchemaBuilderCallback(b =>
+                    b.GraphType<Connection<TElem>>(
+                        b2 => b2
+                            .ListField(x => x.Records)
+                            .Preloaded()
+                    )
                 );
         }
     }

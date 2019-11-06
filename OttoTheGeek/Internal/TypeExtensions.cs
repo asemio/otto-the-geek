@@ -34,6 +34,25 @@ namespace OttoTheGeek.Internal
             return t;
         }
 
+        public static bool IsGenericFor(this Type t, Type baseType)
+        {
+            while(t != null && t != typeof(object))
+            {
+                if(t.IsConstructedGenericType)
+                {
+                    if(t.GetGenericTypeDefinition() == baseType)
+                    {
+                        return true;
+                    }
+                }
+
+                t = t.BaseType;
+            }
+
+
+            return false;
+        }
+
         public static Type MakeNonNullable(this Type t)
         {
             if(t.IsNonNullGraphType())
