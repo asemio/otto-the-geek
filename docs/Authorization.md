@@ -47,3 +47,7 @@ would return a response like this:
     ]
 }
 ```
+
+## Model Validation for Authorization
+
+Since authorization depends on being able to return `null` for unauthorized fields, `OttoTheGeek` will throw an `AuthorizationConfigurationException` if you have configured authorization on a field that is marked as non-nullable.
