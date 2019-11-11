@@ -20,7 +20,7 @@ public sealed class Child
 
 public sealed class Model : OttoModel<Query>
 {
-    protected override SchemaBuilder<Query> ConfigureSchema(SchemaBuilder<Query> builder)
+    protected override SchemaBuilder ConfigureSchema(SchemaBuilder builder)
     {
         return builder.QueryField(x => x.Child)
             .ResolvesVia<Resolver>();
@@ -103,7 +103,7 @@ The model configuration for a setup like this would look something like:
 ```cs
 public class Model : OttoModel<Query>
 {
-    protected override SchemaBuilder<Query> ConfigureSchema(SchemaBuilder<Query> builder)
+    protected override SchemaBuilder ConfigureSchema(SchemaBuilder builder)
     {
         return builder
             .ListQueryField(x => x.Children)

@@ -1,11 +1,11 @@
 # Configuring Each Type
 
-For each C# type that's represented as some value that's returned (or as a field argument), that type has a corresponding GraphQL type. For simple scalars like `int`, `string`, `DateTime`, and so on, the GraphQL type is automatically generated for you. For complex object types (classes, interfaces) OttoTheGeek must inspect the type and build a GraphQL representation of that type. You can control elements of how that type is built via the `GraphType<T>(...)` method of `SchemaBuilder<TQuery>`. For situations where only a small tweak is needed, you can make these adjustments inline:
+For each C# type that's represented as some value that's returned (or as a field argument), that type has a corresponding GraphQL type. For simple scalars like `int`, `string`, `DateTime`, and so on, the GraphQL type is automatically generated for you. For complex object types (classes, interfaces) OttoTheGeek must inspect the type and build a GraphQL representation of that type. You can control elements of how that type is built via the `GraphType<T>(...)` method of `SchemaBuilder`. For situations where only a small tweak is needed, you can make these adjustments inline:
 
 ```csharp
 public sealed class Model : OttoModel<Query>
 {
-    protected override SchemaBuilder<Query> ConfigureSchema(SchemaBuilder<Query> builder)
+    protected override SchemaBuilder ConfigureSchema(SchemaBuilder builder)
     {
         return builder
             .GraphType<Thing>(thingBuilder => thingBuilder.Named("ThingType"));
@@ -18,7 +18,7 @@ For more complex scenarios, consider factoring out a helper method:
 ```csharp
 public sealed class Model : OttoModel<Query>
 {
-    protected override SchemaBuilder<Query> ConfigureSchema(SchemaBuilder<Query> builder)
+    protected override SchemaBuilder ConfigureSchema(SchemaBuilder builder)
     {
         return builder
             .GraphType<Thing>(ConfigureThing);
@@ -45,7 +45,7 @@ Use `.Named("TypeName")` to override the name of the GraphQL type that Otto gene
 ```csharp
 public sealed class Model : OttoModel<Query>
 {
-    protected override SchemaBuilder<Query> ConfigureSchema(SchemaBuilder<Query> builder)
+    protected override SchemaBuilder ConfigureSchema(SchemaBuilder builder)
     {
         return builder
             .GraphType<Namespace1.Thing>(x => x.Named("Thing1"));
@@ -62,7 +62,7 @@ Use `.Named("TypeName")` to override the name of the GraphQL type that Otto gene
 ```csharp
 public sealed class Model : OttoModel<Query>
 {
-    protected override SchemaBuilder<Query> ConfigureSchema(SchemaBuilder<Query> builder)
+    protected override SchemaBuilder ConfigureSchema(SchemaBuilder builder)
     {
         return builder
             .GraphType<Namespace1.Thing>(x => x.Named("Thing1"))
@@ -78,7 +78,7 @@ You can override the nullability that OttoTheGeek assigns to scalar fields with 
 ```csharp
 public sealed class Model : OttoModel<Query>
 {
-    protected override SchemaBuilder<Query> ConfigureSchema(SchemaBuilder<Query> builder)
+    protected override SchemaBuilder ConfigureSchema(SchemaBuilder builder)
     {
         return builder
             .GraphType<Person>(x => x.Nullable(person => person.MiddleName));

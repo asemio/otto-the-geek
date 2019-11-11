@@ -34,7 +34,7 @@ public sealed class ThingArgs
 
 public sealed class Model : OttoModel<Query>
 {
-    protected override SchemaBuilder<Query> ConfigureSchema(SchemaBuilder<Query> builder)
+    protected override SchemaBuilder ConfigureSchema(SchemaBuilder builder)
     {
         return builder.QueryField(x => x.Thing)
             .WithArgs<ThingArgs>()

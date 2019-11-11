@@ -17,7 +17,7 @@ public sealed class Query
 }
 public sealed class Model : OttoModel<Query>
 {
-    protected override SchemaBuilder<Query> ConfigureSchema(SchemaBuilder<Query> builder)
+    protected override SchemaBuilder ConfigureSchema(SchemaBuilder builder)
     {
         builder.ConnectionField(x => x.Products)
             .ResolvesVia<ProductConnectionResolver>()
@@ -77,7 +77,7 @@ Let's also say that we want to order by manufacturer name. However, the end-user
 
 
 ```csharp
-protected override SchemaBuilder<Query> ConfigureSchema(SchemaBuilder<Query> builder)
+protected override SchemaBuilder ConfigureSchema(SchemaBuilder builder)
 {
     builder.ConnectionField(x => x.Products)
         .ResolvesVia<ProductConnectionResolver>()
