@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using GraphQL.Types;
 
 namespace OttoTheGeek.Internal
@@ -41,7 +42,39 @@ namespace OttoTheGeek.Internal
         };
         public static bool TryGetGraphType(Type t, out Type graphType)
         {
-            return CSharpToGraphqlTypeMapping.TryGetValue(t, out graphType);
+            if(CSharpToGraphqlTypeMapping.TryGetValue(t, out graphType))
+            {
+                return true;
+            }
+
+            return TryGetEnumType(t, out graphType);
+        }
+
+        private static bool TryGetEnumType (Type propType, out Type type) {
+            type = null;
+            if (propType.IsEnum) {
+                type = typeof (NonNullGraphType<>).MakeGenericType (
+                    typeof (OttoEnumGraphType<>).MakeGenericType (propType)
+                );
+                return true;
+            }
+
+            if (!propType.IsConstructedGenericType) {
+                return false;
+            }
+
+            if (propType.GetGenericTypeDefinition () != typeof (Nullable<>)) {
+                return false;
+            }
+
+            var innerType = propType.GetGenericArguments ().Single ();
+
+            if (!innerType.IsEnum) {
+                return false;
+            }
+
+            type = typeof (OttoEnumGraphType<>).MakeGenericType (innerType);
+            return true;
         }
     }
 }

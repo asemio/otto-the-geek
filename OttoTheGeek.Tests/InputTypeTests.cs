@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using FluentAssertions;
 using GraphQL;
@@ -30,6 +31,7 @@ namespace OttoTheGeek.Tests
             public string IgnoredString { get; set; }
             public Texture? Texture { get; set; }
             public IEnumerable<int> ListOfInts { get; set; }
+            public IEnumerable<Texture> ListOfTextures { get; set; }
         }
 
         public sealed class Args
@@ -39,6 +41,7 @@ namespace OttoTheGeek.Tests
             public string IgnoredString { get; set; }
             public Texture? Texture { get; set; }
             public IEnumerable<int> ListOfInts { get; set; }
+            public IEnumerable<Texture> ListOfTextures { get; set; }
         }
 
         public sealed class Resolver : IScalarFieldWithArgsResolver<Child, Args>
@@ -50,7 +53,8 @@ namespace OttoTheGeek.Tests
                     AnInt = args.AnInt,
                     ANullableInt = args.ANullableInt,
                     Texture = args.Texture,
-                    ListOfInts = args.ListOfInts
+                    ListOfInts = args.ListOfInts,
+                    ListOfTextures = args.ListOfTextures
                 };
             }
         }
@@ -66,7 +70,10 @@ namespace OttoTheGeek.Tests
                             .ResolvesVia<Resolver>()
                     )
                     .GraphType<Args>(b => b.IgnoreProperty(p => p.IgnoredString))
-                    .GraphType<Child>(b => b.ListField(x => x.ListOfInts).Preloaded())
+                    .GraphType<Child>(b => b
+                        .ListField(x => x.ListOfInts).Preloaded()
+                        .ListField(x => x.ListOfTextures).Preloaded()
+                    )
                     ;
             }
         }
@@ -134,6 +141,13 @@ namespace OttoTheGeek.Tests
                                             ObjectType.NonNullableOf(
                                                 ObjectType.Int))
                             },
+                            new FieldArgument
+                            {
+                                Name = nameof(Args.ListOfTextures).ToCamelCase(),
+                                Type = ObjectType.ListOf(
+                                            ObjectType.NonNullableOf(
+                                                new ObjectType { Name = "Texture", Kind = ObjectKinds.Enum }))
+                            },
                         }
                     },
                 },
@@ -182,6 +196,8 @@ namespace OttoTheGeek.Tests
             yield return new object[] { new Args { AnInt = 7, ANullableInt = 20, ListOfInts = new[] { 4, 5, 6, 0 } } };
 
             yield return new object[] { new Args { AnInt = 4, Texture = Texture.Chunky } };
+
+            yield return new object[] { new Args { AnInt = 4, Texture = Texture.Chunky, ListOfTextures = new[] { Texture.Chunky } } };
         }
 
         [Theory]
@@ -191,18 +207,20 @@ namespace OttoTheGeek.Tests
             var server = new Model().CreateServer();
 
             var rawResult = server.Execute<JObject>(@"
-            query ($anInt: Int!, $aNullableInt: Int, $texture: Texture, $listOfInts: [Int!]) {
-                child(anInt: $anInt, aNullableInt: $aNullableInt, texture: $texture, listOfInts: $listOfInts) {
+            query ($anInt: Int!, $aNullableInt: Int, $texture: Texture, $listOfInts: [Int!], $listOfTextures: [Texture!]) {
+                child(anInt: $anInt, aNullableInt: $aNullableInt, texture: $texture, listOfInts: $listOfInts, listOfTextures: $listOfTextures) {
                     anInt
                     aNullableInt
                     texture
                     listOfInts
+                    listOfTextures
                 }
             }", new {
                 anInt = args.AnInt,
                 aNullableInt = args.ANullableInt,
                 texture = args.Texture?.ToString(),
-                listOfInts = args.ListOfInts
+                listOfInts = args.ListOfInts,
+                listOfTextures = args.ListOfTextures?.Select(x => x.ToString())
             });
 
             var result = rawResult["child"].ToObject<Child>();

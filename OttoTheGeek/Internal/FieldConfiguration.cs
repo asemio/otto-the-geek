@@ -91,9 +91,7 @@ namespace OttoTheGeek.Internal
 
             if (!ScalarTypeMap.TryGetGraphType (Property.PropertyType, out type))
             {
-                if (!TryGetEnumType (Property, out type)) {
-                    return false;
-                }
+                return false;
             }
 
             if (Nullability == Nullability.Unspecified) {
@@ -132,35 +130,6 @@ namespace OttoTheGeek.Internal
                 field.Resolver = AuthResolver.GetResolver(services, field.Resolver);
                 graphType.AddField (fieldType: field);
             }
-
-        }
-
-        private bool TryGetEnumType (PropertyInfo prop, out Type type) {
-            var propType = prop.PropertyType;
-            type = null;
-            if (propType.IsEnum) {
-                type = typeof (NonNullGraphType<>).MakeGenericType (
-                    typeof (OttoEnumGraphType<>).MakeGenericType (propType)
-                );
-                return true;
-            }
-
-            if (!propType.IsConstructedGenericType) {
-                return false;
-            }
-
-            if (propType.GetGenericTypeDefinition () != typeof (Nullable<>)) {
-                return false;
-            }
-
-            var innerType = propType.GetGenericArguments ().Single ();
-
-            if (!innerType.IsEnum) {
-                return false;
-            }
-
-            type = typeof (OttoEnumGraphType<>).MakeGenericType (innerType);
-            return true;
         }
 
         private OrderByBuilder<TEntity> GetOrderByBuilder<TEntity>()
