@@ -35,7 +35,7 @@ Next, you'll need to tell your model how to _resolve_ fields on your query type,
 ```csharp
 public sealed class Model : OttoModel<Query>
 {
-    protected override SchemaBuilder<Query> ConfigureSchema(SchemaBuilder<Query> builder)
+    protected override SchemaBuilder ConfigureSchema(SchemaBuilder builder)
     {
         return builder
             .GraphType<Query>(b =>
@@ -89,6 +89,8 @@ For further reading:
 * [Field Arguments](docs/FieldArguments)
 * [Configuring Each Type](docs/ConfiguringEachType)
 * [Paging and Sorting](docs/Paging)
+* [Authorization](docs/Authorization)
+* [Mutations](docs/Mutations)
 * [ASP.Net Core Sample](https://github.com/asemio/otto-the-geek/tree/master/OttoTheGeek.Sample)
 
 ## Dependency Injection and Integrating
