@@ -1,3 +1,4 @@
+using System;
 using GraphQL;
 using GraphQL.DataLoader;
 using GraphQL.Types;
@@ -15,9 +16,13 @@ namespace OttoTheGeek
         }
         protected virtual SchemaBuilder ConfigureSchema(SchemaBuilder builder) => builder;
 
-        public OttoServer CreateServer()
+        public OttoServer CreateServer(Action<IServiceCollection> configurator = null)
         {
             var services = new ServiceCollection();
+            if(configurator != null)
+            {
+                configurator(services);
+            }
 
             Schema schema = BuildGraphQLSchema(services);
 

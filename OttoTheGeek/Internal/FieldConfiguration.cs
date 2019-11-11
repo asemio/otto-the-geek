@@ -3,6 +3,8 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using GraphQL.Types;
+using Microsoft.Extensions.DependencyInjection;
+using OttoTheGeek.Internal.Authorization;
 
 namespace OttoTheGeek.Internal
 {
@@ -12,6 +14,7 @@ namespace OttoTheGeek.Internal
         public Nullability Nullability { get; private set; }
         public FieldResolverConfiguration ResolverConfiguration { get; private set; }
         public Type OverriddenGraphType { get; private set; }
+        public AuthResolverStub AuthResolver { get; private set; } = new NullAuthResolverStub();
         public OrderByBuilder OrderByBuilder { get; private set; }
 
         public FieldConfiguration(PropertyInfo prop)
@@ -26,6 +29,10 @@ namespace OttoTheGeek.Internal
 
         public FieldConfiguration<TModel> WithResolverConfiguration(FieldResolverConfiguration r) =>
             With(x => x.ResolverConfiguration, r);
+
+        public FieldConfiguration<TModel> WithAuthorization<TAuth>(Func<TAuth, bool> authCallback)
+            where TAuth : class
+            => With(x => x.AuthResolver, new AuthResolverStub<TAuth>(authCallback));
 
         public FieldConfiguration<TModel> ConfigureOrderBy<TEntity>(Func<OrderByBuilder<TEntity>, OrderByBuilder<TEntity>> configurator)
         {
@@ -72,7 +79,6 @@ namespace OttoTheGeek.Internal
                     Name = Property.Name
                 });
             }
-
         }
 
         public bool TryGetScalarGraphType (out Type type)
@@ -100,6 +106,33 @@ namespace OttoTheGeek.Internal
                 type = type.UnwrapNonNullable ();
             }
             return true;
+        }
+
+        public void ConfigureField(ComplexGraphType<TModel> graphType, GraphTypeCache cache, IServiceCollection services)
+        {
+            if (TryGetScalarGraphType (out var graphQlType))
+            {
+                AuthResolver.ValidateGraphqlType(graphQlType, Property);
+                var field = new FieldType
+                {
+                    Type = graphQlType,
+                    Name = Property.Name,
+                    Resolver = AuthResolver.GetResolver(services, new BorrowedNameFieldResolver())
+                };
+                graphType.AddField (field);
+            }
+            else
+            {
+                if(ResolverConfiguration == null)
+                {
+                    throw new UnableToResolveException (Property);
+                }
+
+                var field = ResolverConfiguration.ConfigureField (Property, cache, services);
+                field.Resolver = AuthResolver.GetResolver(services, field.Resolver);
+                graphType.AddField (fieldType: field);
+            }
+
         }
 
         private bool TryGetEnumType (PropertyInfo prop, out Type type) {
@@ -135,4 +168,5 @@ namespace OttoTheGeek.Internal
             return (OrderByBuilder<TEntity>)OrderByBuilder ?? new OrderByBuilder<TEntity>();
         }
     }
+
 }

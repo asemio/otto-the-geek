@@ -7,12 +7,13 @@ using GraphQL.Types;
 using Microsoft.Extensions.DependencyInjection;
 using OttoTheGeek.Connections;
 using OttoTheGeek.Internal;
+using OttoTheGeek.Internal.Authorization;
 using SchemaBuilderCallback = System.Func<OttoTheGeek.SchemaBuilder, OttoTheGeek.SchemaBuilder>;
 
 namespace OttoTheGeek {
     public sealed class GraphTypeBuilder<TModel> : IGraphTypeBuilder
     where TModel : class {
-        private GraphTypeConfiguration<TModel> _config;
+        internal readonly GraphTypeConfiguration<TModel> _config;
 
         private IEnumerable<SchemaBuilderCallback> _schemaBuilderCallbacks;
 
@@ -77,6 +78,11 @@ namespace OttoTheGeek {
             return Clone (_config.ConfigureField(propSelector, f => f.ConfigureOrderBy(configurator)));
         }
 
+        public AuthorizationBuilder<TModel, TProp> Authorize<TProp>(Expression<Func<TModel, TProp>> propertyExpression)
+        {
+            return new AuthorizationBuilder<TModel, TProp>(this, propertyExpression);
+        }
+
         public GraphTypeBuilder<TModel> Interface<TInterface> () {
             var tIface = typeof (TInterface);
             var tModel = typeof (TModel);
@@ -117,23 +123,7 @@ namespace OttoTheGeek {
 
             foreach (var prop in typeof (TModel).GetProperties ().Except (_config.PropsToIgnore)) {
                 var fieldConfig = _config.GetFieldConfig(prop);
-                if (fieldConfig.TryGetScalarGraphType (out var graphQlType))
-                {
-                    graphType.Field (
-                        type: graphQlType,
-                        name: prop.Name
-                    );
-                }
-                else
-                {
-                    if(fieldConfig.ResolverConfiguration == null)
-                    {
-                        throw new UnableToResolveException (prop);
-                    }
-
-                    graphType.AddField (fieldType: fieldConfig.ResolverConfiguration.ConfigureField (prop, cache, services));
-                }
-
+                fieldConfig.ConfigureField(graphType, cache, services);
             }
             return graphType;
         }
@@ -182,7 +172,7 @@ namespace OttoTheGeek {
             return (builder, new GraphTypeBuilder<TModel>(_config, new SchemaBuilderCallback[0]));
         }
 
-        private GraphTypeBuilder<TModel> Clone (GraphTypeConfiguration<TModel> config) {
+        internal GraphTypeBuilder<TModel> Clone (GraphTypeConfiguration<TModel> config) {
             return new GraphTypeBuilder<TModel> (config, _schemaBuilderCallbacks);
         }
 
