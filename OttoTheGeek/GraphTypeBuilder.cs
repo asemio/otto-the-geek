@@ -61,27 +61,20 @@ namespace OttoTheGeek {
             return Clone (_config.Clone (propertiesToIgnore: props));
         }
 
-        public GraphTypeBuilder<TModel> NonNullable<TProp> (Expression<Func<TModel, TProp>> propertyExpression) {
-            var prop = propertyExpression.PropertyInfoForSimpleGet ();
-            var dict = _config.NullabilityOverrides.Add (prop, Nullability.NonNull);
-
-            return Clone (_config.Clone (nullabilityOverrides: dict));
+        public GraphTypeBuilder<TModel> NonNullable<TProp> (Expression<Func<TModel, TProp>> propertyExpression)
+        {
+            return Clone(_config.ConfigureField(propertyExpression, x => x.WithNullable(Nullability.NonNull)));
         }
 
-        public GraphTypeBuilder<TModel> Nullable<TProp> (Expression<Func<TModel, TProp>> propertyExpression) {
-            var prop = propertyExpression.PropertyInfoForSimpleGet ();
-            var dict = _config.NullabilityOverrides.Add (prop, Nullability.Nullable);
-
-            return Clone (_config.Clone (nullabilityOverrides: dict));
+        public GraphTypeBuilder<TModel> Nullable<TProp> (Expression<Func<TModel, TProp>> propertyExpression)
+        {
+            return Clone(_config.ConfigureField(propertyExpression, x => x.WithNullable(Nullability.Nullable)));
         }
 
         public GraphTypeBuilder<TModel> ConfigureOrderBy<TEntity> (
             Expression<Func<TModel, OrderValue<TEntity>>> propSelector, Func<OrderByBuilder<TEntity>, OrderByBuilder<TEntity>> configurator
         ) {
-            var prop = propSelector.PropertyInfoForSimpleGet ();
-            var map = _config.OrderByBuilders.Add (prop, configurator (GetOrderByBuilder<TEntity> (prop)));
-
-            return Clone (_config.Clone (orderByBuilders: map));
+            return Clone (_config.ConfigureField(propSelector, f => f.ConfigureOrderBy(configurator)));
         }
 
         public GraphTypeBuilder<TModel> Interface<TInterface> () {
@@ -101,21 +94,19 @@ namespace OttoTheGeek {
             return Clone (_config.Clone (customName: name));
         }
 
-        internal GraphTypeBuilder<TModel> WithResolverConfiguration (PropertyInfo prop, FieldResolverConfiguration config) {
-            var dict = _config.FieldResolvers.Add (prop, config);
-
-            return Clone (_config.Clone (fieldResolvers: dict));
+        internal GraphTypeBuilder<TModel> WithResolverConfiguration (PropertyInfo prop, FieldResolverConfiguration config)
+        {
+            return Clone(_config.ConfigureField(prop, x => x.WithResolverConfiguration(config)));
         }
 
-        internal GraphTypeBuilder<TModel> WithGraphTypeOverride (PropertyInfo prop, Type graphType) {
-            var dict = _config.GraphTypeOverrides.Add (prop, graphType);
-
-            return Clone (_config.Clone (graphTypeOverrides: dict));
+        internal GraphTypeBuilder<TModel> WithGraphTypeOverride (PropertyInfo prop, Type graphType)
+        {
+            return Clone(_config.ConfigureField(prop, x => x.OverrideGraphType(graphType)));
         }
 
-        IComplexGraphType IGraphTypeBuilder.BuildGraphType (GraphTypeCache cache, IServiceCollection services) {
-            return BuildGraphType (cache, services);
-        }
+        IComplexGraphType IGraphTypeBuilder.BuildGraphType (GraphTypeCache cache, IServiceCollection services)
+            => BuildGraphType (cache, services);
+
         public ComplexGraphType<TModel> BuildGraphType (GraphTypeCache cache, IServiceCollection services) {
             var graphType = CreateGraphTypeCore (cache, services);
             graphType.Name = GraphTypeName;
@@ -125,19 +116,24 @@ namespace OttoTheGeek {
             }
 
             foreach (var prop in typeof (TModel).GetProperties ().Except (_config.PropsToIgnore)) {
-                if (TryGetScalarGraphType (prop, out var graphQlType)) {
+                var fieldConfig = _config.GetFieldConfig(prop);
+                if (fieldConfig.TryGetScalarGraphType (out var graphQlType))
+                {
                     graphType.Field (
                         type: graphQlType,
                         name: prop.Name
                     );
-                } else {
-                    var resolverConfig = _config.FieldResolvers.Get (prop);
-                    if (resolverConfig == null) {
+                }
+                else
+                {
+                    if(fieldConfig.ResolverConfiguration == null)
+                    {
                         throw new UnableToResolveException (prop);
                     }
 
-                    graphType.AddField (fieldType: resolverConfig.ConfigureField (prop, cache, services));
+                    graphType.AddField (fieldType: fieldConfig.ResolverConfiguration.ConfigureField (prop, cache, services));
                 }
+
             }
             return graphType;
         }
@@ -152,24 +148,10 @@ namespace OttoTheGeek {
                 return (InputObjectGraphType<TModel>)cache.GetOrCreateInputType(typeof(TModel));
             }
 
-            foreach (var prop in typeof (TModel).GetProperties ().Except (_config.PropsToIgnore)) {
-                if (TryGetScalarGraphType (prop, out var graphQlType)) {
-                    graphType.Field (
-                        type: graphQlType,
-                        name: prop.Name
-                    );
-                } else
-                {
-                    var inputType = cache.GetOrCreateInputType(prop.PropertyType);
-                    inputType = TryWrapNonNull(prop, inputType);
-
-                    graphType.AddField(new FieldType
-                    {
-                        ResolvedType = inputType,
-                        Type = prop.PropertyType,
-                        Name = prop.Name
-                    });
-                }
+            foreach (var prop in typeof (TModel).GetProperties ().Except (_config.PropsToIgnore))
+            {
+                var fieldConfig = _config.GetFieldConfig(prop);
+                fieldConfig.ConfigureInputTypeField(graphType, cache);
             }
             return graphType;
         }
@@ -220,18 +202,20 @@ namespace OttoTheGeek {
         }
 
         private QueryArgument ToQueryArgument (PropertyInfo prop, GraphTypeCache cache) {
-            if (TryGetScalarGraphType (prop, out var graphType)) {
+            var fieldConfig = _config.GetFieldConfig(prop);
+
+            if (fieldConfig.TryGetScalarGraphType (out var graphType)) {
                 return new QueryArgument (graphType) {
                     Name = prop.Name
                 };
             }
 
             if (typeof (OrderValue).IsAssignableFrom (prop.PropertyType)) {
-                var builder = _config.OrderByBuilders.Get (prop) ??
+                var builder = fieldConfig.OrderByBuilder ??
                     OrderByBuilder.FromPropertyInfo (prop);
 
                 var enumGraphType = builder.BuildGraphType ();
-                if (_config.NullabilityOverrides.Get (prop) == Nullability.NonNull) {
+                if (fieldConfig.Nullability == Nullability.NonNull) {
                     enumGraphType = new NonNullGraphType (enumGraphType);
                 }
                 return new QueryArgument (enumGraphType) {
@@ -251,44 +235,10 @@ namespace OttoTheGeek {
 
             var inputType = cache.GetOrCreateInputType(prop.PropertyType);
 
-            return new QueryArgument(TryWrapNonNull(prop, inputType))
+            return new QueryArgument(fieldConfig.TryWrapNonNull(inputType))
             {
                 Name = prop.Name
             };
-        }
-
-        private bool TryGetScalarGraphType (PropertyInfo prop, out Type type)
-        {
-            type = _config.GraphTypeOverrides.Get(prop);
-
-            if (type != null) {
-                return true;
-            }
-
-            if (!ScalarTypeMap.TryGetGraphType (prop.PropertyType, out type))
-            {
-                if (!TryGetEnumType (prop, out type)) {
-                    return false;
-                }
-            }
-
-            var nullability = _config.NullabilityOverrides.Get (prop);
-            if (nullability == Nullability.Unspecified) {
-                return true;
-            }
-
-            if (nullability == Nullability.NonNull) {
-                type = type.MakeNonNullable ();
-            } else if (nullability == Nullability.Nullable) {
-                type = type.UnwrapNonNullable ();
-            }
-            return true;
-        }
-
-        private OrderByBuilder<TEntity> GetOrderByBuilder<TEntity> (PropertyInfo prop) {
-            var builder = _config.OrderByBuilders.Get (prop);
-
-            return ((OrderByBuilder<TEntity>) builder) ?? new OrderByBuilder<TEntity> ();
         }
 
         private ComplexGraphType<TModel> CreateGraphTypeCore (GraphTypeCache cache, IServiceCollection services) {
@@ -303,42 +253,5 @@ namespace OttoTheGeek {
 
             return objectGraphType;
         }
-
-        private bool TryGetEnumType (PropertyInfo prop, out Type type) {
-            var propType = prop.PropertyType;
-            type = null;
-            if (propType.IsEnum) {
-                type = typeof (NonNullGraphType<>).MakeGenericType (
-                    typeof (OttoEnumGraphType<>).MakeGenericType (propType)
-                );
-                return true;
-            }
-
-            if (!propType.IsConstructedGenericType) {
-                return false;
-            }
-
-            if (propType.GetGenericTypeDefinition () != typeof (Nullable<>)) {
-                return false;
-            }
-
-            var innerType = propType.GetGenericArguments ().Single ();
-
-            if (!innerType.IsEnum) {
-                return false;
-            }
-
-            type = typeof (OttoEnumGraphType<>).MakeGenericType (innerType);
-            return true;
-        }
-
-        private IGraphType TryWrapNonNull(PropertyInfo prop, IGraphType inputType)
-        {
-            if (_config.NullabilityOverrides.Get(prop) == Nullability.Nullable)
-                return inputType;
-
-            return new NonNullGraphType(inputType);
-        }
-
     }
 }
