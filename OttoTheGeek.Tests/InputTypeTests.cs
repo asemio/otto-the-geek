@@ -63,19 +63,31 @@ namespace OttoTheGeek.Tests
         {
             protected override SchemaBuilder ConfigureSchema(SchemaBuilder builder)
             {
-                return builder
-                    .GraphType<Query>(b =>
-                        b.LooseScalarField(x => x.Child)
-                            .WithArgs<Args>()
-                            .ResolvesVia<Resolver>()
-                    )
-                    .GraphType<Args>(b => b.IgnoreProperty(p => p.IgnoredString))
-                    .GraphType<Child>(b => b
-                        .ListField(x => x.ListOfInts).Preloaded()
-                        .ListField(x => x.ListOfTextures).Preloaded()
-                    )
-                    ;
+                return LoadConfigurators(this.GetType().Assembly, builder);
             }
+        }
+
+        public sealed class Configurator
+            : IGraphTypeConfigurator<Model, Query>
+            , IGraphTypeConfigurator<Model, Args>
+            , IGraphTypeConfigurator<Model, Child>
+        {
+            public GraphTypeBuilder<Query> Configure(GraphTypeBuilder<Query> builder)
+            {
+                return builder
+                    .LooseScalarField(x => x.Child)
+                        .WithArgs<Args>()
+                        .ResolvesVia<Resolver>()
+                        ;
+            }
+
+            public GraphTypeBuilder<Args> Configure(GraphTypeBuilder<Args> builder)
+                => builder.IgnoreProperty(x => x.IgnoredString);
+
+            public GraphTypeBuilder<Child> Configure(GraphTypeBuilder<Child> builder)
+                => builder
+                    .ListField(x => x.ListOfInts).Preloaded()
+                    .ListField(x => x.ListOfTextures).Preloaded();
         }
 
         [Fact]
