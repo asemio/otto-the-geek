@@ -1,4 +1,6 @@
 using System;
+using System.Linq;
+using System.Reflection;
 using GraphQL;
 using GraphQL.DataLoader;
 using GraphQL.Types;
@@ -7,6 +9,7 @@ using OttoTheGeek.Internal;
 
 namespace OttoTheGeek
 {
+
     public abstract class OttoModel<TQuery> : OttoModel<TQuery, object, object> {}
     public abstract class OttoModel<TQuery, TMutation> : OttoModel<TQuery, TMutation, object> {}
     public abstract class OttoModel<TQuery, TMutation, TSubscription>
@@ -15,6 +18,24 @@ namespace OttoTheGeek
         {
         }
         protected virtual SchemaBuilder ConfigureSchema(SchemaBuilder builder) => builder;
+
+        protected SchemaBuilder LoadConfigurators(Assembly assembly, SchemaBuilder builder)
+        {
+            var configuratorType = typeof(IModelConfigurator<>).MakeGenericType(GetType());
+            var configurators = assembly.GetTypes()
+                .Where(x => configuratorType.IsAssignableFrom(x))
+                .Where(x => x.IsConcrete())
+                .SelectMany(x => x.GetInterfaces(), (t, iface) => new { t, iface })
+                .Where(x => x.iface.IsGenericFor(typeof(IGraphTypeConfigurator<,>)))
+                .Select(x => ConfiguratorAdapter.Create(x.t, x.iface))
+                .Cast<ConfiguratorAdapter>()
+                .ToArray();
+
+            return configurators.Aggregate(
+                builder,
+                (b, adapter) => adapter.Configure(b)
+            );
+        }
 
         public OttoServer CreateServer(Action<IServiceCollection> configurator = null)
         {
