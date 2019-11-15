@@ -125,7 +125,8 @@ public sealed class ProductConnectionResolver : IConnectionResolver<Product>
     {
         if(args.OrderBy.Name == "ManufacturerName")
         {
-            // sort differently since this is a custom sort value
+            // sort differently since this is a custom sort value;
+            // args.OrderBy.Prop will be null
         }
         else
         {

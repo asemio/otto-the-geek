@@ -48,23 +48,6 @@ public sealed class Model : OttoModel<Query>
     protected override SchemaBuilder ConfigureSchema(SchemaBuilder builder)
     {
         return builder
-            .GraphType<Namespace1.Thing>(x => x.Named("Thing1"));
-            .GraphType<Namespace2.Thing>(x => x.Named("Thing2"));
-    }
-}
-```
-
-## The `.Named(...)` method
-
-Use `.Named("TypeName")` to override the name of the GraphQL type that Otto generates for your class. This is helpful if you have multiple classes, say, in different namespaces, that have the same name.
-
-
-```csharp
-public sealed class Model : OttoModel<Query>
-{
-    protected override SchemaBuilder ConfigureSchema(SchemaBuilder builder)
-    {
-        return builder
             .GraphType<Namespace1.Thing>(x => x.Named("Thing1"))
             .GraphType<Namespace2.Thing>(x => x.Named("Thing2"));
     }
@@ -104,7 +87,7 @@ You must configure the `Make` property using the `.ScalarField(...)` method. The
 To tell OttoTheGeek that the `Make` property will be loaded at the same time as its parent `Product`:
 
 ```csharp
-builder.ScalarFi<eld(x => x.Make).Preloaded();
+builder.ScalarField(x => x.Make).Preloaded();
 ```
 
 To tell OttoTheGeek that the `Make` property will be loaded by a resolver called `ProductMakeResolver`:

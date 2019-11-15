@@ -93,7 +93,3 @@ For further reading:
 * [Mutations](docs/Mutations)
 * [Managing Large Models](docs/ManagingLargeModels)
 * [ASP.Net Core Sample](https://github.com/asemio/otto-the-geek/tree/master/OttoTheGeek.Sample)
-
-## Dependency Injection and Integrating
-
-TODO: show example of integrating OttoTheGeek into an aspnet core app
