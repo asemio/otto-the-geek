@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using GraphQL.Types;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -104,6 +105,22 @@ namespace OttoTheGeek.Internal
             _inputTypeCache[typeof(T)] = graphType;
 
             return true;
+        }
+
+        public void ValidateNoDuplicates()
+        {
+            var groups = _cache
+                .GroupBy(x => x.Value.Name)
+                .Where(x => x.Count() > 1);
+
+            var group = groups.FirstOrDefault();
+
+            if(group == null)
+            {
+                return;
+            }
+
+            throw new DuplicateTypeNameException(group.Key, group.Select(x => x.Key));
         }
     }
 }

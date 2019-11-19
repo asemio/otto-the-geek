@@ -45,6 +45,8 @@ namespace OttoTheGeek
                 .Select(x => x.BuildGraphType(cache, services))
                 .ToArray();
 
+            cache.ValidateNoDuplicates();
+
             var schema = new OttoSchemaInfo((IObjectGraphType)queryGraphType, (IObjectGraphType)mutationGraphType, null, otherTypes);
 
             return schema;

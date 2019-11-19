@@ -176,7 +176,7 @@ namespace OttoTheGeek {
             return new GraphTypeBuilder<TModel> (config, _schemaBuilderCallbacks);
         }
 
-        private string GraphTypeName =>
+        public string GraphTypeName =>
             _config.CustomName ??
             (
                 IsConnection ?
