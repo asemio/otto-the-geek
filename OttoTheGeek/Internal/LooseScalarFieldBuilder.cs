@@ -24,6 +24,10 @@ namespace OttoTheGeek.Internal
         {
             return new LooseScalarFieldWithArgsBuilder<TModel, TProp, TArgs>(_parentBuilder, _prop);
         }
+        public GraphTypeBuilder<TModel> Preloaded()
+        {
+            return _parentBuilder.WithResolverConfiguration(_prop, new PreloadedScalarResolverConfiguration<TProp>());
+        }
     }
 
     public sealed class LooseScalarFieldWithArgsBuilder<TModel, TProp, TArgs>
