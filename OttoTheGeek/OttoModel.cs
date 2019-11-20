@@ -9,10 +9,15 @@ using OttoTheGeek.Internal;
 
 namespace OttoTheGeek
 {
+    public abstract class OttoModel
+    {
+        internal OttoModel() {}
 
+        public abstract OttoSchemaInfo BuildOttoSchema(IServiceCollection services);
+    }
     public abstract class OttoModel<TQuery> : OttoModel<TQuery, object, object> {}
     public abstract class OttoModel<TQuery, TMutation> : OttoModel<TQuery, TMutation, object> {}
-    public abstract class OttoModel<TQuery, TMutation, TSubscription>
+    public abstract class OttoModel<TQuery, TMutation, TSubscription> : OttoModel
     {
         public OttoModel()
         {
@@ -45,21 +50,14 @@ namespace OttoTheGeek
                 configurator(services);
             }
 
-            Schema schema = BuildGraphQLSchema(services);
+            Schema schema = new ModelSchema<OttoModel<TQuery, TMutation, TSubscription>>(BuildOttoSchema(services));
 
             var provider = services.BuildServiceProvider();
             schema.DependencyResolver = provider.GetRequiredService<IDependencyResolver>();
             return new OttoServer(schema, provider);
         }
 
-        public ModelSchema BuildGraphQLSchema(IServiceCollection services)
-        {
-            var ottoSchema = BuildOttoSchema(services);
-
-            return new ModelSchema(ottoSchema);
-        }
-
-        public OttoSchemaInfo BuildOttoSchema(IServiceCollection services)
+        public override OttoSchemaInfo BuildOttoSchema(IServiceCollection services)
         {
             var builder = ConfigureSchema(new SchemaBuilder(typeof(Schema<TQuery, TMutation, TSubscription>)));
             var ottoSchema = builder.Build(services);
