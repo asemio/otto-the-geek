@@ -17,7 +17,7 @@ jobs:
       - run:
           name: Pack
           command:
-            dotnet pack OttoTheGeek -p:PackageVersion=$CIRCLE_TAG -p:Version=$CIRCLE_TAG -o .
+            dotnet pack OttoTheGeek -p:PackageVersion=$CIRCLE_TAG -p:Version=$CIRCLE_TAG -p:AssemblyVersion=$CIRCLE_TAG -o .
       - run:
           name: Publish
           command:
