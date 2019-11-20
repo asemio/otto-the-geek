@@ -22,7 +22,7 @@ namespace OttoTheGeek.Sample
 
             var schema = new Model().BuildGraphQLSchema(services);
 
-            services.AddSingleton<ModelSchema<Query>>(schema);
+            services.AddSingleton<ModelSchema>(schema);
         }
 
         // This method handles the configuration for the GraphQL .Net server
@@ -36,16 +36,18 @@ namespace OttoTheGeek.Sample
 
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
-            app.UseGraphQL<ModelSchema<Query>>(path: "/graphql");
+            app.UseGraphQL<ModelSchema>(path: "/graphql");
         }
     }
 
     public sealed class Model : OttoModel<Query>
     {
-        protected override SchemaBuilder<Query> ConfigureSchema(SchemaBuilder<Query> builder)
+        protected override SchemaBuilder ConfigureSchema(SchemaBuilder builder)
         {
-            return builder.QueryField(x => x.Child)
-                .ResolvesVia<ChildResolver>();
+            return builder.GraphType<Query>(b =>
+                b.LooseScalarField(x => x.Child)
+                    .ResolvesVia<ChildResolver>()
+                    );
         }
 
     }
