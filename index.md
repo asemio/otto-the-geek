@@ -84,12 +84,12 @@ result.Should().Be(JObject.Parse(@"{
 
 For further reading:
 
-* [Resolver Interfaces](docs/ResolverInterfaces)
-* [Model Validation](docs/ModelValidation)
-* [Field Arguments](docs/FieldArguments)
-* [Configuring Each Type](docs/ConfiguringEachType)
-* [Paging and Sorting](docs/Paging)
-* [Authorization](docs/Authorization)
-* [Mutations](docs/Mutations)
-* [Managing Large Models](docs/ManagingLargeModels)
+* [Resolver Interfaces](docs/ResolverInterfaces.md)
+* [Model Validation](docs/ModelValidation.md)
+* [Field Arguments](docs/FieldArguments.md)
+* [Configuring Each Type](docs/ConfiguringEachType.md)
+* [Paging and Sorting](docs/Paging.md)
+* [Authorization](docs/Authorization.md)
+* [Mutations](docs/Mutations.md)
+* [Managing Large Models](docs/ManagingLargeModels.md)
 * [ASP.Net Core Sample](https://github.com/asemio/otto-the-geek/tree/master/OttoTheGeek.Sample)
