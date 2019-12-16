@@ -143,4 +143,4 @@ Configures the graph type to implement the [GraphQL interface](https://graphql.o
 
 ## `.ConfigureOrderBy<TEntity>(...)`
 
-See the documentation for [paging](Paging).
+See the documentation for [paging](Paging.md).
