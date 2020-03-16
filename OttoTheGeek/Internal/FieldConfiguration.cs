@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -108,16 +109,16 @@ namespace OttoTheGeek.Internal
 
         public void ConfigureField(ComplexGraphType<TModel> graphType, GraphTypeCache cache, IServiceCollection services)
         {
+            FieldType field;
             if (TryGetScalarGraphType (out var graphQlType))
             {
                 AuthResolver.ValidateGraphqlType(graphQlType, Property);
-                var field = new FieldType
+                field = new FieldType
                 {
                     Type = graphQlType,
                     Name = Property.Name,
                     Resolver = AuthResolver.GetResolver(services, new BorrowedNameFieldResolver())
                 };
-                graphType.AddField (field);
             }
             else
             {
@@ -126,10 +127,14 @@ namespace OttoTheGeek.Internal
                     throw new UnableToResolveException (Property);
                 }
 
-                var field = ResolverConfiguration.ConfigureField (Property, cache, services);
+                field = ResolverConfiguration.ConfigureField (Property, cache, services);
                 field.Resolver = AuthResolver.GetResolver(services, field.Resolver);
-                graphType.AddField (fieldType: field);
             }
+
+            var descAttr = Property.GetCustomAttribute<DescriptionAttribute>();
+            field.Description = descAttr?.Description;
+
+            graphType.AddField (field);
         }
 
         private OrderByBuilder<TEntity> GetOrderByBuilder<TEntity>()
