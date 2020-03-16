@@ -141,6 +141,22 @@ Loose list fields work similarly to loose scalar fields, but must be `IEnumerabl
 
 Configures the graph type to implement the [GraphQL interface](https://graphql.org/learn/schema/#interfaces) represented by `TInterface`.
 
+## Documenting models and fields
+
+You can populate the `description` field in the GraphQL introspection schema by using `System.ComponentModel.DescriptionAttribute` on classes, interfaces, and properties. For example:
+
+
+```csharp
+[Description("A product for Acme, Inc.")]
+public sealed class Product
+{
+    [Description("The unique identifier for this product")]
+    public int Id { get; set; }
+    [Description("The manufacturer for this product")]
+    public Manufacturer Make { get; set; }
+}
+```
+
 ## `.ConfigureOrderBy<TEntity>(...)`
 
 See the documentation for [paging](Paging).

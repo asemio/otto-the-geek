@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -15,7 +16,7 @@ namespace OttoTheGeek {
     where TModel : class {
         internal readonly GraphTypeConfiguration<TModel> _config;
 
-        private IEnumerable<SchemaBuilderCallback> _schemaBuilderCallbacks;
+        private readonly IEnumerable<SchemaBuilderCallback> _schemaBuilderCallbacks;
 
         public GraphTypeBuilder () : this (new GraphTypeConfiguration<TModel> (), new SchemaBuilderCallback[0]) {
 
@@ -116,6 +117,7 @@ namespace OttoTheGeek {
         public ComplexGraphType<TModel> BuildGraphType (GraphTypeCache cache, IServiceCollection services) {
             var graphType = CreateGraphTypeCore (cache, services);
             graphType.Name = GraphTypeName;
+            graphType.Description = typeof(TModel).GetCustomAttribute<DescriptionAttribute>()?.Description;
 
             if (!cache.TryPrime (graphType)) {
                 return cache.GetOrCreate<TModel> (services);
@@ -194,9 +196,12 @@ namespace OttoTheGeek {
         private QueryArgument ToQueryArgument (PropertyInfo prop, GraphTypeCache cache) {
             var fieldConfig = _config.GetFieldConfig(prop);
 
+            var desc = prop.GetCustomAttribute<DescriptionAttribute>()?.Description;
+
             if (fieldConfig.TryGetScalarGraphType (out var graphType)) {
                 return new QueryArgument (graphType) {
-                    Name = prop.Name
+                    Name = prop.Name,
+                    Description = desc
                 };
             }
 
