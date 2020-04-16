@@ -1,5 +1,6 @@
 using GraphQL.Server;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
 
 namespace OttoTheGeek
 {
@@ -8,7 +9,7 @@ namespace OttoTheGeek
         public static IApplicationBuilder UseOtto<TModel>(this IApplicationBuilder app, string path = "/")
             where TModel : OttoModel
         {
-            return app.UseGraphQL<ModelSchema<TModel>>(path: path);
+            return app.UseMiddleware<GraphQLNetHacks.Middleware<ModelSchema<TModel>>>(new PathString(path));
         }
     }
 }
