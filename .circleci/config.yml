@@ -21,8 +21,7 @@ jobs:
       - run:
           name: Publish
           command:
-            dotnet nuget push OttoTheGeek/OttoTheGeek.${CIRCLE_TAG}.nupkg -k $NUGET_API_KEY -s https://api.nuget.org/v3/index.json
-            # key from env?
+            dotnet nuget push OttoTheGeek.${CIRCLE_TAG}.nupkg -k $NUGET_API_KEY -s https://api.nuget.org/v3/index.json
 
 
 workflows:
