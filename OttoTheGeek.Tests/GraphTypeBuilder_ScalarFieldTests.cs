@@ -55,11 +55,12 @@ namespace OttoTheGeek.Tests
         [Fact]
         public void ThrowsForUnspecifiedPropSameType()
         {
-            var builder = new GraphTypeBuilder<Model>()
+            var map = new Internal.ScalarTypeMap();
+            var builder = new GraphTypeBuilder<Model>(map)
                 .ScalarField(x => x.Child1)
                 .ResolvesVia<ChildModel1.Resolver>();
 
-            new Action(() => builder.BuildGraphType(new Internal.GraphTypeCache(), new ServiceCollection()))
+            new Action(() => builder.BuildGraphType(new Internal.GraphTypeCache(map), new ServiceCollection()))
                 .Should()
                 .Throw<UnableToResolveException>()
                 .WithMessage("Unable to resolve property Child1a on class Model");
@@ -68,7 +69,8 @@ namespace OttoTheGeek.Tests
         [Fact]
         public void BuildsSchema()
         {
-            var builder = new GraphTypeBuilder<Model>()
+            var map = new Internal.ScalarTypeMap();
+            var builder = new GraphTypeBuilder<Model>(map)
                 .ScalarField(x => x.Child1)
                 .ResolvesVia<ChildModel1.Resolver>()
                 .ScalarField(x => x.Child1a)
@@ -76,7 +78,7 @@ namespace OttoTheGeek.Tests
                 .ScalarField(x => x.Child2)
                 .ResolvesVia<ChildModel2.Resolver>();
 
-            builder.BuildGraphType(new Internal.GraphTypeCache(), new ServiceCollection()).Should().NotBeNull();
+            builder.BuildGraphType(new Internal.GraphTypeCache(map), new ServiceCollection()).Should().NotBeNull();
         }
     }
 }

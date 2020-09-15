@@ -14,7 +14,9 @@ namespace OttoTheGeek.Tests
         [Fact]
         public void DefaultName()
         {
-            var graphType = new GraphTypeBuilder<Model>().BuildGraphType(new Internal.GraphTypeCache(), new ServiceCollection());
+            var map = new Internal.ScalarTypeMap();
+            var cache = new Internal.GraphTypeCache(map);
+            var graphType = new GraphTypeBuilder<Model>(map).BuildGraphType(cache, new ServiceCollection());
 
             graphType.Name.Should().Be(nameof(Model));
         }
@@ -22,9 +24,9 @@ namespace OttoTheGeek.Tests
         [Fact]
         public void CustomName()
         {
-            var graphType = new GraphTypeBuilder<Model>()
+            var graphType = new GraphTypeBuilder<Model>(new Internal.ScalarTypeMap())
                 .Named("ImmaCustomName")
-                .BuildGraphType(new Internal.GraphTypeCache(), new ServiceCollection());
+                .BuildGraphType(new Internal.GraphTypeCache(new Internal.ScalarTypeMap()), new ServiceCollection());
 
             graphType.Name.Should().Be("ImmaCustomName");
         }

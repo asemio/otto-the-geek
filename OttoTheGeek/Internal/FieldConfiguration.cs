@@ -11,6 +11,7 @@ namespace OttoTheGeek.Internal
 {
     internal sealed class FieldConfiguration<TModel>
     {
+        private readonly ScalarTypeMap _scalarTypeMap;
         public PropertyInfo Property { get; }
         public Nullability Nullability { get; private set; }
         public FieldResolverConfiguration ResolverConfiguration { get; private set; }
@@ -18,8 +19,9 @@ namespace OttoTheGeek.Internal
         public AuthResolverStub AuthResolver { get; private set; } = new NullAuthResolverStub();
         public OrderByBuilder OrderByBuilder { get; private set; }
 
-        public FieldConfiguration(PropertyInfo prop)
+        public FieldConfiguration(PropertyInfo prop, ScalarTypeMap scalarTypeMap)
         {
+            _scalarTypeMap = scalarTypeMap;
             Property = prop;
         }
         public FieldConfiguration<TModel> WithNullable(Nullability nullability) =>
@@ -90,7 +92,7 @@ namespace OttoTheGeek.Internal
                 return true;
             }
 
-            if (!ScalarTypeMap.TryGetGraphType (Property.PropertyType, out type))
+            if (!_scalarTypeMap.TryGetGraphType (Property.PropertyType, out type))
             {
                 return false;
             }

@@ -7,11 +7,13 @@ namespace OttoTheGeek.Internal
     public sealed class LooseListFieldBuilder<TModel, TElem>
         where TModel : class
     {
+        private readonly ScalarTypeMap _scalarTypeMap;
         private readonly GraphTypeBuilder<TModel> _parentBuilder;
         private readonly Expression<Func<TModel, IEnumerable<TElem>>> _propExpr;
 
-        internal LooseListFieldBuilder(GraphTypeBuilder<TModel> parentBuilder, Expression<Func<TModel, IEnumerable<TElem>>> propExpr)
+        internal LooseListFieldBuilder(GraphTypeBuilder<TModel> parentBuilder, Expression<Func<TModel, IEnumerable<TElem>>> propExpr, ScalarTypeMap scalarTypeMap)
         {
+            _scalarTypeMap = scalarTypeMap;
             _parentBuilder = parentBuilder;
             _propExpr = propExpr;
         }
@@ -31,7 +33,7 @@ namespace OttoTheGeek.Internal
         public GraphTypeBuilder<TModel> Preloaded()
         {
             var prop = _propExpr.PropertyInfoForSimpleGet();
-            return _parentBuilder.WithResolverConfiguration(prop, new PreloadedListResolverConfiguration<TElem>());
+            return _parentBuilder.WithResolverConfiguration(prop, new PreloadedListResolverConfiguration<TElem>(_scalarTypeMap));
         }
     }
 

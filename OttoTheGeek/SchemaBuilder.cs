@@ -11,6 +11,7 @@ namespace OttoTheGeek
     {
         private readonly Type _schemaType;
         private readonly Dictionary<Type, IGraphTypeBuilder> _builders;
+        private readonly ScalarTypeMap _scalarTypeMap;
 
         internal SchemaBuilder(Type schemaType) : this(schemaType, new Dictionary<Type, IGraphTypeBuilder>())
         {
@@ -19,6 +20,7 @@ namespace OttoTheGeek
         {
             _schemaType = schemaType;
             _builders = builders;
+            _scalarTypeMap = new ScalarTypeMap();
         }
 
         public SchemaBuilder GraphType<TType>(Func<GraphTypeBuilder<TType>, GraphTypeBuilder<TType>> configurator)
@@ -34,7 +36,7 @@ namespace OttoTheGeek
         }
         public OttoSchemaInfo Build(IServiceCollection services)
         {
-            var cache = new GraphTypeCache(_builders);
+            var cache = new GraphTypeCache(_builders, _scalarTypeMap);
             var queryType = _schemaType.GetGenericArguments().First();
             var mutationType = _schemaType.GetGenericArguments().Skip(1).First();
             var queryGraphType = cache.GetOrCreate(queryType, services);
@@ -58,7 +60,7 @@ namespace OttoTheGeek
             _builders.TryGetValue(typeof(TType), out var untypedBuilder);
             var builder =
                 ((GraphTypeBuilder<TType>)untypedBuilder)
-                ?? new GraphTypeBuilder<TType>();
+                ?? new GraphTypeBuilder<TType>(_scalarTypeMap);
 
             return builder;
         }
