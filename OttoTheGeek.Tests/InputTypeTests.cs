@@ -11,11 +11,6 @@ namespace OttoTheGeek.Tests
 {
     public sealed class InputTypeTests
     {
-        public sealed class Query
-        {
-            public Child Child { get; set; }
-        }
-
         public enum Texture
         {
             Crunchy,
@@ -59,7 +54,7 @@ namespace OttoTheGeek.Tests
             }
         }
 
-        public sealed class Model : OttoModel<Query>
+        public sealed class Model : OttoModel<SimpleScalarQueryModel<Child>>
         {
             protected override SchemaBuilder ConfigureSchema(SchemaBuilder builder)
             {
@@ -68,13 +63,14 @@ namespace OttoTheGeek.Tests
         }
 
         public sealed class Configurator
-            : IGraphTypeConfigurator<Model, Query>
+            : IGraphTypeConfigurator<Model, SimpleScalarQueryModel<Child>>
             , IGraphTypeConfigurator<Model, Args>
             , IGraphTypeConfigurator<Model, Child>
         {
-            public GraphTypeBuilder<Query> Configure(GraphTypeBuilder<Query> builder)
+            public GraphTypeBuilder<SimpleScalarQueryModel<Child>> Configure(GraphTypeBuilder<SimpleScalarQueryModel<Child>> builder)
             {
                 return builder
+                    .Named("Query")
                     .LooseScalarField(x => x.Child)
                         .WithArgs<Args>()
                         .ResolvesVia<Resolver>()

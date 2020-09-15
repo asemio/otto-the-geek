@@ -10,10 +10,7 @@ namespace OttoTheGeek.Tests
 {
     public sealed class InterfaceTypesTests
     {
-        public sealed class Query
-        {
-            public IChild Child { get; set; }
-        }
+        public sealed class Query : SimpleScalarQueryModel<IChild> {}
         public interface IChild
         {
             string Value1 { get; }
@@ -60,7 +57,7 @@ namespace OttoTheGeek.Tests
             new Action(() => model.CreateServer())
                 .Should()
                 .Throw<UnableToResolveException>()
-                .WithMessage("Unable to resolve property Child on class Query");
+                .WithMessage($"Unable to resolve property Child on class {typeof(SimpleScalarQueryModel<IChild>).Name}");
         }
 
         [Fact]

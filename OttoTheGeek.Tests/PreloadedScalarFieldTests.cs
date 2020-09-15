@@ -8,16 +8,11 @@ namespace OttoTheGeek.Tests
 {
     public sealed class PreloadedScalarFieldTests
     {
-        public sealed class Query
-        {
-            public IEnumerable<ChildObject> Children { get; set; }
-        }
-
-        public class Model : OttoModel<Query>
+        public class Model : OttoModel<SimpleEnumerableQueryModel<ChildObject>>
         {
             protected override SchemaBuilder ConfigureSchema(SchemaBuilder builder)
             {
-                return builder.GraphType<Query>(b =>
+                return builder.GraphType<SimpleEnumerableQueryModel<ChildObject>>(b =>
                     b.LooseListField(x => x.Children)
                         .ResolvesVia<ChildrenResolver>()
                 );

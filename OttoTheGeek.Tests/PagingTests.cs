@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using FluentAssertions;
@@ -11,29 +10,24 @@ namespace OttoTheGeek.Tests
 {
     public class PagingTests
     {
-        public sealed class Query
-        {
-            public IEnumerable<ChildObject> Children { get; set; }
-        }
-
-        public class Model : OttoModel<Query>
+        public class Model : OttoModel<SimpleEnumerableQueryModel<ChildObject>>
         {
             protected override SchemaBuilder ConfigureSchema(SchemaBuilder builder)
             {
-                return builder.GraphType<Query>(b =>
-                    b.ConnectionField(x => x.Children)
+                return builder.GraphType<SimpleEnumerableQueryModel<ChildObject>>(b =>
+                    b.Named("Query").ConnectionField(x => x.Children)
                         .ResolvesVia<ChildrenResolver>()
                 )
 ;
             }
         }
 
-        public sealed class CustomConnectionArgsModel : OttoModel<Query>
+        public sealed class CustomConnectionArgsModel : OttoModel<SimpleEnumerableQueryModel<ChildObject>>
         {
             protected override SchemaBuilder ConfigureSchema(SchemaBuilder builder)
             {
-                return builder.GraphType<Query>(b =>
-                    b.ConnectionField(x => x.Children)
+                return builder.GraphType<SimpleEnumerableQueryModel<ChildObject>>(b =>
+                    b.Named("Query").ConnectionField(x => x.Children)
                         .WithArgs<CustomArgs>()
                         .ResolvesVia<CustomChildrenResolver>()
                 );
