@@ -27,7 +27,7 @@ public sealed class Model : OttoModel<Query>
     }
 }
 
-public sealed class Resolver : IScalarFieldResolver<Child>
+public sealed class Resolver : ILooseScalarFieldResolver<Child>
 {
     public Task<Child> Resolve()
     {
@@ -39,11 +39,11 @@ public sealed class Resolver : IScalarFieldResolver<Child>
 }
 ```
 
-The example above uses `IScalarFieldResolver<TModel>`: it lets you resolve a scalar object anywhere. It's most useful on the query object, where there isn't a parent object that you're resolving from. There's another interface, `IListFieldResolver<TElem>` that works similarly, but is intended to map an `IEnumerable<TElem>` in the model to an appropriate `LIST` type in GraphQL.
+The example above uses `ILooseScalarFieldResolver<TModel>`: it lets you resolve a scalar object anywhere. It's most useful on the query object, where there isn't a parent object that you're resolving from. There's another interface, `ILooseListFieldResolver<TElem>` that works similarly, but is intended to map an `IEnumerable<TElem>` in the model to an appropriate `LIST` type in GraphQL.
 
 # The N + 1 Problem
 
-Both `IScalarFieldResolver<TElem>` and `IListFieldResolver<TElem>` have a fundamental problem, and that is that they will suffer from the classic N+1 query problem. Consider this setup:
+Both `ILooseScalarFieldResolver<TElem>` and `ILooseListFieldResolver<TElem>` have a fundamental problem, and that is that they will suffer from the classic N+1 query problem. Consider this setup:
 
 ```cs
 public sealed class Query

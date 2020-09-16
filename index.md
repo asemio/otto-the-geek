@@ -45,7 +45,7 @@ public sealed class Model : OttoModel<Query>
     }
 }
 
-public sealed class Resolver : IScalarFieldResolver<Child>
+public sealed class Resolver : ILooseScalarFieldResolver<Child>
 {
     public Task<Child> Resolve()
     {

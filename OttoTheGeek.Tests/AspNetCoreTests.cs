@@ -70,7 +70,7 @@ namespace OttoTheGeek.Tests
             }
         }
 
-        public sealed class Resolver : IScalarFieldResolver<Child>, IScalarFieldWithArgsResolver<Child, Child>
+        public sealed class Resolver : ILooseScalarFieldResolver<Child>, IScalarFieldWithArgsResolver<Child, Child>
         {
             public Task<Child> Resolve()
             {

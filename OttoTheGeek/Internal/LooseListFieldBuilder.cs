@@ -19,7 +19,7 @@ namespace OttoTheGeek.Internal
         }
 
         public GraphTypeBuilder<TModel> ResolvesVia<TResolver>()
-            where TResolver : class, IListFieldResolver<TElem>
+            where TResolver : class, ILooseListFieldResolver<TElem>
         {
             var prop = _propExpr.PropertyInfoForSimpleGet();
             return _parentBuilder.WithResolverConfiguration(prop, new ListResolverConfiguration<TResolver, TElem>());
