@@ -6,7 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 namespace OttoTheGeek.Internal
 {
     public sealed class ScalarResolverConfiguration<TResolver, TProp> : FieldResolverConfiguration
-        where TResolver : class, IScalarFieldResolver<TProp>
+        where TResolver : class, ILooseScalarFieldResolver<TProp>
     {
         protected override IFieldResolver CreateGraphQLResolver()
         {

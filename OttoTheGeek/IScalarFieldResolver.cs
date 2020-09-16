@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -9,8 +10,6 @@ namespace OttoTheGeek
         Task<Dictionary<object, TField>> GetData(IEnumerable<object> keys);
     }
 
-    public interface IScalarFieldResolver<TProp>
-    {
-        Task<TProp> Resolve();
-    }
+    [Obsolete("This interface will be removed in version 1.0; use ILooseScalarFieldResolver<TProp>")]
+    public interface IScalarFieldResolver<TProp> : ILooseScalarFieldResolver<TProp> {}
 }

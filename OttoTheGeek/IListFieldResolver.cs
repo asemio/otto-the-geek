@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -10,8 +11,6 @@ namespace OttoTheGeek
         Task<ILookup<object, TField>> GetData(IEnumerable<object> keys);
     }
 
-    public interface IListFieldResolver<TElem>
-    {
-        Task<IEnumerable<TElem>> Resolve();
-    }
+    [Obsolete("This interface will be removed in version 1.0; use ILooseListFieldResolver<TElem>")]
+    public interface IListFieldResolver<TElem> : ILooseListFieldResolver<TElem> {}
 }
