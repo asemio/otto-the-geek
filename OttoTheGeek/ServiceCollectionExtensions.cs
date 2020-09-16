@@ -32,6 +32,8 @@ namespace OttoTheGeek
                     .AddGraphQL()
                     .AddGraphTypes(ServiceLifetime.Scoped)
                     .AddDataLoader();
+
+                services.AddTransient<GraphQL.Http.IDocumentWriter, GraphQLNetHacks.GraphqlDocumentWriter>();
             }
 
             return services;
