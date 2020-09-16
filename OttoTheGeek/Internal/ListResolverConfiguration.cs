@@ -7,7 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 namespace OttoTheGeek.Internal
 {
     public sealed class ListResolverConfiguration<TResolver, TElem> : FieldResolverConfiguration
-        where TResolver : class, IListFieldResolver<TElem>
+        where TResolver : class, ILooseListFieldResolver<TElem>
     {
         protected override IFieldResolver CreateGraphQLResolver()
         {

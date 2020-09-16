@@ -20,7 +20,7 @@ namespace OttoTheGeek.Tests
             }
         }
 
-        public sealed class ChildrenResolver : IListFieldResolver<ChildObject>
+        public sealed class ChildrenResolver : ILooseListFieldResolver<ChildObject>
         {
             public static IEnumerable<ChildObject> Data => new[] {
                 new ChildObject {

@@ -109,7 +109,7 @@ builder.ScalarField(x => x.Make).AsGraphType<NonNullGraphType<IdGraphType>>();
 A "loose" scalar field is one that is not "attached" to a parent; that is, it is resolved in isolation. **Be careful with loose fields because they will suffer from the N + 1 queries problem**:
 ```csharp
 builder.LooseScalarField(x => x.Make).ResolvesVia<ProductMakeResolver>();
-// ProductMakeResolver must implement IScalarFieldResolver<Manufacturer>
+// ProductMakeResolver must implement ILooseScalarFieldResolver<Manufacturer>
 ```
 
 ## `.ListField(...)`

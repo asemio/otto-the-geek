@@ -15,7 +15,7 @@ namespace OttoTheGeek.Internal
         }
 
         public GraphTypeBuilder<TModel> ResolvesVia<TResolver>()
-            where TResolver : class, IScalarFieldResolver<TProp>
+            where TResolver : class, ILooseScalarFieldResolver<TProp>
         {
             return _parentBuilder.WithResolverConfiguration(_prop, new ScalarResolverConfiguration<TResolver, TProp>());
         }
