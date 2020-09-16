@@ -8,6 +8,7 @@ using Xunit;
 
 namespace OttoTheGeek.Tests
 {
+
     public sealed class ScalarObjectQueryResolverTests
     {
         public class Model : OttoModel<SimpleScalarQueryModel<ChildObject>>
