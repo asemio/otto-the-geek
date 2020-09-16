@@ -7,12 +7,19 @@ namespace OttoTheGeek.Internal
 {
     public sealed class ScalarTypeMap
     {
-        private Dictionary<Type, Type> _customMappings = new Dictionary<Type, Type>();
+        public ScalarTypeMap() {}
+        private readonly Dictionary<Type, Type> _customMappings = new Dictionary<Type, Type>();
         public bool TryGetGraphType(Type type, out Type graphType)
         {
             return _customMappings.TryGetValue(type, out graphType)
                 || TryGetDefaultGraphType(type, out graphType);
         }
+
+        public void AddGraphType(Type type, Type graphType)
+        {
+            _customMappings[type] = graphType;
+        }
+
         private static readonly IReadOnlyDictionary<Type, Type> CSharpToGraphqlTypeMapping = new Dictionary<Type, Type>{
             [typeof(string)]            = typeof(NonNullGraphType<StringGraphType>),
             [typeof(int)]               = typeof(NonNullGraphType<IntGraphType>),
