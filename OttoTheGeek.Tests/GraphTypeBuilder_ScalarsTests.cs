@@ -28,7 +28,7 @@ namespace OttoTheGeek.Tests
             Value3
         }
 
-        private static readonly ComplexGraphType<Model> GraphType = new GraphTypeBuilder<Model>().BuildGraphType(new Internal.GraphTypeCache(), new ServiceCollection());
+        private static readonly ComplexGraphType<Model> GraphType = new GraphTypeBuilder<Model>(new Internal.ScalarTypeMap()).BuildGraphType(new Internal.GraphTypeCache(new ScalarTypeMap()), new ServiceCollection());
 
         [Fact]
         public void BuildsStringField()
@@ -106,10 +106,11 @@ namespace OttoTheGeek.Tests
         [Fact]
         public void OverrideToId()
         {
-            var graphType =  new GraphTypeBuilder<Model>()
+            var map = new Internal.ScalarTypeMap();
+            var graphType =  new GraphTypeBuilder<Model>(map)
                 .ScalarField(x => x.StringVal)
                     .AsGraphType<IdGraphType>()
-                .BuildGraphType(new Internal.GraphTypeCache(), new ServiceCollection());
+                .BuildGraphType(new Internal.GraphTypeCache(map), new ServiceCollection());
 
             graphType.Fields
                 .SingleOrDefault(x => x.Name == nameof(Model.StringVal))

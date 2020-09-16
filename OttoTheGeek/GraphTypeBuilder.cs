@@ -18,7 +18,7 @@ namespace OttoTheGeek {
 
         private readonly IEnumerable<SchemaBuilderCallback> _schemaBuilderCallbacks;
 
-        public GraphTypeBuilder () : this (new GraphTypeConfiguration<TModel> (), new SchemaBuilderCallback[0]) {
+        public GraphTypeBuilder (ScalarTypeMap scalarTypeMap) : this (new GraphTypeConfiguration<TModel> (scalarTypeMap), new SchemaBuilderCallback[0]) {
 
         }
         private GraphTypeBuilder (GraphTypeConfiguration<TModel> config, IEnumerable<SchemaBuilderCallback> schemaBuilderCallbacks) {
@@ -43,7 +43,7 @@ namespace OttoTheGeek {
         public ListFieldBuilder<TModel, TProp> ListField<TProp> (Expression<Func<TModel, IEnumerable<TProp>>> propertyExpression) {
             var prop = propertyExpression.PropertyInfoForSimpleGet ();
 
-            return new ListFieldBuilder<TModel, TProp> (this, prop);
+            return new ListFieldBuilder<TModel, TProp> (this, prop, _config.ScalarTypeMap);
         }
 
         public ConnectionFieldBuilder<TModel, TProp> ConnectionField<TProp>(Expression<Func<TModel, IEnumerable<TProp>>> propertyExpression)
@@ -53,7 +53,7 @@ namespace OttoTheGeek {
         }
 
         public LooseListFieldBuilder<TModel, TProp> LooseListField<TProp> (Expression<Func<TModel, IEnumerable<TProp>>> propertyExpression) {
-            return new LooseListFieldBuilder<TModel, TProp> (this, propertyExpression);
+            return new LooseListFieldBuilder<TModel, TProp> (this, propertyExpression, _config.ScalarTypeMap);
         }
 
         public GraphTypeBuilder<TModel> IgnoreProperty<TProp> (Expression<Func<TModel, TProp>> propertyExpression) {
@@ -218,7 +218,7 @@ namespace OttoTheGeek {
                 };
             }
             var elemType = prop.PropertyType.GetEnumerableElementType ();
-            if (elemType != null && ScalarTypeMap.TryGetGraphType(elemType, out var elemGraphType))
+            if (elemType != null && _config.ScalarTypeMap.TryGetGraphType(elemType, out var elemGraphType))
             {
                 var listGraphType = typeof(ListGraphType<>).MakeGenericType(elemGraphType);
 

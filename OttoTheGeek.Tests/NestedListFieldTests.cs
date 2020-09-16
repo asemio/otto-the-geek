@@ -10,10 +10,6 @@ namespace OttoTheGeek.Tests
 {
     public sealed class NestedListFieldTests
     {
-        public sealed class Query
-        {
-            public IEnumerable<ChildObject> Children { get; set; }
-        }
         public sealed class ChildObject
         {
             public long Id { get; set; }
@@ -25,7 +21,7 @@ namespace OttoTheGeek.Tests
             public string Value2 { get; set; }
             public int Value3 { get; set; }
         }
-        public class Model : OttoModel<Query>
+        public class Model : OttoModel<SimpleEnumerableQueryModel<ChildObject>>
         {
             protected override SchemaBuilder ConfigureSchema(SchemaBuilder builder)
             {
@@ -34,7 +30,7 @@ namespace OttoTheGeek.Tests
                         b.ListField(x => x.Children)
                             .ResolvesVia<GrandchildResolver>()
                     )
-                    .GraphType<Query>(b =>
+                    .GraphType<SimpleEnumerableQueryModel<ChildObject>>(b =>
                         b.LooseListField(x => x.Children)
                             .ResolvesVia<ChildrenResolver>()
                     );

@@ -12,19 +12,17 @@ namespace OttoTheGeek.Tests
     public sealed class CustomNamedConnectionTests
     {
         public const string ConnectionTypeName = "CustomChildConnection";
-        public sealed class Query
-        {
-            public IEnumerable<ChildObject> Children { get; set; }
-        }
 
-        public class Model : OttoModel<Query>
+        public class Model : OttoModel<SimpleEnumerableQueryModel<ChildObject>>
         {
             protected override SchemaBuilder ConfigureSchema(SchemaBuilder builder)
             {
                 return builder
-                    .GraphType<Query>(b =>
-                        b.ConnectionField(x => x.Children)
-                            .ResolvesVia<ChildrenResolver>()
+                    .GraphType<SimpleEnumerableQueryModel<ChildObject>>(b =>
+                        b
+                            .ConnectionField(x => x.Children)
+                                .ResolvesVia<ChildrenResolver>()
+                            .Named("Query")
                     )
                     .GraphType<Connection<ChildObject>>(x => x.Named(ConnectionTypeName));
             }

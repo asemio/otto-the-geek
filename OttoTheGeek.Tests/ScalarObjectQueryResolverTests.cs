@@ -10,12 +10,7 @@ namespace OttoTheGeek.Tests
 {
     public sealed class ScalarObjectQueryResolverTests
     {
-        public sealed class Query
-        {
-            public ChildObject Child { get; set; }
-        }
-
-        public class Model : OttoModel<Query>
+        public class Model : OttoModel<SimpleScalarQueryModel<ChildObject>>
         {
 
         }
@@ -24,8 +19,8 @@ namespace OttoTheGeek.Tests
         {
             protected override SchemaBuilder ConfigureSchema(SchemaBuilder builder)
             {
-                return builder.GraphType<Query>(b =>
-                    b.LooseScalarField(x => x.Child)
+                return builder.GraphType<SimpleScalarQueryModel<ChildObject>>(b =>
+                    b.Named("Query").LooseScalarField(x => x.Child)
                         .ResolvesVia<ChildResolver>()
                 );
             }
@@ -53,7 +48,7 @@ namespace OttoTheGeek.Tests
             new Action(() => model.CreateServer())
                 .Should()
                 .Throw<UnableToResolveException>()
-                .WithMessage("Unable to resolve property Child on class Query");
+                .WithMessage($"Unable to resolve property Child on class {typeof(SimpleScalarQueryModel<ChildObject>).Name}");
         }
 
         [Fact]

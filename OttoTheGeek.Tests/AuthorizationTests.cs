@@ -10,16 +10,11 @@ namespace OttoTheGeek.Tests
 {
     public sealed class AuthorizationTests
     {
-        public sealed class Query
-        {
-            public ChildObject Child { get; set; }
-        }
-
-        public sealed class ScalarAuthModel : OttoModel<Query>
+        public sealed class ScalarAuthModel : OttoModel<SimpleScalarQueryModel<ChildObject>>
         {
             protected override SchemaBuilder ConfigureSchema(SchemaBuilder builder)
             {
-                return builder.GraphType<Query>(b =>
+                return builder.GraphType<SimpleScalarQueryModel<ChildObject>>(b =>
                     b.LooseScalarField(x => x.Child)
                         .ResolvesVia<ChildResolver>()
                 )
@@ -32,11 +27,11 @@ namespace OttoTheGeek.Tests
             }
         }
 
-        public sealed class ObjectAuthModel : OttoModel<Query>
+        public sealed class ObjectAuthModel : OttoModel<SimpleScalarQueryModel<ChildObject>>
         {
             protected override SchemaBuilder ConfigureSchema(SchemaBuilder builder)
             {
-                return builder.GraphType<Query>(b =>
+                return builder.GraphType<SimpleScalarQueryModel<ChildObject>>(b =>
                     b
                         .LooseScalarField(x => x.Child)
                             .ResolvesVia<ChildResolver>()
@@ -46,11 +41,11 @@ namespace OttoTheGeek.Tests
             }
         }
 
-        public sealed class NullableMismatchAuthModel : OttoModel<Query>
+        public sealed class NullableMismatchAuthModel : OttoModel<SimpleScalarQueryModel<ChildObject>>
         {
             protected override SchemaBuilder ConfigureSchema(SchemaBuilder builder)
             {
-                return builder.GraphType<Query>(b =>
+                return builder.GraphType<SimpleScalarQueryModel<ChildObject>>(b =>
                     b.LooseScalarField(x => x.Child)
                         .ResolvesVia<ChildResolver>()
                 )

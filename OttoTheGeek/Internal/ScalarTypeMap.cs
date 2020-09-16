@@ -5,8 +5,14 @@ using GraphQL.Types;
 
 namespace OttoTheGeek.Internal
 {
-    public static class ScalarTypeMap
+    public sealed class ScalarTypeMap
     {
+        private Dictionary<Type, Type> _customMappings = new Dictionary<Type, Type>();
+        public bool TryGetGraphType(Type type, out Type graphType)
+        {
+            return _customMappings.TryGetValue(type, out graphType)
+                || TryGetDefaultGraphType(type, out graphType);
+        }
         private static readonly IReadOnlyDictionary<Type, Type> CSharpToGraphqlTypeMapping = new Dictionary<Type, Type>{
             [typeof(string)]            = typeof(NonNullGraphType<StringGraphType>),
             [typeof(int)]               = typeof(NonNullGraphType<IntGraphType>),
@@ -40,7 +46,7 @@ namespace OttoTheGeek.Internal
             [typeof(uint?)]             = typeof(UIntGraphType),
             [typeof(TimeSpan?)]         = typeof(TimeSpanGraphType),
         };
-        public static bool TryGetGraphType(Type t, out Type graphType)
+        private static bool TryGetDefaultGraphType(Type t, out Type graphType)
         {
             if(CSharpToGraphqlTypeMapping.TryGetValue(t, out graphType))
             {

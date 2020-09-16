@@ -8,6 +8,13 @@ namespace OttoTheGeek.Internal
 {
     public sealed class PreloadedListResolverConfiguration<TRecord> : FieldResolverConfiguration
     {
+        private readonly ScalarTypeMap _scalarTypeMap;
+
+        public PreloadedListResolverConfiguration(ScalarTypeMap scalarTypeMap)
+        {
+            _scalarTypeMap = scalarTypeMap;
+        }
+
         protected override IFieldResolver CreateGraphQLResolver()
         {
             return null;
@@ -15,7 +22,7 @@ namespace OttoTheGeek.Internal
 
         protected override IGraphType GetGraphType(GraphTypeCache cache, IServiceCollection services)
         {
-            if(ScalarTypeMap.TryGetGraphType(typeof(TRecord), out var scalarGraphType))
+            if(_scalarTypeMap.TryGetGraphType(typeof(TRecord), out var scalarGraphType))
             {
                 var listGraphType = typeof(ListGraphType<>).MakeGenericType(scalarGraphType);
                 var listTypeInstance = (ListGraphType)Activator.CreateInstance(listGraphType);

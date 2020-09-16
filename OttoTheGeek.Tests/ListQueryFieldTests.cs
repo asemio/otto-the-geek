@@ -9,17 +9,12 @@ namespace OttoTheGeek.Tests
 {
     public sealed class ListQueryFieldTests
     {
-        public sealed class Query
-        {
-            public IEnumerable<ChildObject> Children { get; set; }
-        }
-
-        public sealed class Model : OttoModel<Query>
+        public sealed class Model : OttoModel<SimpleEnumerableQueryModel<ChildObject>>
         {
             protected override SchemaBuilder ConfigureSchema(SchemaBuilder builder)
             {
-                return builder.GraphType<Query>(
-                    b => b.LooseListField(x => x.Children)
+                return builder.GraphType<SimpleEnumerableQueryModel<ChildObject>>(
+                    b => b.Named("Query").LooseListField(x => x.Children)
                         .ResolvesVia<ChildrenResolver>()
                         );
             }

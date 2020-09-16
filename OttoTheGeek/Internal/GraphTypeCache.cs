@@ -12,13 +12,15 @@ namespace OttoTheGeek.Internal
         private readonly Dictionary<Type, IGraphType> _cache = new Dictionary<Type, IGraphType>();
         private readonly Dictionary<Type, IGraphType> _inputTypeCache = new Dictionary<Type, IGraphType>();
         private readonly Dictionary<Type, QueryArguments> _argsCache = new Dictionary<Type, QueryArguments>();
+        private readonly ScalarTypeMap _scalarTypeMap;
 
-        public GraphTypeCache() : this(new Dictionary<Type, IGraphTypeBuilder>())
+        public GraphTypeCache(ScalarTypeMap scalarTypeMap) : this(new Dictionary<Type, IGraphTypeBuilder>(), scalarTypeMap)
         {
 
         }
-        public GraphTypeCache(Dictionary<Type, IGraphTypeBuilder> builders)
+        public GraphTypeCache(Dictionary<Type, IGraphTypeBuilder> builders, ScalarTypeMap scalarTypeMap)
         {
+            _scalarTypeMap = scalarTypeMap;
             _builders = builders;
         }
 
@@ -39,7 +41,7 @@ namespace OttoTheGeek.Internal
                 _cache[modelType] = ((dynamic)cachedBuilder).BuildGraphType(this, services);
             }
             else {
-                dynamic builder = Activator.CreateInstance(typeof(GraphTypeBuilder<>).MakeGenericType(modelType));
+                dynamic builder = Activator.CreateInstance(typeof(GraphTypeBuilder<>).MakeGenericType(modelType), _scalarTypeMap);
                 _cache[modelType] = builder.BuildGraphType(cache: this, services: services);
             }
 
@@ -55,7 +57,7 @@ namespace OttoTheGeek.Internal
 
             if(!_builders.TryGetValue(modelType, out var builder))
             {
-                builder = (IGraphTypeBuilder)Activator.CreateInstance(typeof(GraphTypeBuilder<>).MakeGenericType(modelType));
+                builder = (IGraphTypeBuilder)Activator.CreateInstance(typeof(GraphTypeBuilder<>).MakeGenericType(modelType), _scalarTypeMap);
             }
 
             _inputTypeCache[modelType] = ((dynamic)builder).BuildInputGraphType(this);
@@ -76,7 +78,7 @@ namespace OttoTheGeek.Internal
                 _argsCache[modelType] = ((dynamic)cachedBuilder).BuildQueryArguments(this, services);
             }
             else {
-                dynamic builder = Activator.CreateInstance(typeof(GraphTypeBuilder<>).MakeGenericType(modelType));
+                dynamic builder = Activator.CreateInstance(typeof(GraphTypeBuilder<>).MakeGenericType(modelType), _scalarTypeMap);
                 _argsCache[modelType] = builder.BuildQueryArguments(cache: this, services: services);
             }
 

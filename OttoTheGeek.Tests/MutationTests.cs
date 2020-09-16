@@ -9,11 +9,6 @@ namespace OttoTheGeek.Tests
 {
     public sealed class MutationTests
     {
-        public sealed class Mutation
-        {
-            public Child Child { get; set; }
-        }
-
         public sealed class Args
         {
             public Child Data { get; set; }
@@ -25,11 +20,11 @@ namespace OttoTheGeek.Tests
             public int Value3 { get; set; }
         }
 
-        public class Model : OttoModel<object, Mutation>
+        public class Model : OttoModel<object, SimpleScalarQueryModel<Child>>
         {
             protected override SchemaBuilder ConfigureSchema(SchemaBuilder builder)
             {
-                return builder.GraphType<Mutation>(b =>
+                return builder.GraphType<SimpleScalarQueryModel<Child>>(b =>
                     b.LooseScalarField(x => x.Child)
                         .WithArgs<Args>()
                         .ResolvesVia<ChildResolver>()

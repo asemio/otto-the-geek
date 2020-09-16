@@ -9,16 +9,18 @@ namespace OttoTheGeek.Internal
 
     internal sealed class GraphTypeConfiguration<T>
     {
+        public ScalarTypeMap ScalarTypeMap { get; }
         private PropertyMap<FieldConfiguration<T>> _fieldConfig { get; }
         public IEnumerable<PropertyInfo> PropsToIgnore { get; }
         public IEnumerable<Type> Interfaces { get; }
         public string CustomName { get; }
 
-        public GraphTypeConfiguration() : this(
+        public GraphTypeConfiguration(ScalarTypeMap scalarTypeMap) : this(
             new PropertyInfo[0],
             new Type[0],
             new PropertyMap<FieldConfiguration<T>>(),
-            null)
+            null,
+            scalarTypeMap)
         {
 
         }
@@ -27,13 +29,15 @@ namespace OttoTheGeek.Internal
             IEnumerable<PropertyInfo> propertiesToIgnore,
             IEnumerable<Type> interfaces,
             PropertyMap<FieldConfiguration<T>> fieldConfig,
-            string customName
+            string customName,
+            ScalarTypeMap scalarTypeMap
             )
         {
             PropsToIgnore = propertiesToIgnore;
             Interfaces = interfaces;
             _fieldConfig = fieldConfig;
             CustomName = customName;
+            ScalarTypeMap = scalarTypeMap;
         }
         public bool NeedsRegistration => Interfaces.Any();
 
@@ -55,11 +59,10 @@ namespace OttoTheGeek.Internal
         public FieldConfiguration<T> GetFieldConfig(PropertyInfo prop)
         {
             return _fieldConfig.Get(prop)
-                ?? new FieldConfiguration<T>(prop);
+                ?? new FieldConfiguration<T>(prop, ScalarTypeMap);
         }
 
         public GraphTypeConfiguration<T> Clone(
-            PropertyMap<OrderByBuilder> orderByBuilders = null,
             IEnumerable<PropertyInfo> propertiesToIgnore = null,
             IEnumerable<Type> interfaces = null,
             PropertyMap<FieldConfiguration<T>> fieldConfig = null,
@@ -70,7 +73,8 @@ namespace OttoTheGeek.Internal
                 propertiesToIgnore: propertiesToIgnore ?? PropsToIgnore,
                 interfaces: interfaces ?? Interfaces,
                 fieldConfig: fieldConfig ?? _fieldConfig,
-                customName: customName ?? CustomName
+                customName: customName ?? CustomName,
+                ScalarTypeMap
             );
         }
     }
