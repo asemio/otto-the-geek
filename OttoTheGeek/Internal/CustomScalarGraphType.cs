@@ -19,6 +19,11 @@ namespace OttoTheGeek.Internal
                 return null;
             }
 
+            if(value is StringValue strVal)
+            {
+                return _converter.Parse(strVal.Value);
+            }
+
             return _converter.Parse(value.Value.ToString());
         }
 
@@ -34,7 +39,12 @@ namespace OttoTheGeek.Internal
 
         public override object Serialize(object value)
         {
-            return _converter.Convert((T)value);
+            if(value is T castedValue)
+            {
+                return _converter.Convert(castedValue);
+            }
+
+            return _converter.Convert(_converter.Parse(value?.ToString()));
         }
     }
 }
