@@ -87,7 +87,11 @@ namespace OttoTheGeek.Tests
             public override FancyInt Parse(string value)
             {
                 var trimmed = value.Trim('*');
-                return FancyInt.FromInt(int.Parse(trimmed));
+                if(!int.TryParse(trimmed, out var intVal))
+                {
+                    throw new System.Exception($"couldn't parse {trimmed} as an int");
+                }
+                return FancyInt.FromInt(intVal);
             }
         }
         public sealed class FancyStringConverter : ScalarTypeConverter<FancyString>
@@ -144,12 +148,14 @@ namespace OttoTheGeek.Tests
         {
             var server = new Model().CreateServer();
 
-            var result = server.Execute<JObject>(@"{
-                child(intValue: ""**234**"") {
+            var result = server.Execute<JObject>(@"query ($intValue: FancyInt!){
+                child(intValue: $intValue) {
                     intValue
                     strValue
                 }
-            }");
+            }", new {
+                intValue = "**234**"
+            });
 
             result["child"].Value<string>("intValue").Should().Be("**234**");
         }
