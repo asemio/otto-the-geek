@@ -1,5 +1,6 @@
 using System;
 using System.Reflection;
+using System.Threading.Tasks;
 using GraphQL.Resolvers;
 using GraphQL.Types;
 using Microsoft.Extensions.DependencyInjection;
@@ -25,9 +26,14 @@ namespace OttoTheGeek.Internal.Authorization
     internal sealed class AuthResolverStub<TAuthorizer> : AuthResolverStub
         where TAuthorizer : class
     {
-        private readonly Func<TAuthorizer, bool> _cb;
+        private readonly Func<TAuthorizer, Task<bool>> _cb;
 
         public AuthResolverStub(Func<TAuthorizer, bool> cb)
+        {
+            _cb = (x => Task.FromResult(cb(x)));
+        }
+
+        public AuthResolverStub(Func<TAuthorizer, Task<bool>> cb)
         {
             _cb = cb;
         }
@@ -48,5 +54,4 @@ namespace OttoTheGeek.Internal.Authorization
 
         }
     }
-
 }

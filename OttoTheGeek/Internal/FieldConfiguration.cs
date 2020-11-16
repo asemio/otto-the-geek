@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Threading.Tasks;
 using GraphQL.Types;
 using Microsoft.Extensions.DependencyInjection;
 using OttoTheGeek.Internal.Authorization;
@@ -34,6 +35,9 @@ namespace OttoTheGeek.Internal
             With(x => x.ResolverConfiguration, r);
 
         public FieldConfiguration<TModel> WithAuthorization<TAuth>(Func<TAuth, bool> authCallback)
+            where TAuth : class
+            => With(x => x.AuthResolver, new AuthResolverStub<TAuth>(authCallback));
+        public FieldConfiguration<TModel> WithAuthorization<TAuth>(Func<TAuth, Task<bool>> authCallback)
             where TAuth : class
             => With(x => x.AuthResolver, new AuthResolverStub<TAuth>(authCallback));
 

@@ -1,5 +1,6 @@
 using System;
 using System.Linq.Expressions;
+using System.Threading.Tasks;
 
 namespace OttoTheGeek.Internal.Authorization
 {
@@ -19,6 +20,12 @@ namespace OttoTheGeek.Internal.Authorization
             where TAuth : class
         {
             return _parent.Clone(_parent._config.ConfigureField(_expr, x => x.WithAuthorization(authorizeCallback)));
+        }
+
+        public GraphTypeBuilder<TModel> Via<TAuth>(Func<TAuth, Task<bool>> authorizeAsyncCallback)
+            where TAuth : class
+        {
+            return _parent.Clone(_parent._config.ConfigureField(_expr, x => x.WithAuthorization(authorizeAsyncCallback)));
         }
     }
 }
