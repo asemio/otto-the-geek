@@ -27,6 +27,23 @@ namespace OttoTheGeek.Tests
             }
         }
 
+        public sealed class AsyncScalarAuthModel : OttoModel<SimpleScalarQueryModel<ChildObject>>
+        {
+            protected override SchemaBuilder ConfigureSchema(SchemaBuilder builder)
+            {
+                return builder.GraphType<SimpleScalarQueryModel<ChildObject>>(b =>
+                    b.LooseScalarField(x => x.Child)
+                        .ResolvesVia<ChildResolver>()
+                )
+                .GraphType<ChildObject>(b =>
+                    b
+                        .Authorize(c => c.Protected)
+                            .Via<Authorizer>(a => a.AuthorizeAsync())
+                        .Nullable(x => x.Protected)
+                );
+            }
+        }
+
         public sealed class ObjectAuthModel : OttoModel<SimpleScalarQueryModel<ChildObject>>
         {
             protected override SchemaBuilder ConfigureSchema(SchemaBuilder builder)
@@ -87,6 +104,7 @@ namespace OttoTheGeek.Tests
             }
             public bool Authorize() => _backend.IsAuthorized;
 
+            public Task<bool> AuthorizeAsync() => Task.FromResult(_backend.IsAuthorized);
         }
 
         [Fact]
@@ -127,6 +145,32 @@ namespace OttoTheGeek.Tests
                 IsAuthorized = true
             };
             var server = new ScalarAuthModel()
+                .CreateServer(services => services.AddSingleton(backend));
+
+            var result = server.Execute<JObject>(@"{
+                child {
+                    value1
+                    protected
+                    value3
+                }
+            }");
+
+            var data = result["child"];
+            data.Should().BeEquivalentTo(new JObject(
+                new JProperty("value1", "hello"),
+                new JProperty("protected", "world"),
+                new JProperty("value3", 654)
+            ));
+        }
+
+        [Fact]
+        public void ScalarAllowAuthorizationAsync()
+        {
+            var backend = new AuthBackend
+            {
+                IsAuthorized = true
+            };
+            var server = new AsyncScalarAuthModel()
                 .CreateServer(services => services.AddSingleton(backend));
 
             var result = server.Execute<JObject>(@"{
