@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
 using FluentAssertions;
@@ -13,6 +14,7 @@ namespace OttoTheGeek.Tests
     {
         public enum Texture
         {
+            [Description("Desc of Crunchy")]
             Crunchy,
             Smooth,
             Chunky,
@@ -177,6 +179,7 @@ namespace OttoTheGeek.Tests
                     kind
                     enumValues {
                         name
+                        description
                     }
                 }
             }");
@@ -185,7 +188,7 @@ namespace OttoTheGeek.Tests
                 Kind = ObjectKinds.Enum,
                 Name = "Texture",
                 EnumValues = new [] {
-                    new EnumValue { Name = "Crunchy" },
+                    new EnumValue { Name = "Crunchy", Description = "Desc of Crunchy" },
                     new EnumValue { Name = "Smooth" },
                     new EnumValue { Name = "Chunky" },
                     new EnumValue { Name = "Grainy" }
