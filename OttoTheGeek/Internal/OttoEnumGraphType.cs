@@ -1,3 +1,7 @@
+using System;
+using System.ComponentModel;
+using System.Linq;
+using System.Reflection;
 using GraphQL.Types;
 
 namespace OttoTheGeek.Internal
@@ -7,9 +11,15 @@ namespace OttoTheGeek.Internal
         public OttoEnumGraphType()
         {
             Name = typeof(TEnum).Name;
-            foreach(var val in typeof(TEnum).GetEnumValues())
+
+            var valuesByName = Enum.GetValues(typeof(TEnum))
+                .Cast<TEnum>()
+                .ToDictionary(x => x.ToString());
+
+            foreach(var member in typeof(TEnum).GetMembers().Where(x => valuesByName.ContainsKey(x.Name)))
             {
-                AddValue(typeof(TEnum).GetEnumName(val), null, val);
+                var descAttr = member.GetCustomAttribute<DescriptionAttribute>();
+                AddValue(member.Name, descAttr?.Description, Enum.Parse(typeof(TEnum), member.Name));
             }
         }
     }
