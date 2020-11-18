@@ -57,7 +57,7 @@ namespace OttoTheGeek.Tests
             new Action(() => model.CreateServer())
                 .Should()
                 .Throw<UnableToResolveException>()
-                .WithMessage($"Unable to resolve property Child on class {typeof(SimpleScalarQueryModel<IChild>).Name}");
+                .WithMessage($"Unable to resolve property Child on class Query");
         }
 
         [Fact]
