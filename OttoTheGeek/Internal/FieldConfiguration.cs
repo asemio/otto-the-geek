@@ -130,7 +130,7 @@ namespace OttoTheGeek.Internal
             {
                 if(ResolverConfiguration == null)
                 {
-                    throw new UnableToResolveException (Property);
+                    throw new UnableToResolveException (Property, typeof(TModel));
                 }
 
                 field = ResolverConfiguration.ConfigureField (Property, cache, services);
