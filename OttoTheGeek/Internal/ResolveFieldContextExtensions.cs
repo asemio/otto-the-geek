@@ -1,12 +1,11 @@
 using System;
 using GraphQL;
-using GraphQL.Types;
 
 namespace OttoTheGeek.Internal
 {
     public static class ResolveFieldContextExtensions
     {
-        public static TArgs DeserializeArgs<TArgs>(this ResolveFieldContext context)
+        public static TArgs DeserializeArgs<TArgs>(this IResolveFieldContext context)
         {
             var args = (TArgs)Activator.CreateInstance(typeof(TArgs));
 

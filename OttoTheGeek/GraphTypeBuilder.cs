@@ -127,6 +127,14 @@ namespace OttoTheGeek {
                 var fieldConfig = _config.GetFieldConfig(prop);
                 fieldConfig.ConfigureField(graphType, cache, services);
             }
+
+            if(graphType is ObjectGraphType<TModel> objectGraphType)
+            {
+                foreach (var iFace in _config.Interfaces) {
+                    objectGraphType.AddResolvedInterface ((IInterfaceGraphType) cache.GetOrCreate (iFace, services));
+                }
+            }
+
             return graphType;
         }
 
@@ -183,7 +191,7 @@ namespace OttoTheGeek {
             (
                 IsConnection ?
                 $"{GetConnectionElemType().Name}Connection" :
-                typeof (TModel).Name
+                SanitizedTypeName()
             );
 
         private bool IsConnection => typeof (TModel).IsConstructedGenericType &&
@@ -191,6 +199,23 @@ namespace OttoTheGeek {
 
         private Type GetConnectionElemType () {
             return typeof (TModel).GetGenericArguments ().Single ();
+        }
+
+        private string SanitizedTypeName()
+        {
+            var modelType = typeof(TModel);
+            var typeName = modelType.Name;
+
+            if(!modelType.IsGenericType)
+            {
+                return typeName;
+            }
+
+            var closedType = modelType.GetGenericArguments()[0];
+
+            var trimmedName = typeName.Substring(0, typeName.IndexOf('`'));
+
+            return $"{trimmedName}Of{closedType.Name}";
         }
 
         private QueryArgument ToQueryArgument (PropertyInfo prop, GraphTypeCache cache) {
@@ -242,10 +267,6 @@ namespace OttoTheGeek {
             }
 
             var objectGraphType = new ObjectGraphType<TModel> ();
-            foreach (var iFace in _config.Interfaces) {
-                objectGraphType.AddResolvedInterface ((IInterfaceGraphType) cache.GetOrCreate (iFace, services));
-            }
-
             return objectGraphType;
         }
     }

@@ -103,14 +103,12 @@ namespace OttoTheGeek.Tests
             var response = await client.PostAsync("/graphql", new StringContent(query, Encoding.ASCII, "application/graphql"));
 
             var rawResult = await response.Content.ReadAsStringAsync();
-            var result = JObject.Parse(rawResult).ToString();
+            var result = JObject.Parse(rawResult)["data"].ToString();
 
             result.Should().Be(JObject.Parse(@"{
-                ""data"": {
-                    ""child"": {
-                        ""anInt"": 42,
-                        ""aString"": ""Hello World!""
-                    }
+                ""child"": {
+                    ""anInt"": 42,
+                    ""aString"": ""Hello World!""
                 }
             }").ToString());
         }
@@ -141,16 +139,14 @@ namespace OttoTheGeek.Tests
             var response = await client.PostAsync("/graphql", new StringContent(postdata, Encoding.ASCII, "application/json"));
 
             var rawResult = await response.Content.ReadAsStringAsync();
-            var result = JObject.Parse(rawResult).ToString();
+            var result = JObject.Parse(rawResult)["data"].ToString();
 
             result.Should().Be(JObject.Parse(@"{
-                ""data"": {
-                    ""childFromArgs"": {
-                        ""anInt"": 12,
-                        ""aString"": ""Halloo variables""
-                    }
+                ""childFromArgs"": {
+                    ""anInt"": 12,
+                    ""aString"": ""Halloo variables""
                 }
-            }").ToString());
+            }").ToString(), $"full result: {rawResult}");
         }
     }
 }

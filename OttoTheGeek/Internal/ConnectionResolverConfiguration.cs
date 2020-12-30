@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using GraphQL;
 using GraphQL.Resolvers;
@@ -28,11 +29,13 @@ namespace OttoTheGeek.Internal
 
         private sealed class ResolverProxy : ResolverProxyBase<Connection<TModel>>
         {
-            protected override Task<Connection<TModel>> Resolve(ResolveFieldContext context, IDependencyResolver dependencyResolver)
+            protected override Task<Connection<TModel>> Resolve(IResolveFieldContext context, IServiceProvider provider)
             {
-                var resolver = dependencyResolver.Resolve<TResolver>();
+                var resolver = provider.GetRequiredService<TResolver>();
 
-                return resolver.Resolve(context.DeserializeArgs<TArgs>());
+                var args = context.DeserializeArgs<TArgs>();
+
+                return resolver.Resolve(args);
             }
         }
     }

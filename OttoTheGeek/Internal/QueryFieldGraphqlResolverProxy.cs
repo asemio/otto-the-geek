@@ -1,4 +1,5 @@
 using System.Threading.Tasks;
+using GraphQL;
 using GraphQL.Resolvers;
 using GraphQL.Types;
 
@@ -12,12 +13,12 @@ namespace OttoTheGeek.Internal
         {
             _resolver = resolver;
         }
-        public Task<T> Resolve(ResolveFieldContext context)
+        public Task<T> Resolve(IResolveFieldContext context)
         {
             return _resolver.Resolve();
         }
 
-        object IFieldResolver.Resolve(ResolveFieldContext context)
+        object IFieldResolver.Resolve(IResolveFieldContext context)
         {
             return Resolve(context);
         }

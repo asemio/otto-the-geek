@@ -1,4 +1,6 @@
+using System;
 using System.Threading.Tasks;
+using GraphQL;
 using GraphQL.DataLoader;
 using GraphQL.Resolvers;
 using GraphQL.Types;
@@ -26,14 +28,16 @@ namespace OttoTheGeek.Internal
 
         private sealed class ResolverProxy : ResolverProxyBase<TChild>
         {
-            protected override Task<TChild> Resolve(ResolveFieldContext context, GraphQL.IDependencyResolver dependencyResolver)
+            protected override Task<TChild> Resolve(IResolveFieldContext context, IServiceProvider provider)
             {
-                var loaderContext = dependencyResolver.Resolve<IDataLoaderContextAccessor>().Context;
-                var resolver = dependencyResolver.Resolve<TResolver>();
+                var loaderContext = provider.GetRequiredService<IDataLoaderContextAccessor>().Context;
+                var resolver = provider.GetRequiredService<TResolver>();
 
                 var loader = loaderContext.GetOrAddBatchLoader<object, TChild>(resolver.GetType().FullName, async (keys, token) => await resolver.GetData(keys));
 
-                return loader.LoadAsync(resolver.GetKey((TModel)context.Source));
+                var loaderResult = loader.LoadAsync(resolver.GetKey((TModel)context.Source));
+
+                return loaderResult.GetResultAsync();
             }
         }
     }

@@ -4,6 +4,8 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Threading.Tasks;
+using GraphQL;
+using GraphQL.Resolvers;
 using GraphQL.Types;
 using Microsoft.Extensions.DependencyInjection;
 using OttoTheGeek.Internal.Authorization;
@@ -123,7 +125,7 @@ namespace OttoTheGeek.Internal
                 {
                     Type = graphQlType,
                     Name = Property.Name,
-                    Resolver = AuthResolver.GetResolver(services, new BorrowedNameFieldResolver())
+                    Resolver = AuthResolver.GetResolver(services, NameFieldResolver.Instance)
                 };
             }
             else
@@ -139,6 +141,9 @@ namespace OttoTheGeek.Internal
 
             var descAttr = Property.GetCustomAttribute<DescriptionAttribute>();
             field.Description = descAttr?.Description;
+
+            var isOutputType = field.Type?.IsOutputType();
+            var isOutputGraphType = field.ResolvedType?.IsOutputType();
 
             graphType.AddField (field);
         }
