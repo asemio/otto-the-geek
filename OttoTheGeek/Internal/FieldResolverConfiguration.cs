@@ -25,7 +25,6 @@ namespace OttoTheGeek.Internal
             return new FieldType {
                 Name = prop.Name,
                 ResolvedType = GetGraphType(cache, services),
-                Type = prop.PropertyType,
                 Resolver = CreateGraphQLResolver(),
                 Arguments = GetQueryArguments(cache, services)
             };

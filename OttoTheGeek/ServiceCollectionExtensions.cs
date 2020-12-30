@@ -1,6 +1,7 @@
 using System.Linq;
 using GraphQL;
 using GraphQL.Server;
+using GraphQL.SystemTextJson;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace OttoTheGeek
@@ -14,9 +15,7 @@ namespace OttoTheGeek
 
             return services
                 .AddTransient(ctx => {
-                    var schema = new ModelSchema<TModel>(ottoSchema);
-
-                    schema.DependencyResolver = new FuncDependencyResolver(t => ctx.GetRequiredService(t));
+                    var schema = new ModelSchema<TModel>(ottoSchema, ctx);
 
                     return schema;
                 })
@@ -26,14 +25,16 @@ namespace OttoTheGeek
         private static IServiceCollection TryRegisterGraphQLServer(this IServiceCollection services)
         {
             // using IDocumentWriter to check for registration already present
-            if (!services.Any(x => x.ServiceType == typeof(GraphQL.Http.IDocumentWriter)))
+            if (!services.Any(x => x.ServiceType == typeof(GraphQL.IDocumentWriter)))
             {
                 services
                     .AddGraphQL()
+                    .AddSystemTextJson()
                     .AddGraphTypes(ServiceLifetime.Scoped)
                     .AddDataLoader();
-
-                services.AddTransient<GraphQL.Http.IDocumentWriter, GraphQLNetHacks.GraphqlDocumentWriter>();
+                services
+                    .AddSingleton<IDocumentExecuter, DocumentExecuter>()
+                    .AddSingleton<IDocumentWriter, DocumentWriter>();
             }
 
             return services;

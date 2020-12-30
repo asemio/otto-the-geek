@@ -1,4 +1,6 @@
+using System;
 using System.Threading.Tasks;
+using GraphQL;
 using GraphQL.Resolvers;
 using GraphQL.Types;
 using Microsoft.Extensions.DependencyInjection;
@@ -25,9 +27,9 @@ namespace OttoTheGeek.Internal
 
         private sealed class ScalarQueryFieldResolverProxy : ResolverProxyBase<TProp>
         {
-            protected override Task<TProp> Resolve(ResolveFieldContext context, GraphQL.IDependencyResolver dependencyResolver)
+            protected override Task<TProp> Resolve(IResolveFieldContext context, IServiceProvider provider)
             {
-                var resolver = dependencyResolver.Resolve<TResolver>();
+                var resolver = provider.GetRequiredService<TResolver>();
 
                 return resolver.Resolve();
             }

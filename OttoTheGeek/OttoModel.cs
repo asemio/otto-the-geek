@@ -45,15 +45,17 @@ namespace OttoTheGeek
         public OttoServer CreateServer(Action<IServiceCollection> configurator = null)
         {
             var services = new ServiceCollection();
+            services
+                .AddOtto(this);
+
             if(configurator != null)
             {
                 configurator(services);
             }
 
-            Schema schema = new ModelSchema<OttoModel<TQuery, TMutation, TSubscription>>(BuildOttoSchema(services));
-
             var provider = services.BuildServiceProvider();
-            schema.DependencyResolver = provider.GetRequiredService<IDependencyResolver>();
+            Schema schema = new ModelSchema<OttoModel<TQuery, TMutation, TSubscription>>(BuildOttoSchema(services), provider);
+
             return new OttoServer(schema, provider);
         }
 
@@ -70,7 +72,6 @@ namespace OttoTheGeek
             services.AddTransient(typeof(OttoEnumGraphType<>));
             services.AddTransient(typeof(NonNullGraphType<>));
             services.AddTransient(typeof(IntGraphType));
-            services.AddTransient<IDependencyResolver>(x => new FuncDependencyResolver(x.GetRequiredService));
 
             return ottoSchema;
         }

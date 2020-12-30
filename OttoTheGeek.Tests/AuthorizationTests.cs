@@ -207,8 +207,7 @@ namespace OttoTheGeek.Tests
                 }
             }", throwOnError: false);
 
-            var data = (JValue)result["data"]["child"];
-            data.GetValue().Should().BeNull();
+            result["data"].GetPropertyValue("child").Should().BeNull();
 
             var errs = (JArray)result["errors"];
             errs.Count.Should().Be(1);

@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using GraphQL.Types;
 
@@ -5,7 +6,8 @@ namespace OttoTheGeek
 {
     public class ModelSchema<TModel> : Schema
     {
-        public ModelSchema(OttoSchemaInfo schema)
+        public ModelSchema(OttoSchemaInfo schema, IServiceProvider provider)
+            : base(provider)
         {
             if(schema.QueryType?.Fields?.Any() == true)
             {

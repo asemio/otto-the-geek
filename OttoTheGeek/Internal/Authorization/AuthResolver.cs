@@ -1,7 +1,9 @@
 using System;
 using System.Threading.Tasks;
+using GraphQL;
 using GraphQL.Resolvers;
 using GraphQL.Types;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace OttoTheGeek.Internal.Authorization
 {
@@ -16,14 +18,15 @@ namespace OttoTheGeek.Internal.Authorization
             _wrapped = wrapped;
         }
 
-        object IFieldResolver.Resolve(ResolveFieldContext context)
+        object IFieldResolver.Resolve(IResolveFieldContext context)
         {
             return ResolveCore(context);
         }
 
-        private async Task<object> ResolveCore(ResolveFieldContext context)
+        private async Task<object> ResolveCore(IResolveFieldContext context)
         {
-            var authorizer = ((Schema)context.Schema).DependencyResolver.Resolve<TAuthorizer>();
+            var sp = ((IServiceProvider)context.Schema);
+            var authorizer = sp.GetRequiredService<TAuthorizer>();
             if(await _authFn(authorizer))
             {
                 var res = _wrapped.Resolve(context);

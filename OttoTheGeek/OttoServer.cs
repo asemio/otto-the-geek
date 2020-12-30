@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using GraphQL;
 using GraphQL.DataLoader;
 using GraphQL.Types;
@@ -21,10 +22,11 @@ namespace OttoTheGeek
 
         public T Execute<T>(string queryText, object inputData = null, bool throwOnError = true)
         {
-            var inputs = new Inputs();
+            var inputs = Inputs.Empty;
             if(inputData != null)
             {
-                inputs = JsonConvert.SerializeObject(inputData).ToInputs();
+                var inputAsJson = JsonConvert.SerializeObject(inputData);
+                inputs = GraphQL.SystemTextJson.StringExtensions.ToInputs(inputAsJson);
             }
             var executer = _provider.GetRequiredService<IDocumentExecuter>();
             var opts = new ExecutionOptions
