@@ -10,7 +10,9 @@ namespace OttoTheGeek.Internal
     {
         public Task<T> Resolve(IResolveFieldContext context)
         {
-            return Resolve(context, context.RequestServices);
+            var resolver = ((IServiceProvider)context.Schema);
+
+            return Resolve(context, resolver);
         }
 
         protected abstract Task<T> Resolve(IResolveFieldContext context, IServiceProvider provider);
