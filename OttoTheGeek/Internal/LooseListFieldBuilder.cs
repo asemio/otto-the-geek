@@ -22,7 +22,7 @@ namespace OttoTheGeek.Internal
             where TResolver : class, ILooseListFieldResolver<TElem>
         {
             var prop = _propExpr.PropertyInfoForSimpleGet();
-            return _parentBuilder.WithResolverConfiguration(prop, new ListResolverConfiguration<TResolver, TElem>());
+            return _parentBuilder.WithResolverConfiguration(prop, new ListResolverConfiguration<TResolver, TElem>(_scalarTypeMap));
         }
 
         public LooseListFieldWithArgsBuilder<TModel, TElem, TArgs> WithArgs<TArgs>()
