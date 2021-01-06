@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using GraphQL;
 using GraphQL.Server;
@@ -8,7 +9,7 @@ namespace OttoTheGeek
 {
     public static class ServiceCollectionExtensions
     {
-        public static IServiceCollection AddOtto<TModel>(this IServiceCollection services, TModel model)
+        public static IServiceCollection AddOtto<TModel>(this IServiceCollection services, TModel model, Action<GraphQLOptions, IServiceProvider> configureOptions = null)
             where TModel : OttoModel
         {
             var ottoSchema = model.BuildOttoSchema(services);
@@ -19,16 +20,23 @@ namespace OttoTheGeek
 
                     return schema;
                 })
-                .TryRegisterGraphQLServer();
+                .TryRegisterGraphQLServer(configureOptions);
         }
 
-        private static IServiceCollection TryRegisterGraphQLServer(this IServiceCollection services)
+        private static IServiceCollection TryRegisterGraphQLServer(this IServiceCollection services, Action<GraphQLOptions, IServiceProvider> configureOptions)
         {
+            if(configureOptions == null)
+            {
+                configureOptions = NopConfigureOptions;
+            }
             // using IDocumentWriter to check for registration already present
             if (!services.Any(x => x.ServiceType == typeof(GraphQL.IDocumentWriter)))
             {
                 services
-                    .AddGraphQL()
+                    .AddGraphQL((opts, sp) => {
+                        opts.EnableMetrics = false;
+                        configureOptions(opts, sp);
+                    })
                     .AddSystemTextJson()
                     .AddGraphTypes(ServiceLifetime.Scoped)
                     .AddDataLoader();
@@ -39,5 +47,7 @@ namespace OttoTheGeek
 
             return services;
         }
+
+        private static void NopConfigureOptions(GraphQLOptions options, IServiceProvider provider) {}
     }
 }
