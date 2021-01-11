@@ -41,7 +41,7 @@ namespace OttoTheGeek
                     .AddGraphTypes(ServiceLifetime.Scoped)
                     .AddDataLoader();
                 services
-                    .AddSingleton<IDocumentExecuter, DocumentExecuter>()
+                    .AddSingleton<IDocumentExecuter, Internal.OttoDocumentExecuter>()
                     .AddSingleton<IDocumentWriter, DocumentWriter>();
             }
 
