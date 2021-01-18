@@ -22,7 +22,12 @@ namespace OttoTheGeek.Tests
                 return builder.GraphType<SimpleScalarQueryModel<ChildObject>>(b =>
                     b.Named("Query").LooseScalarField(x => x.Child)
                         .ResolvesVia<ChildResolver>()
-                );
+                ).GraphType<ChildObject>(BuildChildObject);
+            }
+
+            private GraphTypeBuilder<ChildObject> BuildChildObject(GraphTypeBuilder<ChildObject> builder)
+            {
+                return builder.IgnoreProperty(x => x.Ignored);
             }
         }
 
@@ -34,7 +39,11 @@ namespace OttoTheGeek.Tests
             }
         }
 
-        public sealed class ChildObject
+        public class ChildObjectBase
+        {
+            public int Ignored { get; set; }
+        }
+        public sealed class ChildObject : ChildObjectBase
         {
             public string Value1 => "hello";
             public string Value2 => "world";
@@ -74,6 +83,45 @@ namespace OttoTheGeek.Tests
                     {
                         Name = "child"
                     }
+                }
+            };
+
+            var queryType = rawResult["__type"].ToObject<ObjectType>();
+
+            queryType.Should().BeEquivalentTo(expectedType);
+        }
+
+        [Fact]
+        public void BuildsChildObjectType()
+        {
+            var server = new WorkingModel().CreateServer();
+
+            var rawResult = server.Execute<JObject>(@"{
+                __type(name:""ChildObject"") {
+                    name
+                    kind
+                    fields {
+                        name
+                    }
+                }
+            }");
+
+            var expectedType = new ObjectType {
+                Kind = ObjectKinds.Object,
+                Name = "ChildObject",
+                Fields = new [] {
+                    new ObjectField
+                    {
+                        Name = "value1"
+                    },
+                    new ObjectField
+                    {
+                        Name = "value2"
+                    },
+                    new ObjectField
+                    {
+                        Name = "value3"
+                    },
                 }
             };
 

@@ -56,6 +56,12 @@ namespace OttoTheGeek.Internal
             return Clone(fieldConfig: _fieldConfig.Add(prop, newConfig));
         }
 
+        public bool IsPropertyIgnored(PropertyInfo prop)
+        {
+            return PropsToIgnore
+                .Any(x => x.DeclaringType == prop.DeclaringType && x.Name == prop.Name);
+        }
+
         public FieldConfiguration<T> GetFieldConfig(PropertyInfo prop)
         {
             return _fieldConfig.Get(prop)

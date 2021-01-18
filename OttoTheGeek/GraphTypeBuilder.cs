@@ -123,7 +123,7 @@ namespace OttoTheGeek {
                 return cache.GetOrCreate<TModel> (services);
             }
 
-            foreach (var prop in typeof (TModel).GetProperties ().Except (_config.PropsToIgnore)) {
+            foreach (var prop in typeof (TModel).GetProperties ().Where(x => !_config.IsPropertyIgnored(x))) {
                 var fieldConfig = _config.GetFieldConfig(prop);
                 fieldConfig.ConfigureField(graphType, cache, services);
             }
