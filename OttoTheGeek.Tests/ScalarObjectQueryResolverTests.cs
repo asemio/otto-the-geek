@@ -27,7 +27,13 @@ namespace OttoTheGeek.Tests
 
             private GraphTypeBuilder<ChildObject> BuildChildObject(GraphTypeBuilder<ChildObject> builder)
             {
-                return builder.IgnoreProperty(x => x.Ignored);
+                return ConfigureViaBaseType(builder)
+                    .IgnoreProperty(x => x.Ignored);
+            }
+
+            private GraphTypeBuilder<T> ConfigureViaBaseType<T>(GraphTypeBuilder<T> builder) where T : class, IChildObjectBase
+            {
+                return builder.IgnoreProperty(x => x.IgnoredViaBase);
             }
         }
 
@@ -39,9 +45,14 @@ namespace OttoTheGeek.Tests
             }
         }
 
-        public class ChildObjectBase
+        public interface IChildObjectBase
+        {
+            string IgnoredViaBase { get; set; }
+        }
+        public class ChildObjectBase : IChildObjectBase
         {
             public int Ignored { get; set; }
+            public string IgnoredViaBase { get; set; }
         }
         public sealed class ChildObject : ChildObjectBase
         {

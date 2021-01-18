@@ -59,7 +59,7 @@ namespace OttoTheGeek.Internal
         public bool IsPropertyIgnored(PropertyInfo prop)
         {
             return PropsToIgnore
-                .Any(x => x.DeclaringType == prop.DeclaringType && x.Name == prop.Name);
+                .Any(x => x.Name == prop.Name);
         }
 
         public FieldConfiguration<T> GetFieldConfig(PropertyInfo prop)
