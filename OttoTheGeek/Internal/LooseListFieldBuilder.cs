@@ -33,7 +33,7 @@ namespace OttoTheGeek.Internal
         public GraphTypeBuilder<TModel> Preloaded()
         {
             var prop = _propExpr.PropertyInfoForSimpleGet();
-            return _parentBuilder.WithResolverConfiguration(prop, new PreloadedListResolverConfiguration<TElem>(_scalarTypeMap));
+            return _parentBuilder.WithResolverConfiguration(prop, new PreloadedListResolverConfiguration<TModel, TElem>(_scalarTypeMap));
         }
     }
 

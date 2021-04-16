@@ -6,7 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace OttoTheGeek.Internal
 {
-    public sealed class PreloadedListResolverConfiguration<TRecord> : FieldResolverConfiguration
+    public sealed class PreloadedListResolverConfiguration<TModel, TProp> : FieldResolverConfiguration
     {
         private readonly ScalarTypeMap _scalarTypeMap;
 
@@ -17,12 +17,12 @@ namespace OttoTheGeek.Internal
 
         protected override IFieldResolver CreateGraphQLResolver()
         {
-            return null;
+            return new PreloadedFieldResolver<TModel>();
         }
 
         protected override IGraphType GetGraphType(GraphTypeCache cache, IServiceCollection services)
         {
-            if(_scalarTypeMap.TryGetGraphType(typeof(TRecord), out var scalarGraphType))
+            if(_scalarTypeMap.TryGetGraphType(typeof(TProp), out var scalarGraphType))
             {
                 var listGraphType = typeof(ListGraphType<>).MakeGenericType(scalarGraphType);
                 var listTypeInstance = (ListGraphType)Activator.CreateInstance(listGraphType);
@@ -35,7 +35,7 @@ namespace OttoTheGeek.Internal
                 return listTypeInstance;
             }
 
-            return new ListGraphType(cache.GetOrCreate(typeof(TRecord), services));
+            return new ListGraphType(cache.GetOrCreate(typeof(TProp), services));
         }
 
         protected override void RegisterResolver(IServiceCollection services)

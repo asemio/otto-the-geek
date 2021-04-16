@@ -23,7 +23,7 @@ namespace OttoTheGeek.Internal
 
         public GraphTypeBuilder<TModel> Preloaded()
         {
-            return _parentBuilder.WithResolverConfiguration(_prop, new PreloadedScalarResolverConfiguration<TProp>());
+            return _parentBuilder.WithResolverConfiguration(_prop, new PreloadedScalarResolverConfiguration<TModel, TProp>());
         }
 
         public GraphTypeBuilder<TModel> AsGraphType<TGraphType>()

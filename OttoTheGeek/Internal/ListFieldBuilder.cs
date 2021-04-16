@@ -24,7 +24,7 @@ namespace OttoTheGeek.Internal
 
         public GraphTypeBuilder<TModel> Preloaded()
         {
-            return _parentBuilder.WithResolverConfiguration(_prop, new PreloadedListResolverConfiguration<TElem>(_scalarTypeMap));
+            return _parentBuilder.WithResolverConfiguration(_prop, new PreloadedListResolverConfiguration<TModel, TElem>(_scalarTypeMap));
         }
     }
 
