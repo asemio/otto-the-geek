@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
+using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json.Linq;
 using OttoTheGeek.RuntimeSchema;
 using Xunit;
@@ -23,6 +25,14 @@ namespace OttoTheGeek.Tests
 
         public class WorkingModel : Model
         {
+            private int _grandchildResolves;
+
+            public int GrandchildResolves => _grandchildResolves;
+
+            public void IncrementGrandchildResolves()
+            {
+                Interlocked.Increment(ref _grandchildResolves);
+            }
             protected override SchemaBuilder ConfigureSchema(SchemaBuilder builder)
             {
                 var configured = builder
@@ -41,6 +51,11 @@ namespace OttoTheGeek.Tests
             protected virtual GraphTypeBuilder<GrandchildObject> ConfigureGrandchild(GraphTypeBuilder<GrandchildObject> builder)
             {
                 return builder.IgnoreProperty(x => x.CircularRelationship);
+            }
+
+            public override OttoServer CreateServer(Action<IServiceCollection> configurator = null)
+            {
+                return base.CreateServer(x => x.AddSingleton(this));
             }
         }
 
@@ -84,6 +99,12 @@ namespace OttoTheGeek.Tests
 
         public sealed class GrandchildResolver : IScalarFieldResolver<ChildObject, GrandchildObject>
         {
+            private readonly WorkingModel _model;
+
+            public GrandchildResolver(WorkingModel model)
+            {
+                _model = model;
+            }
             public static Dictionary<object, GrandchildObject> Data => new Dictionary<object, GrandchildObject>{
                 { 1L, new GrandchildObject {
                     Value1 = "one",
@@ -99,6 +120,7 @@ namespace OttoTheGeek.Tests
 
             public Task<Dictionary<object, GrandchildObject>> GetData(IEnumerable<object> keys)
             {
+                _model.IncrementGrandchildResolves();
                 return Task.FromResult(Data);
             }
 
@@ -195,6 +217,26 @@ namespace OttoTheGeek.Tests
             actual
                 .Should()
                 .BeEquivalentTo(GrandchildResolver.Data.Select(x => x.Value));
+        }
+
+        [Fact]
+        public void AvoidsNPlusOne()
+        {
+            var model = new WorkingModel();
+            var server = model.CreateServer();
+
+            var rawResult = server.Execute<JObject>(@"{
+                children {
+                    id
+                    child {
+                        value1
+                        value2
+                        value3
+                    }
+                }
+            }");
+
+            model.GrandchildResolves.Should().Be(1);
         }
 
         [Fact]

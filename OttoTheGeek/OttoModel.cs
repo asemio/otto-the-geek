@@ -42,7 +42,7 @@ namespace OttoTheGeek
             );
         }
 
-        public OttoServer CreateServer(Action<IServiceCollection> configurator = null)
+        public virtual OttoServer CreateServer(Action<IServiceCollection> configurator = null)
         {
             var services = new ServiceCollection();
             services

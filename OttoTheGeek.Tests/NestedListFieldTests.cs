@@ -1,7 +1,10 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
+using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json.Linq;
 using OttoTheGeek.RuntimeSchema;
 using Xunit;
@@ -23,6 +26,14 @@ namespace OttoTheGeek.Tests
         }
         public class Model : OttoModel<SimpleEnumerableQueryModel<ChildObject>>
         {
+            private int _grandchildResolves;
+
+            public int GrandchildResolves => _grandchildResolves;
+
+            public void IncrementGrandchildResolves()
+            {
+                Interlocked.Increment(ref _grandchildResolves);
+            }
             protected override SchemaBuilder ConfigureSchema(SchemaBuilder builder)
             {
                 return builder
@@ -34,6 +45,11 @@ namespace OttoTheGeek.Tests
                         b.LooseListField(x => x.Children)
                             .ResolvesVia<ChildrenResolver>()
                     );
+            }
+
+            public override OttoServer CreateServer(Action<IServiceCollection> configurator = null)
+            {
+                return base.CreateServer(x => x.AddSingleton(this));
             }
         }
 
@@ -52,8 +68,15 @@ namespace OttoTheGeek.Tests
 
         public sealed class GrandchildResolver : IListFieldResolver<ChildObject, GrandchildObject>
         {
+            private readonly Model _model;
+
+            public GrandchildResolver(Model model)
+            {
+                _model = model;
+            }
             public async Task<ILookup<object, GrandchildObject>> GetData(IEnumerable<object> keys)
             {
+                _model.IncrementGrandchildResolves();
                 await Task.CompletedTask;
 
                 return keys
@@ -142,6 +165,26 @@ namespace OttoTheGeek.Tests
             actual
                 .Should()
                 .BeEquivalentTo(expected);
+        }
+
+        [Fact]
+        public void AvoidsNPlusOne()
+        {
+            var model = new Model();
+            var server = model.CreateServer();
+
+            var rawResult = server.Execute<JObject>(@"{
+                children {
+                    id
+                    children {
+                        value1
+                        value2
+                        value3
+                    }
+                }
+            }");
+
+            model.GrandchildResolves.Should().Be(1);
         }
 
     }

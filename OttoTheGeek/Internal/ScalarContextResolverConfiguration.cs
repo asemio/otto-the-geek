@@ -26,18 +26,17 @@ namespace OttoTheGeek.Internal
             services.AddTransient<TResolver>();
         }
 
-        private sealed class ResolverProxy : ResolverProxyBase<TChild>
+        private sealed class ResolverProxy : IFieldResolver
         {
-            protected override Task<TChild> Resolve(IResolveFieldContext context, IServiceProvider provider)
+            public object Resolve(IResolveFieldContext context)
             {
+                var provider = ((IServiceProvider)context.Schema);
                 var loaderContext = provider.GetRequiredService<IDataLoaderContextAccessor>().Context;
                 var resolver = provider.GetRequiredService<TResolver>();
 
                 var loader = loaderContext.GetOrAddBatchLoader<object, TChild>(resolver.GetType().FullName, async (keys, token) => await resolver.GetData(keys));
 
-                var loaderResult = loader.LoadAsync(resolver.GetKey((TModel)context.Source));
-
-                return loaderResult.GetResultAsync();
+                return loader.LoadAsync(resolver.GetKey((TModel)context.Source));
             }
         }
     }
