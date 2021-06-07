@@ -29,6 +29,7 @@ namespace OttoTheGeek.Tests
             public Texture? Texture { get; set; }
             public IEnumerable<int> ListOfInts { get; set; }
             public IEnumerable<Texture> ListOfTextures { get; set; }
+            public ComplexThing ComplexThing { get; set; }
         }
 
         public sealed class Args
@@ -39,6 +40,13 @@ namespace OttoTheGeek.Tests
             public Texture? Texture { get; set; }
             public IEnumerable<int> ListOfInts { get; set; }
             public IEnumerable<Texture> ListOfTextures { get; set; }
+            public ComplexThing ComplexThing { get; set; } = new ComplexThing();
+        }
+
+        public sealed class ComplexThing
+        {
+            public int NumericThing { get; set; } = 22;
+            public string StringyValue { get; set; } = "Imma nested stringy thing";
         }
 
         public sealed class Resolver : IScalarFieldWithArgsResolver<Child, Args>
@@ -51,7 +59,8 @@ namespace OttoTheGeek.Tests
                     ANullableInt = args.ANullableInt,
                     Texture = args.Texture,
                     ListOfInts = args.ListOfInts,
-                    ListOfTextures = args.ListOfTextures
+                    ListOfTextures = args.ListOfTextures,
+                    ComplexThing = args.ComplexThing,
                 };
             }
         }
@@ -85,7 +94,9 @@ namespace OttoTheGeek.Tests
             public GraphTypeBuilder<Child> Configure(GraphTypeBuilder<Child> builder)
                 => builder
                     .ListField(x => x.ListOfInts).Preloaded()
-                    .ListField(x => x.ListOfTextures).Preloaded();
+                    .ListField(x => x.ListOfTextures).Preloaded()
+                    .ScalarField(x => x.ComplexThing).Preloaded()
+                ;
         }
 
         [Fact]
@@ -158,6 +169,12 @@ namespace OttoTheGeek.Tests
                                             ObjectType.NonNullableOf(
                                                 new ObjectType { Name = "Texture", Kind = ObjectKinds.Enum }))
                             },
+                            new FieldArgument
+                            {
+                                Name = nameof(Args.ComplexThing).ToCamelCase(),
+                                Type = ObjectType.NonNullableOf(
+                                    new ObjectType { Name = $"{nameof(ComplexThing)}Input", Kind = ObjectKinds.InputObject })
+                            },
                         }
                     },
                 },
@@ -218,20 +235,26 @@ namespace OttoTheGeek.Tests
             var server = new Model().CreateServer();
 
             var rawResult = server.Execute<JObject>(@"
-            query ($anInt: Int!, $aNullableInt: Int, $texture: Texture, $listOfInts: [Int!], $listOfTextures: [Texture!]) {
-                child(anInt: $anInt, aNullableInt: $aNullableInt, texture: $texture, listOfInts: $listOfInts, listOfTextures: $listOfTextures) {
+            query ($anInt: Int!, $aNullableInt: Int, $texture: Texture, $listOfInts: [Int!], $listOfTextures: [Texture!], $complexThing: ComplexThingInput!) {
+                child(anInt: $anInt, aNullableInt: $aNullableInt, texture: $texture, listOfInts: $listOfInts, listOfTextures: $listOfTextures, complexThing: $complexThing) {
                     anInt
                     aNullableInt
                     texture
                     listOfInts
                     listOfTextures
+                    complexThing { numericThing stringyValue }
                 }
             }", new {
                 anInt = args.AnInt,
                 aNullableInt = args.ANullableInt,
                 texture = args.Texture?.ToString(),
                 listOfInts = args.ListOfInts,
-                listOfTextures = args.ListOfTextures?.Select(x => x.ToString())
+                listOfTextures = args.ListOfTextures?.Select(x => x.ToString()),
+                complexThing = new
+                {
+                    numericThing = args.ComplexThing.NumericThing,
+                    stringyValue = args.ComplexThing.StringyValue,
+                },
             });
 
             var result = rawResult["child"].ToObject<Child>();
