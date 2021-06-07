@@ -243,11 +243,21 @@ namespace OttoTheGeek {
                 };
             }
             var elemType = prop.PropertyType.GetEnumerableElementType ();
-            if (elemType != null && _config.ScalarTypeMap.TryGetGraphType(elemType, out var elemGraphType))
+            if (elemType != null)
             {
-                var listGraphType = typeof(ListGraphType<>).MakeGenericType(elemGraphType);
+                if (_config.ScalarTypeMap.TryGetGraphType(elemType, out var scalarElemGraphType))
+                {
+                    var listGraphType = typeof(ListGraphType<>).MakeGenericType(scalarElemGraphType);
 
-                return new QueryArgument(listGraphType)
+                    return new QueryArgument(listGraphType)
+                    {
+                        Name = prop.Name
+                    };
+                }
+
+                var complexElemGraphType = cache.GetOrCreateInputType(elemType);
+                var listType = new ListGraphType(new NonNullGraphType(complexElemGraphType));
+                return new QueryArgument(listType)
                 {
                     Name = prop.Name
                 };

@@ -30,6 +30,8 @@ namespace OttoTheGeek.Tests
             public IEnumerable<int> ListOfInts { get; set; }
             public IEnumerable<Texture> ListOfTextures { get; set; }
             public ComplexThing ComplexThing { get; set; }
+
+            public IEnumerable<ComplexThing> MoreThings { get; set; }
         }
 
         public sealed class Args
@@ -41,6 +43,7 @@ namespace OttoTheGeek.Tests
             public IEnumerable<int> ListOfInts { get; set; }
             public IEnumerable<Texture> ListOfTextures { get; set; }
             public ComplexThing ComplexThing { get; set; } = new ComplexThing();
+            public IEnumerable<ComplexThing> MoreThings { get; set; } = new[] { new ComplexThing() };
         }
 
         public sealed class ComplexThing
@@ -61,6 +64,7 @@ namespace OttoTheGeek.Tests
                     ListOfInts = args.ListOfInts,
                     ListOfTextures = args.ListOfTextures,
                     ComplexThing = args.ComplexThing,
+                    MoreThings = args.MoreThings,
                 };
             }
         }
@@ -96,11 +100,84 @@ namespace OttoTheGeek.Tests
                     .ListField(x => x.ListOfInts).Preloaded()
                     .ListField(x => x.ListOfTextures).Preloaded()
                     .ScalarField(x => x.ComplexThing).Preloaded()
+                    .ListField(x => x.MoreThings).Preloaded()
                 ;
         }
 
         [Fact]
-        public void ConfiguresSchema()
+        public void ConfiguresScalarArgs()
+        {
+            var queryType = GetQueryObjectType();
+
+            queryType.Fields.Single().Args.Should().ContainEquivalentOf(
+                new FieldArgument
+                {
+                    Name = nameof(Args.AnInt).ToCamelCase(),
+                    Type = ObjectType.NonNullableOf(ObjectType.Int)
+                });
+            queryType.Fields.Single().Args.Should().ContainEquivalentOf(
+                new FieldArgument
+                {
+                    Name = nameof(Args.ANullableInt).ToCamelCase(),
+                    Type = ObjectType.Int
+                });
+            queryType.Fields.Single().Args.Should().ContainEquivalentOf(
+                new FieldArgument
+                {
+                    Name = nameof(Args.Texture).ToCamelCase(),
+                    Type = new ObjectType {
+                        Name = "Texture",
+                        Kind = ObjectKinds.Enum
+                    }
+                });
+        }
+
+        [Fact]
+        public void ConfiguresScalarLists()
+        {
+            var queryType = GetQueryObjectType();
+
+            queryType.Fields.Single().Args.Should().ContainEquivalentOf(
+                new FieldArgument
+                {
+                    Name = nameof(Args.ListOfInts).ToCamelCase(),
+                    Type = ObjectType.ListOf(
+                        ObjectType.NonNullableOf(
+                            ObjectType.Int))
+                });
+            queryType.Fields.Single().Args.Should().ContainEquivalentOf(
+                new FieldArgument
+                {
+                    Name = nameof(Args.ListOfTextures).ToCamelCase(),
+                    Type = ObjectType.ListOf(
+                        ObjectType.NonNullableOf(
+                            new ObjectType {Name = "Texture", Kind = ObjectKinds.Enum}))
+                });
+        }
+
+        [Fact]
+        public void ConfiguresComplexArgs()
+        {
+            var queryType = GetQueryObjectType();
+
+            queryType.Fields.Single().Args.Should().ContainEquivalentOf(
+                new FieldArgument
+                {
+                    Name = nameof(Args.ComplexThing).ToCamelCase(),
+                    Type = ObjectType.NonNullableOf(
+                        new ObjectType { Name = $"{nameof(ComplexThing)}Input", Kind = ObjectKinds.InputObject })
+                });
+            queryType.Fields.Single().Args.Should().ContainEquivalentOf(
+                new FieldArgument
+                {
+                    Name = nameof(Args.MoreThings).ToCamelCase(),
+                    Type =
+                        ObjectType.ListOf(ObjectType.NonNullableOf(
+                            new ObjectType { Name = $"{nameof(ComplexThing)}Input", Kind = ObjectKinds.InputObject }))
+                });
+        }
+
+        private static ObjectType GetQueryObjectType()
         {
             var server = new Model().CreateServer();
 
@@ -129,60 +206,8 @@ namespace OttoTheGeek.Tests
                 }
             }");
 
-            var expectedType = new ObjectType {
-                Kind = ObjectKinds.Object,
-                Name = "Query",
-                Fields = new [] {
-                    new ObjectField
-                    {
-                        Name = "child",
-                        Args = new [] {
-                            new FieldArgument
-                            {
-                                Name = nameof(Args.AnInt).ToCamelCase(),
-                                Type = ObjectType.NonNullableOf(ObjectType.Int)
-                            },
-                            new FieldArgument
-                            {
-                                Name = nameof(Args.ANullableInt).ToCamelCase(),
-                                Type = ObjectType.Int
-                            },
-                            new FieldArgument
-                            {
-                                Name = nameof(Args.Texture).ToCamelCase(),
-                                Type = new ObjectType {
-                                    Name = "Texture",
-                                    Kind = ObjectKinds.Enum
-                                }
-                            },
-                            new FieldArgument
-                            {
-                                Name = nameof(Args.ListOfInts).ToCamelCase(),
-                                Type = ObjectType.ListOf(
-                                            ObjectType.NonNullableOf(
-                                                ObjectType.Int))
-                            },
-                            new FieldArgument
-                            {
-                                Name = nameof(Args.ListOfTextures).ToCamelCase(),
-                                Type = ObjectType.ListOf(
-                                            ObjectType.NonNullableOf(
-                                                new ObjectType { Name = "Texture", Kind = ObjectKinds.Enum }))
-                            },
-                            new FieldArgument
-                            {
-                                Name = nameof(Args.ComplexThing).ToCamelCase(),
-                                Type = ObjectType.NonNullableOf(
-                                    new ObjectType { Name = $"{nameof(ComplexThing)}Input", Kind = ObjectKinds.InputObject })
-                            },
-                        }
-                    },
-                },
-            };
-
             var queryType = rawResult["__type"].ToObject<ObjectType>();
-
-            queryType.Should().BeEquivalentTo(expectedType);
+            return queryType;
         }
 
         [Fact]
@@ -235,14 +260,23 @@ namespace OttoTheGeek.Tests
             var server = new Model().CreateServer();
 
             var rawResult = server.Execute<JObject>(@"
-            query ($anInt: Int!, $aNullableInt: Int, $texture: Texture, $listOfInts: [Int!], $listOfTextures: [Texture!], $complexThing: ComplexThingInput!) {
-                child(anInt: $anInt, aNullableInt: $aNullableInt, texture: $texture, listOfInts: $listOfInts, listOfTextures: $listOfTextures, complexThing: $complexThing) {
+            query ($anInt: Int!, $aNullableInt: Int, $texture: Texture, $listOfInts: [Int!], $listOfTextures: [Texture!], $complexThing: ComplexThingInput!, $moreThings: [ComplexThingInput!]) {
+                child(
+                        anInt: $anInt,
+                        aNullableInt: $aNullableInt,
+                        texture: $texture,
+                        listOfInts: $listOfInts,
+                        listOfTextures: $listOfTextures,
+                        complexThing: $complexThing,
+                        moreThings: $moreThings
+                        ) {
                     anInt
                     aNullableInt
                     texture
                     listOfInts
                     listOfTextures
                     complexThing { numericThing stringyValue }
+                    moreThings { numericThing stringyValue }
                 }
             }", new {
                 anInt = args.AnInt,
@@ -255,6 +289,14 @@ namespace OttoTheGeek.Tests
                     numericThing = args.ComplexThing.NumericThing,
                     stringyValue = args.ComplexThing.StringyValue,
                 },
+                moreThings = new[]
+                {
+                    new
+                    {
+                        numericThing = args.ComplexThing.NumericThing,
+                        stringyValue = args.ComplexThing.StringyValue,
+                    },
+                }
             });
 
             var result = rawResult["child"].ToObject<Child>();
