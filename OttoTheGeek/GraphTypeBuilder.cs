@@ -123,7 +123,8 @@ namespace OttoTheGeek {
                 return cache.GetOrCreate<TModel> (services);
             }
 
-            foreach (var prop in typeof (TModel).GetProperties ().Where(x => !_config.IsPropertyIgnored(x))) {
+            foreach (var prop in GetRelevantProperties())
+            {
                 var fieldConfig = _config.GetFieldConfig(prop);
                 fieldConfig.ConfigureField(graphType, cache, services);
             }
@@ -148,7 +149,7 @@ namespace OttoTheGeek {
                 return (InputObjectGraphType<TModel>)cache.GetOrCreateInputType(typeof(TModel));
             }
 
-            foreach (var prop in typeof (TModel).GetProperties ().Except (_config.PropsToIgnore))
+            foreach (var prop in GetRelevantProperties())
             {
                 var fieldConfig = _config.GetFieldConfig(prop);
                 fieldConfig.ConfigureInputTypeField(graphType, cache);
@@ -157,9 +158,7 @@ namespace OttoTheGeek {
         }
 
         public QueryArguments BuildQueryArguments (GraphTypeCache cache, IServiceCollection services) {
-            var args = typeof (TModel)
-                .GetProperties ()
-                .Except (_config.PropsToIgnore)
+            var args = GetRelevantProperties()
                 .Select (prop => ToQueryArgument (prop, cache));
 
             return new QueryArguments (args);
@@ -239,7 +238,8 @@ namespace OttoTheGeek {
                     enumGraphType = new NonNullGraphType (enumGraphType);
                 }
                 return new QueryArgument (enumGraphType) {
-                    Name = prop.Name
+                    Name = prop.Name,
+                    Description = desc,
                 };
             }
             var elemType = prop.PropertyType.GetEnumerableElementType ();
@@ -251,7 +251,8 @@ namespace OttoTheGeek {
 
                     return new QueryArgument(listGraphType)
                     {
-                        Name = prop.Name
+                        Name = prop.Name,
+                        Description = desc,
                     };
                 }
 
@@ -259,7 +260,8 @@ namespace OttoTheGeek {
                 var listType = new ListGraphType(new NonNullGraphType(complexElemGraphType));
                 return new QueryArgument(listType)
                 {
-                    Name = prop.Name
+                    Name = prop.Name,
+                    Description = desc,
                 };
             }
 
@@ -267,7 +269,8 @@ namespace OttoTheGeek {
 
             return new QueryArgument(fieldConfig.TryWrapNonNull(inputType))
             {
-                Name = prop.Name
+                Name = prop.Name,
+                Description = desc,
             };
         }
 
@@ -278,6 +281,16 @@ namespace OttoTheGeek {
 
             var objectGraphType = new ObjectGraphType<TModel> ();
             return objectGraphType;
+        }
+
+        private IEnumerable<PropertyInfo> GetRelevantProperties()
+        {
+            var props = typeof(TModel)
+                .GetProperties()
+                .Where(x => !_config.IsPropertyIgnored(x))
+                .Where(x => x.CanRead && x.GetMethod?.IsStatic == false);
+
+            return props;
         }
     }
 }
