@@ -59,6 +59,13 @@ namespace OttoTheGeek.Tests
             public string Value1 => "hello";
             public string Value2 => "world";
             public int Value3 => 654;
+
+            public sealed class Irrelevant
+            {
+                public static string DoesNotMatter { get; set; }
+            }
+
+            public static Irrelevant ThingThatOttoShouldNotCareAbout { get; set; }
         }
 
         [Fact]
