@@ -1,7 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using FluentAssertions;
-using GraphQL;
+using GraphQL.NewtonsoftJson;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json.Linq;
 using Xunit;
@@ -207,7 +207,7 @@ namespace OttoTheGeek.Tests
                 }
             }", throwOnError: false);
 
-            result["data"].GetPropertyValue("child").Should().BeNull();
+            result["data"]["child"].Should().BeEquivalentTo(new JObject());
 
             var errs = (JArray)result["errors"];
             errs.Count.Should().Be(1);
