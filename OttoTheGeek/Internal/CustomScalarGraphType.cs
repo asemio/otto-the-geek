@@ -44,7 +44,7 @@ namespace OttoTheGeek.Internal
                 return _converter.Convert(castedValue);
             }
 
-            return _converter.Convert(_converter.Parse(value?.ToString()));
+            return null;
         }
     }
 }

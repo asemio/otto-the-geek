@@ -48,6 +48,8 @@ namespace OttoTheGeek.Tests
         public sealed class ChildObject
         {
             public FancyInt IntValue { get; set; } = FancyInt.FromInt(654);
+
+            public FancyInt? NeverValue { get; set; }
             public FancyString StrValue { get; set; } = FancyString.FromString("foo");
         }
 
@@ -136,11 +138,13 @@ namespace OttoTheGeek.Tests
                 child {
                     intValue
                     strValue
+                    neverValue
                 }
             }");
 
             result["child"].Value<string>("intValue").Should().Be("**654**");
             result["child"].Value<string>("strValue").Should().Be("--foo--");
+            result["child"].Value<string>("neverValue").Should().BeNull();
         }
 
         [Fact]
