@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using GraphQL;
+using GraphQL.DataLoader;
 using GraphQL.Server;
 using GraphQL.SystemTextJson;
 using Microsoft.Extensions.DependencyInjection;
@@ -20,6 +21,8 @@ namespace OttoTheGeek
 
                     return schema;
                 })
+                .AddSingleton<IDataLoaderContextAccessor, DataLoaderContextAccessor>()
+                .AddSingleton<DataLoaderDocumentListener>()
                 .TryRegisterGraphQLServer(configureOptions);
         }
 
