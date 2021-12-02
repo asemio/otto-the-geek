@@ -22,7 +22,10 @@ namespace OttoTheGeek
                 Subscription = schema.SubscriptionType;
             }
 
-            RegisterTypes(schema.OtherTypes.ToArray());
+            foreach (var gt in schema.OtherTypes)
+            {
+                RegisterType(gt);
+            }
         }
     }
 }

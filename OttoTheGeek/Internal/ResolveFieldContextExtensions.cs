@@ -17,7 +17,7 @@ namespace OttoTheGeek.Internal
                 }
 
                 // this GetPropertyValue is from GraphQL
-                prop.SetValue(args, propValue.GetPropertyValue(prop.PropertyType));
+                prop.SetValue(args, propValue.Value.GetPropertyValue(prop.PropertyType));
             }
 
             return args;

@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using GraphQL;
 using GraphQL.DataLoader;
+using GraphQL.Execution;
 using GraphQL.Types;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
@@ -11,7 +13,7 @@ namespace OttoTheGeek
 {
     public sealed class OttoServer
     {
-        private Schema _schema;
+        private readonly Schema _schema;
         private readonly IServiceProvider _provider;
 
         internal OttoServer(Schema schema, IServiceProvider provider)
@@ -33,9 +35,10 @@ namespace OttoTheGeek
             {
                 Query = queryText,
                 Schema = _schema,
-                Inputs = inputs
+                Inputs = inputs,
+                RequestServices = _provider,
             };
-            opts.Listeners.Add(_provider.GetRequiredService<DataLoaderDocumentListener>());
+            opts.Listeners.AddRange(_provider.GetServices<IDocumentExecutionListener>());
             var resultAsync = executer.ExecuteAsync(opts);
             var executionResult = resultAsync.Result;
 
@@ -44,7 +47,13 @@ namespace OttoTheGeek
                 throw new InvalidOperationException("Errors found: " + JArray.FromObject(executionResult.Errors).ToString());
             }
 
-            var data = JObject.FromObject(executionResult.Data);
+            var node = (RootExecutionNode)executionResult.Data;
+
+            var writer = _provider.GetRequiredService<GraphQL.IDocumentWriter>();
+
+            var dataString = writer.WriteToStringAsync(node.ToValue()).GetAwaiter().GetResult();
+
+            var data = JObject.Parse(dataString);
             if(!throwOnError)
             {
                 data = new JObject(
