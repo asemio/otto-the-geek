@@ -40,6 +40,8 @@ public sealed class ProductConnectionResolver : IConnectionResolver<Product>
 }
 ```
 
+## The `OrderValue<T>` Class
+
 One of the properties of `PagingArgs<Product>` is `OrderBy`, which is of type `OrderValue<Product>`. OttoTheGeek configures this as an `ENUM` type in GraphQL, and uses the properties of the model to determine its values. By default, the enum values of `OrderValue<Product>` for the model above would be:
 
 * `Id_ASC`
@@ -123,6 +125,7 @@ public sealed class ProductConnectionResolver : IConnectionResolver<Product>
 
     public async Task<Connection<Product>> Resolve(PagingArgs<Product> args)
     {
+        var query = BaseQuery(); // assuming IQueryable<Product>
         if(args.OrderBy.Name == "ManufacturerName")
         {
             // sort differently since this is a custom sort value;
@@ -130,12 +133,14 @@ public sealed class ProductConnectionResolver : IConnectionResolver<Product>
         }
         else
         {
-            // sort based on args.OrderBy.Prop
+            query = query.OrderBy(args.OrderBy);
         }
         // use args.Offset, args.Count to select page
     }
 }
 ```
+
+As a convenience, OttoTheGeek publishes an extension method on `IQueryable<T>` that allows you to use an `OrderValue<T>` to sort an `IQueryable<T>`, as shown in the example above. This method will throw an exception if using a custom order value since it can't be automatically translated.
 
 ## Custom `PagingArgs<T>`
 
