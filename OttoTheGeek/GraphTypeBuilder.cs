@@ -9,6 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 using OttoTheGeek.Connections;
 using OttoTheGeek.Internal;
 using OttoTheGeek.Internal.Authorization;
+using OttoTheGeek.Internal.ResolverConfiguration;
 using SchemaBuilderCallback = System.Func<OttoTheGeek.SchemaBuilder, OttoTheGeek.SchemaBuilder>;
 
 namespace OttoTheGeek {

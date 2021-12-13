@@ -1,4 +1,5 @@
 using System.Reflection;
+using OttoTheGeek.Internal.ResolverConfiguration;
 
 namespace OttoTheGeek.Internal
 {
@@ -26,6 +27,10 @@ namespace OttoTheGeek.Internal
         {
             return _parentBuilder.WithResolverConfiguration(_prop, new PreloadedListResolverConfiguration<TModel, TElem>(_scalarTypeMap));
         }
-    }
 
+        public ListFieldWithArgsBuilder<TModel, TElem, TArgs> WithArgs<TArgs>()
+        {
+            return new ListFieldWithArgsBuilder<TModel, TElem, TArgs>(_parentBuilder, _prop, _scalarTypeMap);
+        }
+    }
 }

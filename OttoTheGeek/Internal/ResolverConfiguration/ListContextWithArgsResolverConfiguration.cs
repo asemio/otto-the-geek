@@ -1,15 +1,14 @@
-using System;
-using System.Threading.Tasks;
+﻿using System;
 using GraphQL;
 using GraphQL.DataLoader;
 using GraphQL.Resolvers;
 using GraphQL.Types;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace OttoTheGeek.Internal
+namespace OttoTheGeek.Internal.ResolverConfiguration
 {
-    internal sealed class ScalarContextResolverConfiguration<TResolver, TModel, TChild> : FieldResolverConfiguration
-        where TResolver : class, IScalarFieldResolver<TModel, TChild>
+    internal sealed class ListContextWithArgsResolverConfiguration<TResolver, TModel, TField, TArgs> : FieldWithArgsResolverConfiguration<TArgs>
+        where TResolver : class, IListFieldWithArgsResolver<TModel, TField, TArgs>
     {
         protected override IFieldResolver CreateGraphQLResolver()
         {
@@ -18,7 +17,7 @@ namespace OttoTheGeek.Internal
 
         protected override IGraphType GetGraphType(GraphTypeCache cache, IServiceCollection services)
         {
-            return cache.GetOrCreate<TChild>(services);
+            return new ListGraphType(cache.GetOrCreate<TField>(services));
         }
 
         protected override void RegisterResolver(IServiceCollection services)
@@ -34,9 +33,10 @@ namespace OttoTheGeek.Internal
                 var loaderContext = provider.GetRequiredService<IDataLoaderContextAccessor>().Context;
                 var resolver = provider.GetRequiredService<TResolver>();
 
-                var loader = loaderContext.GetOrAddBatchLoader<object, TChild>(resolver.GetType().FullName, async (keys, token) => await resolver.GetData(keys));
+                var args = context.DeserializeArgs<TArgs>();
+                var loader = loaderContext.GetOrAddCollectionBatchLoader<object, TField>(resolver.GetType().FullName, async (keys, token) => await resolver.GetData(keys, args));
 
-                return loader.LoadAsync(resolver.GetKey((TModel)context.Source));
+                return loader.LoadAsync(resolver.GetKey((TModel) context.Source));
             }
         }
     }

@@ -1,4 +1,5 @@
 using System.Reflection;
+using OttoTheGeek.Internal.ResolverConfiguration;
 
 namespace OttoTheGeek.Internal
 {

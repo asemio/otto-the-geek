@@ -51,7 +51,7 @@ namespace OttoTheGeek.Tests
             public string SearchText { get; set; }
         }
 
-        public sealed class ChildResolver : IListFieldWithArgsResolver<Child, Args>
+        public sealed class ChildResolver : ILooseListFieldWithArgsResolver<Child, Args>
         {
             public static IEnumerable<Child> Data = new[] {
                 new Child(),

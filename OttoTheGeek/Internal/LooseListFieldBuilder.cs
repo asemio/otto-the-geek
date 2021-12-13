@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
+using OttoTheGeek.Internal.ResolverConfiguration;
 
 namespace OttoTheGeek.Internal
 {
@@ -22,7 +23,7 @@ namespace OttoTheGeek.Internal
             where TResolver : class, ILooseListFieldResolver<TElem>
         {
             var prop = _propExpr.PropertyInfoForSimpleGet();
-            return _parentBuilder.WithResolverConfiguration(prop, new ListResolverConfiguration<TResolver, TElem>(_scalarTypeMap));
+            return _parentBuilder.WithResolverConfiguration(prop, new LooseListResolverConfiguration<TResolver, TElem>(_scalarTypeMap));
         }
 
         public LooseListFieldWithArgsBuilder<TModel, TElem, TArgs> WithArgs<TArgs>()
@@ -50,10 +51,10 @@ namespace OttoTheGeek.Internal
         }
 
         public GraphTypeBuilder<TModel> ResolvesVia<TResolver>()
-            where TResolver : class, IListFieldWithArgsResolver<TElem, TArgs>
+            where TResolver : class, ILooseListFieldWithArgsResolver<TElem, TArgs>
         {
             var prop = _propExpr.PropertyInfoForSimpleGet();
-            return _parentBuilder.WithResolverConfiguration(prop, new ListWithArgsResolverConfiguration<TResolver, TElem, TArgs>());
+            return _parentBuilder.WithResolverConfiguration(prop, new LooseListWithArgsResolverConfiguration<TResolver, TElem, TArgs>());
         }
     }
 }

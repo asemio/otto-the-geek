@@ -11,6 +11,6 @@ namespace OttoTheGeek
         Task<ILookup<object, TField>> GetData(IEnumerable<object> keys);
     }
 
-    [Obsolete("This interface will be removed in version 1.0; use ILooseListFieldResolver<TElem>")]
+    [Obsolete("This interface will be removed in version 2.0; use ILooseListFieldResolver<TElem>")]
     public interface IListFieldResolver<TElem> : ILooseListFieldResolver<TElem> {}
 }

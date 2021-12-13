@@ -9,6 +9,7 @@ using GraphQL.Resolvers;
 using GraphQL.Types;
 using Microsoft.Extensions.DependencyInjection;
 using OttoTheGeek.Internal.Authorization;
+using OttoTheGeek.Internal.ResolverConfiguration;
 
 namespace OttoTheGeek.Internal
 {

@@ -1,5 +1,6 @@
 using System.Reflection;
 using GraphQL.Types;
+using OttoTheGeek.Internal.ResolverConfiguration;
 
 namespace OttoTheGeek.Internal
 {

@@ -4,7 +4,7 @@ using GraphQL.Resolvers;
 using GraphQL.Types;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace OttoTheGeek.Internal
+namespace OttoTheGeek.Internal.ResolverConfiguration
 {
     public sealed class PreloadedListResolverConfiguration<TModel, TProp> : FieldResolverConfiguration
     {

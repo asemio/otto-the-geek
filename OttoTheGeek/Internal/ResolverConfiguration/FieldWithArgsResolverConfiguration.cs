@@ -1,7 +1,7 @@
 using GraphQL.Types;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace OttoTheGeek.Internal
+namespace OttoTheGeek.Internal.ResolverConfiguration
 {
     public abstract class FieldWithArgsResolverConfiguration<TArgs> : FieldResolverConfiguration
     {

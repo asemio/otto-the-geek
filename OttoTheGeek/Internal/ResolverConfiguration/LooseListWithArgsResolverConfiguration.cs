@@ -1,16 +1,15 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using GraphQL;
 using GraphQL.Resolvers;
 using GraphQL.Types;
 using Microsoft.Extensions.DependencyInjection;
-using OttoTheGeek.Connections;
 
-namespace OttoTheGeek.Internal
+namespace OttoTheGeek.Internal.ResolverConfiguration
 {
-    public sealed class ConnectionResolverConfiguration<TModel, TArgs, TResolver> : FieldWithArgsResolverConfiguration<TArgs>
-        where TResolver : class, IConnectionResolver<TModel, TArgs>
-        where TArgs : PagingArgs<TModel>
+    public sealed class LooseListWithArgsResolverConfiguration<TResolver, TElem, TArgs> : FieldWithArgsResolverConfiguration<TArgs>
+        where TResolver : class, ILooseListFieldWithArgsResolver<TElem, TArgs>
     {
         protected override IFieldResolver CreateGraphQLResolver()
         {
@@ -19,7 +18,7 @@ namespace OttoTheGeek.Internal
 
         protected override IGraphType GetGraphType(GraphTypeCache cache, IServiceCollection services)
         {
-            return cache.GetOrCreate<Connection<TModel>>(services);
+            return new ListGraphType(cache.GetOrCreate<TElem>(services));
         }
 
         protected override void RegisterResolver(IServiceCollection services)
@@ -27,9 +26,9 @@ namespace OttoTheGeek.Internal
             services.AddTransient<TResolver>();
         }
 
-        private sealed class ResolverProxy : ResolverProxyBase<Connection<TModel>>
+        private sealed class ResolverProxy : ResolverProxyBase<IEnumerable<TElem>>
         {
-            protected override Task<Connection<TModel>> Resolve(IResolveFieldContext context, IServiceProvider provider)
+            protected override Task<IEnumerable<TElem>> Resolve(IResolveFieldContext context, IServiceProvider provider)
             {
                 var resolver = provider.GetRequiredService<TResolver>();
 

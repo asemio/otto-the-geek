@@ -4,11 +4,13 @@ using GraphQL;
 using GraphQL.Resolvers;
 using GraphQL.Types;
 using Microsoft.Extensions.DependencyInjection;
+using OttoTheGeek.Connections;
 
-namespace OttoTheGeek.Internal
+namespace OttoTheGeek.Internal.ResolverConfiguration
 {
-    public sealed class ScalarWithArgsResolverConfiguration<TResolver, TProp, TArgs> : FieldWithArgsResolverConfiguration<TArgs>
-        where TResolver : class, IScalarFieldWithArgsResolver<TProp, TArgs>
+    public sealed class ConnectionResolverConfiguration<TModel, TArgs, TResolver> : FieldWithArgsResolverConfiguration<TArgs>
+        where TResolver : class, IConnectionResolver<TModel, TArgs>
+        where TArgs : PagingArgs<TModel>
     {
         protected override IFieldResolver CreateGraphQLResolver()
         {
@@ -17,7 +19,7 @@ namespace OttoTheGeek.Internal
 
         protected override IGraphType GetGraphType(GraphTypeCache cache, IServiceCollection services)
         {
-            return cache.GetOrCreate<TProp>(services);
+            return cache.GetOrCreate<Connection<TModel>>(services);
         }
 
         protected override void RegisterResolver(IServiceCollection services)
@@ -25,13 +27,12 @@ namespace OttoTheGeek.Internal
             services.AddTransient<TResolver>();
         }
 
-        private sealed class ResolverProxy : ResolverProxyBase<TProp>
+        private sealed class ResolverProxy : ResolverProxyBase<Connection<TModel>>
         {
-            protected override Task<TProp> Resolve(IResolveFieldContext context, IServiceProvider provider)
+            protected override Task<Connection<TModel>> Resolve(IResolveFieldContext context, IServiceProvider provider)
             {
                 var resolver = provider.GetRequiredService<TResolver>();
 
-                // apparently need to downcast the context to get deserialization
                 var args = context.DeserializeArgs<TArgs>();
 
                 return resolver.Resolve(args);

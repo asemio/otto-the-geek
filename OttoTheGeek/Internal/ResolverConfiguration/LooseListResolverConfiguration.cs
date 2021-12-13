@@ -6,14 +6,14 @@ using GraphQL.Resolvers;
 using GraphQL.Types;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace OttoTheGeek.Internal
+namespace OttoTheGeek.Internal.ResolverConfiguration
 {
-    public sealed class ListResolverConfiguration<TResolver, TElem> : FieldResolverConfiguration
+    public sealed class LooseListResolverConfiguration<TResolver, TElem> : FieldResolverConfiguration
         where TResolver : class, ILooseListFieldResolver<TElem>
     {
         private readonly ScalarTypeMap _scalarTypeMap;
 
-        public ListResolverConfiguration(ScalarTypeMap scalarTypeMap)
+        public LooseListResolverConfiguration(ScalarTypeMap scalarTypeMap)
         {
             _scalarTypeMap = scalarTypeMap;
         }
