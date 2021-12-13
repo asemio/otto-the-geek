@@ -129,7 +129,7 @@ namespace OttoTheGeek.Tests
 
                 if(args.OrderBy?.Prop != null)
                 {
-                    return ApplyOrderingByProp(args.OrderBy);
+                    return Data.AsQueryable().OrderBy(args.OrderBy);
                 }
 
                 if(args.OrderBy?.Name == "custom")
@@ -142,16 +142,6 @@ namespace OttoTheGeek.Tests
                 }
 
                 return Data;
-            }
-
-            private IEnumerable<Child> ApplyOrderingByProp(OrderValue<Child> orderValue)
-            {
-                if(orderValue.Descending)
-                {
-                    return Data.OrderByDescending(x => orderValue.Prop.GetValue(x));
-                }
-
-                return Data.OrderBy(x => orderValue.Prop.GetValue(x));
             }
         }
 
