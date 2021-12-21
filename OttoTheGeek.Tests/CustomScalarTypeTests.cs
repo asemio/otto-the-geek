@@ -24,7 +24,7 @@ namespace OttoTheGeek.Tests
             }
         }
 
-        public sealed class ChildResolver : IScalarFieldWithArgsResolver<ChildObject, Args>
+        public sealed class ChildResolver : ILooseScalarFieldWithArgsResolver<ChildObject, Args>
         {
             public async Task<ChildObject> Resolve(Args args)
             {

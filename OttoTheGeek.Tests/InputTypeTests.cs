@@ -52,7 +52,7 @@ namespace OttoTheGeek.Tests
             public string StringyValue { get; set; } = "Imma nested stringy thing";
         }
 
-        public sealed class Resolver : IScalarFieldWithArgsResolver<Child, Args>
+        public sealed class Resolver : ILooseScalarFieldWithArgsResolver<Child, Args>
         {
             public async Task<Child> Resolve(Args args)
             {

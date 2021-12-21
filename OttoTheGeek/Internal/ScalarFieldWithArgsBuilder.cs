@@ -3,22 +3,22 @@ using OttoTheGeek.Internal.ResolverConfiguration;
 
 namespace OttoTheGeek.Internal
 {
-    public sealed class ListFieldWithArgsBuilder<TModel, TElem, TArgs>
+    public sealed class ScalarFieldWithArgsBuilder<TModel, TProp, TArgs>
         where TModel : class
     {
         private readonly GraphTypeBuilder<TModel> _parentBuilder;
         private readonly PropertyInfo _prop;
 
-        internal ListFieldWithArgsBuilder(GraphTypeBuilder<TModel> parentBuilder, PropertyInfo prop)
+        internal ScalarFieldWithArgsBuilder(GraphTypeBuilder<TModel> parentBuilder, PropertyInfo prop)
         {
             _parentBuilder = parentBuilder;
             _prop = prop;
         }
 
         public GraphTypeBuilder<TModel> ResolvesVia<TResolver>()
-            where TResolver : class, IListFieldWithArgsResolver<TModel, TElem, TArgs>
+            where TResolver : class, IScalarFieldWithArgsResolver<TModel, TProp, TArgs>
         {
-            return _parentBuilder.WithResolverConfiguration(_prop, new ListContextWithArgsResolverConfiguration<TResolver, TModel, TElem, TArgs>());
+            return _parentBuilder.WithResolverConfiguration(_prop, new ScalarContextWithArgsResolverConfiguration<TResolver, TModel, TProp, TArgs>());
         }
     }
 }

@@ -32,5 +32,10 @@ namespace OttoTheGeek.Internal
         {
             return _parentBuilder.WithGraphTypeOverride(_prop, typeof(TGraphType));
         }
+
+        public ScalarFieldWithArgsBuilder<TModel, TProp, TArgs> WithArgs<TArgs>()
+        {
+            return new ScalarFieldWithArgsBuilder<TModel, TProp, TArgs>(_parentBuilder, _prop);
+        }
     }
 }

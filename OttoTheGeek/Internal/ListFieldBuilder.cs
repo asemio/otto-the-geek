@@ -30,7 +30,7 @@ namespace OttoTheGeek.Internal
 
         public ListFieldWithArgsBuilder<TModel, TElem, TArgs> WithArgs<TArgs>()
         {
-            return new ListFieldWithArgsBuilder<TModel, TElem, TArgs>(_parentBuilder, _prop, _scalarTypeMap);
+            return new ListFieldWithArgsBuilder<TModel, TElem, TArgs>(_parentBuilder, _prop);
         }
     }
 }
