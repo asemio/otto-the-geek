@@ -165,7 +165,10 @@ namespace OttoTheGeek {
             return new QueryArguments (args);
         }
 
-        internal GraphTypeBuilder<TModel> WithSchemaBuilderCallback(SchemaBuilderCallback callback)
+        /// <summary>
+        /// This is an escape hatch to allow you to configure other graph types
+        /// </summary>
+        public GraphTypeBuilder<TModel> WithSchemaBuilderCallback(SchemaBuilderCallback callback)
         {
             return new GraphTypeBuilder<TModel>(_config, _schemaBuilderCallbacks.Concat(new[] { callback }).ToArray());
         }
