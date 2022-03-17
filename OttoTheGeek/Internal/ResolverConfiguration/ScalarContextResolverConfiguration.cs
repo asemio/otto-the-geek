@@ -35,7 +35,13 @@ namespace OttoTheGeek.Internal.ResolverConfiguration
 
                 var loader = loaderContext.GetOrAddBatchLoader<object, TChild>(resolver.GetType().FullName, async (keys, token) => await resolver.GetData(keys));
 
-                return loader.LoadAsync(resolver.GetKey((TModel)context.Source));
+                var key = resolver.GetKey((TModel) context.Source);
+                if (key == null)
+                {
+                    return null;
+                }
+
+                return loader.LoadAsync(key);
             }
         }
     }

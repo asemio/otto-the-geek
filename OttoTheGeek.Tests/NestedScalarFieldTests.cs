@@ -76,7 +76,8 @@ namespace OttoTheGeek.Tests
 
                 return new[] {
                     new ChildObject { Id = 1 },
-                    new ChildObject { Id = 2 }
+                    new ChildObject { Id = 2 },
+                    new ChildObject { Id = 3 },
                 };
             }
         }
@@ -115,6 +116,11 @@ namespace OttoTheGeek.Tests
                     Value1 = "two",
                     Value2 = "dos",
                     Value3 = 20000
+                }},
+                { 3L, new GrandchildObject {
+                    Value1 = "three",
+                    Value2 = "tres",
+                    Value3 = null
                 }}
             };
 
@@ -139,7 +145,7 @@ namespace OttoTheGeek.Tests
         {
             public string Value1 { get; set; }
             public string Value2 { get; set; }
-            public int Value3 { get; set; }
+            public int? Value3 { get; set; }
             public ChildObject CircularRelationship { get; set; }
         }
 
@@ -267,10 +273,12 @@ namespace OttoTheGeek.Tests
                 .Select(x => x["child"])
                 .Select(x => x["circularRelationship"])
                 .Select(x => x.ToObject<ChildObject>())
+                .Where(x => x != null)
                 .ToArray();
 
             var expected = GrandchildResolver.Data.Values
-                .Select(x => new ChildObject { Id = x.Value3 });
+                .Where(x => x.Value3 != null)
+                .Select(x => new ChildObject { Id = x.Value3 ?? 0 });
 
             actual
                 .Should()
