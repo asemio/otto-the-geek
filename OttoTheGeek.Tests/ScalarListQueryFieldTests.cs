@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Newtonsoft.Json.Linq;
@@ -12,6 +13,8 @@ namespace OttoTheGeek.Tests
         public sealed class Query
         {
             public IEnumerable<string> Things { get; set; }
+            public IEnumerable<string> ThingsWithArgs { get; set; }
+            public IEnumerable<int> NumsWithArgs { get; set; }
         }
 
         public sealed class Model : OttoModel<Query>
@@ -19,13 +22,20 @@ namespace OttoTheGeek.Tests
             protected override SchemaBuilder ConfigureSchema(SchemaBuilder builder)
             {
                 return builder.GraphType<Query>(
-                    b => b.LooseListField(x => x.Things)
-                        .ResolvesVia<Resolver>()
+                    b => b
+                        .LooseListField(x => x.Things)
+                            .ResolvesVia<ThingsResolver>()
+                        .LooseListField(x => x.ThingsWithArgs)
+                            .WithArgs<Args>()
+                            .ResolvesVia<ThingsWithArgsResolver>()
+                        .LooseListField(x => x.NumsWithArgs)
+                            .WithArgs<Args>()
+                            .ResolvesVia<NumsWithArgsResolver>()
                         );
             }
         }
 
-        public sealed class Resolver : ILooseListFieldResolver<string>
+        public sealed class ThingsResolver : ILooseListFieldResolver<string>
         {
             public static IEnumerable<string> Data => new[] {
                 "one",
@@ -35,6 +45,30 @@ namespace OttoTheGeek.Tests
             public Task<IEnumerable<string>> Resolve()
             {
                 return Task.FromResult(Data);
+            }
+        }
+        
+        public class Args
+        {
+            public string Arg { get; set; }
+        }
+        public sealed class ThingsWithArgsResolver : ILooseListFieldWithArgsResolver<string, Args>
+        {
+            public static IEnumerable<string> Data => new[] {
+                "one",
+                "two",
+                "three"
+            };
+            public Task<IEnumerable<string>> Resolve(Args args)
+            {
+                return Task.FromResult(Data);
+            }
+        }
+        public sealed class NumsWithArgsResolver : ILooseListFieldWithArgsResolver<int, Args>
+        {
+            public Task<IEnumerable<int>> Resolve(Args args)
+            {
+                return Task.FromResult(Enumerable.Range(1, 5));
             }
         }
 
@@ -75,7 +109,21 @@ namespace OttoTheGeek.Tests
                         Type = ObjectType.ListOf(
                             ObjectType.NonNullableOf(ObjectType.String)
                         )
-                    }
+                    },
+                    new ObjectField
+                    {
+                        Name = "thingsWithArgs",
+                        Type = ObjectType.ListOf(
+                            ObjectType.NonNullableOf(ObjectType.String)
+                        )
+                    },
+                    new ObjectField
+                    {
+                        Name = "numsWithArgs",
+                        Type = ObjectType.ListOf(
+                            ObjectType.NonNullableOf(ObjectType.Int)
+                        )
+                    },
                 }
             };
 
@@ -96,7 +144,7 @@ namespace OttoTheGeek.Tests
             var result = rawResult["things"].ToObject<string[]>();
 
 
-            result.Should().BeEquivalentTo(Resolver.Data);
+            result.Should().BeEquivalentTo(ThingsResolver.Data);
         }
     }
 }
