@@ -16,7 +16,7 @@ namespace OttoTheGeek
             var ottoSchema = model.BuildOttoSchema(services);
 
             return services
-                .AddTransient(ctx => {
+                .AddSingleton(ctx => {
                     var schema = new ModelSchema<TModel>(ottoSchema, ctx);
 
                     return schema;
