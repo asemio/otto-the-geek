@@ -16,7 +16,7 @@ namespace OttoTheGeek
             var ottoSchema = model.BuildOttoSchema(services);
 
             return services
-                .AddSingleton(ctx => {
+                .AddScoped(ctx => {
                     var schema = new ModelSchema<TModel>(ottoSchema, ctx);
 
                     return schema;
