@@ -2,7 +2,6 @@ using System;
 using System.Threading.Tasks;
 using GraphQL;
 using GraphQL.Resolvers;
-using GraphQL.Types;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace OttoTheGeek.Internal.Authorization
@@ -18,25 +17,13 @@ namespace OttoTheGeek.Internal.Authorization
             _wrapped = wrapped;
         }
 
-        object IFieldResolver.Resolve(IResolveFieldContext context)
-        {
-            return ResolveCore(context);
-        }
-
-        private async Task<object> ResolveCore(IResolveFieldContext context)
+        public async ValueTask<object> ResolveAsync(IResolveFieldContext context)
         {
             var sp = ((IServiceProvider)context.Schema);
             var authorizer = sp.GetRequiredService<TAuthorizer>();
             if(await _authFn(authorizer))
             {
-                var res = _wrapped.Resolve(context);
-
-                if(res is Task t)
-                {
-                    await t.ConfigureAwait(false);
-
-                    return ((dynamic)t).Result;
-                }
+                var res = await _wrapped.ResolveAsync(context);
 
                 return res;
             }

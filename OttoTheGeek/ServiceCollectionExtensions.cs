@@ -3,7 +3,6 @@ using System.Linq;
 using GraphQL;
 using GraphQL.DataLoader;
 using GraphQL.Server;
-using GraphQL.SystemTextJson;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace OttoTheGeek
@@ -32,8 +31,8 @@ namespace OttoTheGeek
             {
                 configureOptions = NopConfigureOptions;
             }
-            // using IDocumentWriter to check for registration already present
-            if (!services.Any(x => x.ServiceType == typeof(GraphQL.IDocumentWriter)))
+            // using IDocumentExecuter to check for registration already present
+            if (!services.Any(x => x.ServiceType == typeof(GraphQL.IDocumentExecuter)))
             {
                 services
                     .AddGraphQL((opts, sp) => {
@@ -45,7 +44,8 @@ namespace OttoTheGeek
                     .AddDataLoader();
                 services
                     .AddSingleton<IDocumentExecuter, Internal.OttoDocumentExecuter>()
-                    .AddSingleton<IDocumentWriter, DocumentWriter>();
+                    //.AddSingleton<IDocumentWriter, DocumentWriter>()
+                    ;
             }
 
             return services;

@@ -73,8 +73,12 @@ namespace OttoTheGeek
             foreach(var prop in typeof(T).GetProperties().Except(_propsToIgnore))
             {
                 string propName = prop.Name.ToCamelCase();
-                graphType.AddValue($"{propName}_ASC",  $"Order by {propName} ascending",  new OrderValue<T>(prop, false));
-                graphType.AddValue($"{propName}_DESC", $"Order by {propName} descending", new OrderValue<T>(prop, true));
+                graphType.Values.Add(new EnumValueDefinition($"{propName}_ASC", new OrderValue<T>(prop, descending: false)) {
+                    Description = $"Order by {propName} ascending",
+                });
+                graphType.Values.Add(new EnumValueDefinition($"{propName}_DESC", new OrderValue<T>(prop, descending: true)) {
+                    Description = $"Order by {propName} descending",
+                });
             }
 
             foreach(var name in _customValues.Keys)
@@ -82,11 +86,15 @@ namespace OttoTheGeek
                 var sortOrder = _customValues[name];
                 if(sortOrder.HasFlag(AscDesc.Asc))
                 {
-                    graphType.AddValue($"{name}_ASC",  $"Order by {name} ascending",  new OrderValue<T>(name, false));
+                    graphType.Values.Add(new EnumValueDefinition($"{name}_ASC", new OrderValue<T>(name, descending: false)) {
+                        Description = $"Order by {name} ascending",
+                    });
                 }
                 if(sortOrder.HasFlag(AscDesc.Desc))
                 {
-                    graphType.AddValue($"{name}_DESC",  $"Order by {name} descending",  new OrderValue<T>(name, true));
+                    graphType.Values.Add(new EnumValueDefinition($"{name}_DESC", new OrderValue<T>(name, descending: true)) {
+                        Description = $"Order by {name} descending",
+                    });
                 }
             }
 

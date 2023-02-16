@@ -87,9 +87,9 @@ namespace OttoTheGeek.Tests
             enumGraphType.Name.Should().Be(nameof(ExampleEnum));
             enumGraphType.Values.Should().BeEquivalentTo(
                 new [] {
-                    new EnumValueDefinition { Name = nameof(ExampleEnum.Value1), Value = ExampleEnum.Value1 },
-                    new EnumValueDefinition { Name = nameof(ExampleEnum.Value2), Value = ExampleEnum.Value2 },
-                    new EnumValueDefinition { Name = nameof(ExampleEnum.Value3), Value = ExampleEnum.Value3 },
+                    new EnumValueDefinition(nameof(ExampleEnum.Value1), ExampleEnum.Value1),
+                    new EnumValueDefinition(nameof(ExampleEnum.Value2), ExampleEnum.Value2),
+                    new EnumValueDefinition(nameof(ExampleEnum.Value3), ExampleEnum.Value3),
                 }
             );
         }

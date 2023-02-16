@@ -19,7 +19,10 @@ namespace OttoTheGeek.Internal
             foreach(var member in typeof(TEnum).GetMembers().Where(x => valuesByName.ContainsKey(x.Name)))
             {
                 var descAttr = member.GetCustomAttribute<DescriptionAttribute>();
-                AddValue(member.Name, descAttr?.Description, Enum.Parse(typeof(TEnum), member.Name));
+                Values.Add(new EnumValueDefinition(member.Name, Enum.Parse(typeof(TEnum), member.Name))
+                {
+                    Description = descAttr?.Description,
+                });
             }
         }
     }

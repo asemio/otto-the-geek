@@ -3,7 +3,6 @@ using System.Linq;
 using System.Reflection;
 using GraphQL;
 using GraphQL.DataLoader;
-using GraphQL.Server;
 using GraphQL.Types;
 using Microsoft.Extensions.DependencyInjection;
 using OttoTheGeek.Internal;

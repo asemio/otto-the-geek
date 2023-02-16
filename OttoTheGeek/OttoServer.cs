@@ -1,9 +1,10 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
+using System.Text.Json;
+using System.Threading.Tasks;
 using GraphQL;
-using GraphQL.DataLoader;
 using GraphQL.Execution;
+using GraphQL.SystemTextJson;
 using GraphQL.Types;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
@@ -24,19 +25,26 @@ namespace OttoTheGeek
 
         public T Execute<T>(string queryText, object inputData = null, bool throwOnError = true)
         {
+            return ExecuteAsync<T>(queryText, inputData, throwOnError).GetAwaiter().GetResult();
+        }
+        
+        private async Task<T> ExecuteAsync<T>(string queryText, object inputData = null, bool throwOnError = true)
+        {
             var inputs = Inputs.Empty;
+            var serializer = _provider.GetRequiredService<IGraphQLSerializer>();
             if(inputData != null)
             {
-                var inputAsJson = JsonConvert.SerializeObject(inputData);
-                inputs = GraphQL.SystemTextJson.StringExtensions.ToInputs(inputAsJson);
+                var inputsAsJson = JsonConvert.SerializeObject(inputData);
+                var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(inputsAsJson));
+                inputs = await serializer.ReadAsync<Inputs>(stream);
             }
             var executer = _provider.GetRequiredService<IDocumentExecuter>();
             var opts = new ExecutionOptions
             {
                 Query = queryText,
                 Schema = _schema,
-                Inputs = inputs,
                 RequestServices = _provider,
+                Variables = inputs,
             };
             opts.Listeners.AddRange(_provider.GetServices<IDocumentExecutionListener>());
             var resultAsync = executer.ExecuteAsync(opts);
@@ -46,14 +54,11 @@ namespace OttoTheGeek
             {
                 throw new InvalidOperationException("Errors found: " + JArray.FromObject(executionResult.Errors).ToString());
             }
-
-            var node = (RootExecutionNode)executionResult.Data;
-
-            var writer = _provider.GetRequiredService<GraphQL.IDocumentWriter>();
-
-            var dataString = writer.WriteToStringAsync(node.ToValue()).GetAwaiter().GetResult();
-
-            var data = JObject.Parse(dataString);
+            
+            var memoryStream = new MemoryStream();
+            await serializer.WriteAsync(memoryStream, executionResult);
+            
+            var data = JObject.Parse(System.Text.Encoding.UTF8.GetString(memoryStream.ToArray()))["data"];
             if(!throwOnError)
             {
                 data = new JObject(
@@ -72,5 +77,6 @@ namespace OttoTheGeek
 
             return data.ToObject<T>();
         }
+
     }
 }

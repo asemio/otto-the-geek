@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using GraphQL;
 using GraphQL.DataLoader;
 using GraphQL.Resolvers;
@@ -27,7 +28,7 @@ namespace OttoTheGeek.Internal.ResolverConfiguration
 
         private sealed class ResolverProxy : IFieldResolver
         {
-            public object Resolve(IResolveFieldContext context)
+            public ValueTask<object> ResolveAsync(IResolveFieldContext context)
             {
                 var provider = ((IServiceProvider)context.Schema);
                 var loaderContext = provider.GetRequiredService<IDataLoaderContextAccessor>().Context;
@@ -38,10 +39,10 @@ namespace OttoTheGeek.Internal.ResolverConfiguration
                 var key = resolver.GetKey((TModel) context.Source);
                 if (key == null)
                 {
-                    return null;
+                    return new ValueTask<object>(result: null);
                 }
 
-                return loader.LoadAsync(key);
+                return new ValueTask<object>(loader.LoadAsync(key));
             }
         }
     }
