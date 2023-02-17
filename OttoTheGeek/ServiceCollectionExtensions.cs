@@ -2,17 +2,19 @@ using System;
 using System.Linq;
 using GraphQL;
 using GraphQL.DataLoader;
-using GraphQL.Server;
+using GraphQL.DI;
+using GraphQL.Execution;
+using GraphQLParser.AST;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace OttoTheGeek
 {
     public static class ServiceCollectionExtensions
     {
-        public static IServiceCollection AddOtto<TModel>(this IServiceCollection services, TModel model)
+        public static IServiceCollection AddOtto<TModel>(this IServiceCollection services, TModel model, Action<IGraphQLBuilder> configureAction = null)
             where TModel : OttoModel
         {
-            services.TryRegisterGraphQLServer();
+            services.TryRegisterGraphQLServer(configureAction);
             
             var ottoSchema = model.BuildOttoSchema(services);
 
@@ -27,8 +29,9 @@ namespace OttoTheGeek
                 ;
         }
 
-        private static IServiceCollection TryRegisterGraphQLServer(this IServiceCollection services)
+        private static IServiceCollection TryRegisterGraphQLServer(this IServiceCollection services, Action<IGraphQLBuilder> configureAction)
         {
+            configureAction ??= NopConfigure;
             // using IDocumentExecuter to check for registration already present
             if (!services.Any(x => x.ServiceType == typeof(GraphQL.IDocumentExecuter)))
             {
@@ -39,11 +42,13 @@ namespace OttoTheGeek
                             .AddSystemTextJson()
                             .AddGraphTypes()
                             .AddDataLoader()
+                            .AddExecutionStrategy<SerialExecutionStrategy>(OperationType.Query)
                             .ConfigureExecutionOptions(opts =>
                             {
                                 opts.EnableMetrics = false;
                             })
                             ;
+                        configureAction(builder);
                     });
                 services
                     .AddSingleton<IDocumentExecuter, Internal.OttoDocumentExecuter>()
@@ -51,6 +56,10 @@ namespace OttoTheGeek
             }
 
             return services;
+        }
+
+        private static void NopConfigure(IGraphQLBuilder builder)
+        {
         }
     }
 }
