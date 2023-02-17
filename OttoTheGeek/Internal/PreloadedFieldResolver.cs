@@ -19,7 +19,6 @@ namespace OttoTheGeek.Internal
     /// its properties can't be resolved, and resolve as null. This class detects this case, instantiates that topmost type,
     /// and resolves its property.
     /// </summary>
-    /// TODO: see if this still needs to exist
     public sealed class PreloadedFieldResolver<T> : IFieldResolver
     {
         public ValueTask<object> ResolveAsync(IResolveFieldContext context)
