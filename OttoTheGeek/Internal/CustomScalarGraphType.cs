@@ -4,12 +4,7 @@ using GraphQLParser.AST;
 
 namespace OttoTheGeek.Internal
 {
-    public abstract class CustomScalarGraphType : GraphQL.Types.ScalarGraphType
-    {
-        public abstract Type ClrType { get; }
-    }
-    
-    public sealed class CustomScalarGraphType<T, TConverter> : CustomScalarGraphType
+    public sealed class CustomScalarGraphType<T, TConverter> : GraphQL.Types.ScalarGraphType
         where TConverter : ScalarTypeConverter<T>, new()
     {
         private static readonly TConverter _converter = new TConverter();
@@ -59,7 +54,5 @@ namespace OttoTheGeek.Internal
 
             return null;
         }
-
-        public override Type ClrType => typeof(T);
     }
 }
