@@ -19,7 +19,7 @@ namespace OttoTheGeek.Tests
             public int Value3 { get; set; }
         }
 
-        public class Model : OttoModel<object, SimpleScalarQueryModel<Child>>
+        public class Model : OttoModel<EmptyQueryType, SimpleScalarQueryModel<Child>>
         {
             protected override SchemaBuilder ConfigureSchema(SchemaBuilder builder)
             {
@@ -27,7 +27,7 @@ namespace OttoTheGeek.Tests
                     b.LooseScalarField(x => x.Child)
                         .WithArgs<Args>()
                         .ResolvesVia<ChildResolver>()
-                );
+                ).GraphType<EmptyQueryType>(x => x.LooseScalarField(f => f.Dummy).Preloaded());
             }
         }
 

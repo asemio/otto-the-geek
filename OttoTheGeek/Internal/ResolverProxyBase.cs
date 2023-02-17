@@ -7,11 +7,11 @@ namespace OttoTheGeek.Internal
 {
     public abstract class ResolverProxyBase<T> : IFieldResolver
     {
-        public ValueTask<object> ResolveAsync(IResolveFieldContext context)
+        public async ValueTask<object> ResolveAsync(IResolveFieldContext context)
         {
             var resolver = ((IServiceProvider)context.Schema);
 
-            return new ValueTask<object>(Resolve(context, resolver));
+            return await Resolve(context, resolver);
         }
 
         protected abstract Task<T> Resolve(IResolveFieldContext context, IServiceProvider provider);

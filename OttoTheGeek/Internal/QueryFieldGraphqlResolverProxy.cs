@@ -12,9 +12,9 @@ namespace OttoTheGeek.Internal
             _resolver = resolver;
         }
 
-        public ValueTask<object> ResolveAsync(IResolveFieldContext context)
+        public async ValueTask<object> ResolveAsync(IResolveFieldContext context)
         {
-            return new ValueTask<object>(_resolver.Resolve());
+            return await _resolver.Resolve();
         }
     }
 }

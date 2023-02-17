@@ -1,9 +1,15 @@
+using System;
 using GraphQL.NewtonsoftJson;
 using GraphQLParser.AST;
 
 namespace OttoTheGeek.Internal
 {
-    public sealed class CustomScalarGraphType<T, TConverter> : GraphQL.Types.ScalarGraphType
+    public abstract class CustomScalarGraphType : GraphQL.Types.ScalarGraphType
+    {
+        public abstract Type ClrType { get; }
+    }
+    
+    public sealed class CustomScalarGraphType<T, TConverter> : CustomScalarGraphType
         where TConverter : ScalarTypeConverter<T>, new()
     {
         private static readonly TConverter _converter = new TConverter();
@@ -23,6 +29,12 @@ namespace OttoTheGeek.Internal
             if(value is GraphQLStringValue strVal)
             {
                 return _converter.Parse(new string(strVal.Value.Span));
+            }
+
+            if (value.Kind == ASTNodeKind.IntValue)
+            {
+                var innerVal = (GraphQLIntValue)value.GetValue();
+                return _converter.Parse(new string(innerVal.Value.Span));
             }
 
             return _converter.Parse(value.GetValue().ToString());
@@ -47,5 +59,7 @@ namespace OttoTheGeek.Internal
 
             return null;
         }
+
+        public override Type ClrType => typeof(T);
     }
 }

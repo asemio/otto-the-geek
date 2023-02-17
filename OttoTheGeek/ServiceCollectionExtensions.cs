@@ -9,9 +9,11 @@ namespace OttoTheGeek
 {
     public static class ServiceCollectionExtensions
     {
-        public static IServiceCollection AddOtto<TModel>(this IServiceCollection services, TModel model, Action<GraphQLOptions, IServiceProvider> configureOptions = null)
+        public static IServiceCollection AddOtto<TModel>(this IServiceCollection services, TModel model)
             where TModel : OttoModel
         {
+            services.TryRegisterGraphQLServer();
+            
             var ottoSchema = model.BuildOttoSchema(services);
 
             return services
@@ -22,35 +24,33 @@ namespace OttoTheGeek
                 })
                 .AddSingleton<IDataLoaderContextAccessor, DataLoaderContextAccessor>()
                 .AddSingleton<DataLoaderDocumentListener>()
-                .TryRegisterGraphQLServer(configureOptions);
+                ;
         }
 
-        private static IServiceCollection TryRegisterGraphQLServer(this IServiceCollection services, Action<GraphQLOptions, IServiceProvider> configureOptions)
+        private static IServiceCollection TryRegisterGraphQLServer(this IServiceCollection services)
         {
-            if(configureOptions == null)
-            {
-                configureOptions = NopConfigureOptions;
-            }
             // using IDocumentExecuter to check for registration already present
             if (!services.Any(x => x.ServiceType == typeof(GraphQL.IDocumentExecuter)))
             {
                 services
-                    .AddGraphQL((opts, sp) => {
-                        opts.EnableMetrics = false;
-                        configureOptions(opts, sp);
-                    })
-                    .AddSystemTextJson()
-                    .AddGraphTypes(ServiceLifetime.Scoped)
-                    .AddDataLoader();
+                    .AddGraphQL(builder =>
+                    {
+                        builder
+                            .AddSystemTextJson()
+                            .AddGraphTypes()
+                            .AddDataLoader()
+                            .ConfigureExecutionOptions(opts =>
+                            {
+                                opts.EnableMetrics = false;
+                            })
+                            ;
+                    });
                 services
                     .AddSingleton<IDocumentExecuter, Internal.OttoDocumentExecuter>()
-                    //.AddSingleton<IDocumentWriter, DocumentWriter>()
                     ;
             }
 
             return services;
         }
-
-        private static void NopConfigureOptions(GraphQLOptions options, IServiceProvider provider) {}
     }
 }

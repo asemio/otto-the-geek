@@ -1,11 +1,17 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using GraphQL.Types;
+using OttoTheGeek.Internal;
 
 namespace OttoTheGeek
 {
     public sealed class OttoSchemaInfo
     {
-        public OttoSchemaInfo(IObjectGraphType queryType, IObjectGraphType mutationType, IObjectGraphType subscriptionType, IEnumerable<IGraphType> otherTypes)
+        public OttoSchemaInfo(
+            IObjectGraphType queryType,
+            IObjectGraphType mutationType,
+            IObjectGraphType subscriptionType,
+            IEnumerable<IGraphType> otherTypes)
         {
             QueryType = queryType;
             MutationType = mutationType;
