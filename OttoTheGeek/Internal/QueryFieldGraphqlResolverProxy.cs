@@ -1,11 +1,9 @@
 using System.Threading.Tasks;
 using GraphQL;
-using GraphQL.Resolvers;
-using GraphQL.Types;
 
 namespace OttoTheGeek.Internal
 {
-    public sealed class QueryFieldGraphqlResolverProxy<T> : GraphQL.Resolvers.IFieldResolver<Task<T>>
+    public sealed class QueryFieldGraphqlResolverProxy<T> : GraphQL.Resolvers.IFieldResolver
     {
         private readonly ILooseScalarFieldResolver<T> _resolver;
 
@@ -13,14 +11,10 @@ namespace OttoTheGeek.Internal
         {
             _resolver = resolver;
         }
-        public Task<T> Resolve(IResolveFieldContext context)
-        {
-            return _resolver.Resolve();
-        }
 
-        object IFieldResolver.Resolve(IResolveFieldContext context)
+        public async ValueTask<object> ResolveAsync(IResolveFieldContext context)
         {
-            return Resolve(context);
+            return await _resolver.Resolve();
         }
     }
 }

@@ -1,5 +1,6 @@
 using GraphQL;
 using GraphQL.Execution;
+using GraphQLParser.AST;
 
 namespace OttoTheGeek.Internal
 {
@@ -8,7 +9,7 @@ namespace OttoTheGeek.Internal
     {
         protected override IExecutionStrategy SelectExecutionStrategy(ExecutionContext context)
         {
-            if(context.Operation.OperationType == GraphQL.Language.AST.OperationType.Query)
+            if(context.Operation.Operation == OperationType.Query)
             {
                 return new SerialExecutionStrategy();
             }

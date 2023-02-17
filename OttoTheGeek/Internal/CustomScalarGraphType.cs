@@ -1,4 +1,6 @@
-using GraphQL.Language.AST;
+using System;
+using GraphQL.NewtonsoftJson;
+using GraphQLParser.AST;
 
 namespace OttoTheGeek.Internal
 {
@@ -12,19 +14,25 @@ namespace OttoTheGeek.Internal
             Name = typeof(T).Name;
         }
 
-        public override object ParseLiteral(IValue value)
+        public override object ParseLiteral(GraphQLValue value)
         {
-            if(value is NullValue)
+            if(value is GraphQLNullValue)
             {
                 return null;
             }
 
-            if(value is StringValue strVal)
+            if(value is GraphQLStringValue strVal)
             {
-                return _converter.Parse(strVal.Value);
+                return _converter.Parse(new string(strVal.Value.Span));
             }
 
-            return _converter.Parse(value.Value.ToString());
+            if (value.Kind == ASTNodeKind.IntValue)
+            {
+                var innerVal = (GraphQLIntValue)value.GetValue();
+                return _converter.Parse(new string(innerVal.Value.Span));
+            }
+
+            return _converter.Parse(value.GetValue().ToString());
         }
 
         public override object ParseValue(object value)
