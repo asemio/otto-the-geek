@@ -55,11 +55,11 @@ namespace OttoTheGeek.Tests
         }
 
         [Fact]
-        public void ReadsDescriptionForField()
+        public async Task ReadsDescriptionForField()
         {
             var server = new Model().CreateServer();
 
-            var rawResult = server.Execute<JObject>(@"{
+            var rawResult = await server.GetResultAsync<JObject>(@"{
                 __type(name:""Query"") {
                     fields {
                         name
@@ -80,11 +80,11 @@ namespace OttoTheGeek.Tests
         }
 
         [Fact]
-        public void ReadsDescriptionForFieldArgument()
+        public async Task ReadsDescriptionForFieldArgument()
         {
             var server = new Model().CreateServer();
 
-            var rawResult = server.Execute<JObject>(@"{
+            var rawResult = await server.GetResultAsync<JObject>(@"{
                 __type(name:""Query"") {
                     fields {
                         args {
@@ -107,11 +107,11 @@ namespace OttoTheGeek.Tests
         }
 
         [Fact]
-        public void ReadsDescriptionForClass()
+        public async Task ReadsDescriptionForClass()
         {
             var server = new Model().CreateServer();
 
-            var rawResult = server.Execute<JObject>(@"{
+            var rawResult = await server.GetResultAsync<JObject>(@"{
                 __type(name:""ChildObject"") {
                     description
                 }

@@ -160,11 +160,11 @@ namespace OttoTheGeek.Tests
         }
 
         [Fact]
-        public void GeneratesSchema()
+        public async Task GeneratesSchema()
         {
             var server = new WorkingModel().CreateServer();
 
-            var rawResult = server.Execute<JObject>(@"{
+            var queryType = await server.GetResultAsync<ObjectType>(@"{
                 __type(name:""ChildObject"") {
                     name
                     kind
@@ -180,7 +180,7 @@ namespace OttoTheGeek.Tests
                         }
                     }
                 }
-            }");
+            }", "__type");
 
             var expectedField = new ObjectField
             {
@@ -191,8 +191,6 @@ namespace OttoTheGeek.Tests
                 }
             };
 
-            var queryType = rawResult["__type"].ToObject<ObjectType>();
-
             queryType.Fields
                 .SingleOrDefault(x => x.Name == "child")
                 .Should()
@@ -200,11 +198,11 @@ namespace OttoTheGeek.Tests
         }
 
         [Fact]
-        public void ReturnsData()
+        public async Task ReturnsData()
         {
             var server = new WorkingModel().CreateServer();
 
-            var rawResult = server.Execute<JObject>(@"{
+            var rawResult = await server.GetResultAsync<JObject>(@"{
                 children {
                     id
                     child {
@@ -226,12 +224,12 @@ namespace OttoTheGeek.Tests
         }
 
         [Fact]
-        public void AvoidsNPlusOne()
+        public async Task AvoidsNPlusOne()
         {
             var model = new WorkingModel();
             var server = model.CreateServer();
 
-            var rawResult = server.Execute<JObject>(@"{
+            await server.GetResultAsync<JObject>(@"{
                 children {
                     id
                     child {
@@ -246,11 +244,11 @@ namespace OttoTheGeek.Tests
         }
 
         [Fact]
-        public void ReturnsDeeplyNestedData()
+        public async Task ReturnsDeeplyNestedData()
         {
             var server = new DeepNestedWorkingModel().CreateServer();
 
-            var rawResult = server.Execute<JObject>(@"{
+            var rawResult = await server.GetResultAsync<JObject>(@"{
                 children {
                     id
                     child {

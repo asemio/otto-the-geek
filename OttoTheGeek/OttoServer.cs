@@ -1,14 +1,12 @@
 using System;
 using System.IO;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using GraphQL;
 using GraphQL.Execution;
-using GraphQL.SystemTextJson;
 using GraphQL.Types;
 using Microsoft.Extensions.DependencyInjection;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 
 namespace OttoTheGeek
 {
@@ -23,18 +21,13 @@ namespace OttoTheGeek
             _provider = provider;
         }
 
-        public T Execute<T>(string queryText, object inputData = null, bool throwOnError = true)
-        {
-            return ExecuteAsync<T>(queryText, inputData, throwOnError).GetAwaiter().GetResult();
-        }
-        
-        private async Task<T> ExecuteAsync<T>(string queryText, object inputData = null, bool throwOnError = true)
+        public async Task<string> ExecuteAsync(string queryText, object inputData = null, bool throwOnError = true)
         {
             var inputs = Inputs.Empty;
             var serializer = _provider.GetRequiredService<IGraphQLSerializer>();
             if(inputData != null)
             {
-                var inputsAsJson = JsonConvert.SerializeObject(inputData);
+                var inputsAsJson = JsonSerializer.Serialize(inputData);
                 var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(inputsAsJson));
                 inputs = await serializer.ReadAsync<Inputs>(stream);
             }
@@ -50,32 +43,29 @@ namespace OttoTheGeek
             var resultAsync = executer.ExecuteAsync(opts);
             var executionResult = resultAsync.Result;
 
-            if(executionResult.Errors != null && executionResult.Errors.Count > 0 && throwOnError)
+            if(executionResult.Errors != null && executionResult.Errors.Count > 0)
             {
-                throw new InvalidOperationException("Errors found: " + JArray.FromObject(executionResult.Errors).ToString());
+                if (throwOnError)
+                {
+                    throw new InvalidOperationException("Errors found: " + JsonSerializer.Serialize(executionResult.Errors));
+                }
             }
             
             var memoryStream = new MemoryStream();
             await serializer.WriteAsync(memoryStream, executionResult);
             
-            var data = JObject.Parse(System.Text.Encoding.UTF8.GetString(memoryStream.ToArray()))["data"];
-            if(!throwOnError)
-            {
-                data = new JObject(
-                    new JProperty("data", data),
-                    new JProperty("errors", JArray.FromObject(executionResult.Errors ?? new ExecutionErrors()))
-                );
-            }
+            var jsonResult = System.Text.Encoding.UTF8.GetString(memoryStream.ToArray());
 
-            if(typeof(T) == typeof(string)) {
-                return (T)(object)(data.ToString());
-            }
-            if(typeof(T) == typeof(JObject))
+            if (!throwOnError)
             {
-                return (T)(object)data;
-            }
+                var errorStream = new MemoryStream();
+                await serializer.WriteAsync(errorStream, executionResult.Errors);
+                var jsonErrors = System.Text.Encoding.UTF8.GetString(errorStream.ToArray());
 
-            return data.ToObject<T>();
+                return $"{{ \"data\": {jsonResult}, \"errors\": {jsonErrors} }}";
+            }
+            
+            return System.Text.Encoding.UTF8.GetString(memoryStream.ToArray());
         }
 
     }

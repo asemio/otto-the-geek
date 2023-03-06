@@ -96,11 +96,11 @@ namespace OttoTheGeek.Tests
 
 
         [Fact]
-        public void GeneratesSchema()
+        public async Task GeneratesSchema()
         {
             var server = new Model().CreateServer();
 
-            var rawResult = server.Execute<JObject>(@"{
+            var rawResult = await server.GetResultAsync<JObject>(@"{
                 __type(name:""ChildObject"") {
                     name
                     kind
@@ -136,11 +136,11 @@ namespace OttoTheGeek.Tests
         }
 
         [Fact]
-        public void ReturnsData()
+        public async Task ReturnsData()
         {
             var server = new Model().CreateServer();
 
-            var rawResult = server.Execute<JObject>(@"{
+            var rawResult = await server.GetResultAsync<JObject>(@"{
                 children {
                     id
                     children {
@@ -168,12 +168,12 @@ namespace OttoTheGeek.Tests
         }
 
         [Fact]
-        public void AvoidsNPlusOne()
+        public async Task AvoidsNPlusOne()
         {
             var model = new Model();
             var server = model.CreateServer();
 
-            var rawResult = server.Execute<JObject>(@"{
+            var rawResult = await server.GetResultAsync<JObject>(@"{
                 children {
                     id
                     children {

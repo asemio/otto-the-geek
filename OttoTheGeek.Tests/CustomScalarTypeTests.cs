@@ -112,11 +112,11 @@ namespace OttoTheGeek.Tests
 
 
         [Fact]
-        public void NamesCustomType()
+        public async Task NamesCustomType()
         {
             var server = new Model().CreateServer();
 
-            var result = server.Execute<JObject>(@"{
+            var result = await server.GetResultAsync<JObject>(@"{
                 __type(name: ""FancyInt"") {
                     name
                     kind
@@ -130,11 +130,11 @@ namespace OttoTheGeek.Tests
         }
 
         [Fact]
-        public void ResolvesFields()
+        public async Task ResolvesFields()
         {
             var server = new Model().CreateServer();
 
-            var result = server.Execute<JObject>(@"{
+            var result = await server.GetResultAsync<JObject>(@"{
                 child {
                     intValue
                     strValue
@@ -148,16 +148,16 @@ namespace OttoTheGeek.Tests
         }
 
         [Fact]
-        public void ParsesFieldArgumentAsString()
+        public async Task ParsesFieldArgumentAsString()
         {
             var server = new Model().CreateServer();
 
-            var result = server.Execute<JObject>(@"query ($intValue: FancyInt!){
+            var result = await server.GetResultAsync<JObject>(@"query ($intValue: FancyInt!){
                 child(intValue: $intValue) {
                     intValue
                     strValue
                 }
-            }", new {
+            }", variables: new {
                 intValue = "**234**"
             });
 
@@ -165,11 +165,11 @@ namespace OttoTheGeek.Tests
         }
 
         [Fact]
-        public void ParsesStringFieldArgument()
+        public async Task ParsesStringFieldArgument()
         {
             var server = new Model().CreateServer();
 
-            var result = server.Execute<JObject>(@"{
+            var result = await server.GetResultAsync<JObject>(@"{
                 child(strValue: ""--wat--"") {
                     intValue
                     strValue
@@ -180,11 +180,11 @@ namespace OttoTheGeek.Tests
         }
 
         [Fact]
-        public void ParsesFieldArgumentAsInt()
+        public async Task ParsesFieldArgumentAsInt()
         {
             var server = new Model().CreateServer();
 
-            var result = server.Execute<JObject>(@"{
+            var result = await server.GetResultAsync<JObject>(@"{
                 child(intValue: 234) {
                     intValue
                     strValue

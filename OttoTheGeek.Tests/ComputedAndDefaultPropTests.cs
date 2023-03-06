@@ -1,3 +1,6 @@
+using System.Collections.Generic;
+using System.Dynamic;
+using System.Threading.Tasks;
 using FluentAssertions;
 using Newtonsoft.Json.Linq;
 using Xunit;
@@ -6,7 +9,6 @@ namespace OttoTheGeek.Tests
 {
     public sealed class ComputedAndDefaultPropTests
     {
-
         public sealed class Query
         {
             public Child DefaultChild { get; set; } = new Child();
@@ -33,46 +35,43 @@ namespace OttoTheGeek.Tests
         }
 
         [Fact]
-        public void ResolvesDefaultPropertyValue()
+        public async Task ResolvesDefaultPropertyValue()
         {
             var server = new Model().CreateServer();
 
-            var result = server.Execute<string>(@"{
+            var result = await server.GetResultAsync<JObject>(@"{
                 defaultChild {
                     anInt
                     aString
                 }
             }");
 
-            result.Should().Be(JObject.Parse(@"{
-                ""defaultChild"": {
-                    ""anInt"": 42,
-                    ""aString"": ""Hello World!""
-                }
-            }").ToString());
-
+            result.Should().BeEquivalentTo(new JObject(
+                new JProperty("defaultChild", new JObject(
+                    new JProperty("anInt",  42),
+                    new JProperty("aString", "Hello World!")
+                ))
+            ));
         }
 
         [Fact]
-        public void ResolvesComputedPropertyValue()
+        public async Task ResolvesComputedPropertyValue()
         {
             var server = new Model().CreateServer();
 
-            var result = server.Execute<string>(@"{
+            var result = await server.GetResultAsync<JObject>(@"{
                 computedChild {
                     anInt
                     aString
                 }
             }");
 
-            result.Should().Be(JObject.Parse(@"{
-                ""computedChild"": {
-                    ""anInt"": 42,
-                    ""aString"": ""Hello World!""
-                }
-            }").ToString());
-
+            result.Should().BeEquivalentTo(new JObject(
+                new JProperty("computedChild", new JObject(
+                    new JProperty("anInt",  42),
+                    new JProperty("aString", "Hello World!")
+                ))
+            ));
         }
-
     }
 }

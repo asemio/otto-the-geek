@@ -43,16 +43,18 @@ namespace OttoTheGeek.Tests
         }
 
         [Fact]
-        public void QsgRuns()
+        public async Task QsgRuns()
         {
             var server = new Model().CreateServer();
 
-            var result = server.Execute<string>(@"{
+            var rawResult = await server.ExecuteAsync(@"{
                 child {
                     anInt
                     aString
                 }
             }");
+            var result = JObject.Parse(rawResult)["data"].ToString();
+            
 
             result.Should().Be(JObject.Parse(@"{
                 ""child"": {

@@ -100,11 +100,11 @@ namespace OttoTheGeek.Tests
 
 
         [Fact]
-        public void GeneratesSchema()
+        public async Task GeneratesSchema()
         {
             var server = new Model().CreateServer();
 
-            var rawResult = server.Execute<JObject>(@"{
+            var rawResult = await server.GetResultAsync<JObject>(@"{
                 __type(name:""ChildObject"") {
                     name
                     kind
@@ -120,7 +120,7 @@ namespace OttoTheGeek.Tests
                         }
                     }
                 }
-            }");
+            }", "__type");
 
             var expectedField = new ObjectField
             {
@@ -131,7 +131,7 @@ namespace OttoTheGeek.Tests
                 })
             };
 
-            var queryType = rawResult["__type"].ToObject<ObjectType>();
+            var queryType = rawResult.ToObject<ObjectType>();
 
             queryType.Fields
                 .SingleOrDefault(x => x.Name == "children")
@@ -140,11 +140,11 @@ namespace OttoTheGeek.Tests
         }
 
         [Fact]
-        public void ReturnsData()
+        public async Task ReturnsData()
         {
             var server = new Model().CreateServer();
 
-            var rawResult = server.Execute<JObject>(@"{
+            var rawResult = await server.GetResultAsync<JObject>(@"{
                 children {
                     id
                     children(arg: ""derp"") {
@@ -170,12 +170,12 @@ namespace OttoTheGeek.Tests
         }
 
         [Fact]
-        public void AvoidsNPlusOne()
+        public async Task AvoidsNPlusOne()
         {
             var model = new Model();
             var server = model.CreateServer();
 
-            server.Execute<JObject>(@"{
+            await server.GetResultAsync<JObject>(@"{
                 children {
                     id
                     children(arg: ""derp"") {

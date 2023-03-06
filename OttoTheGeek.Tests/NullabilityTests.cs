@@ -8,7 +8,7 @@ using Xunit;
 
 namespace OttoTheGeek.Tests
 {
-    public sealed class CustomNullabilityTests
+    public sealed class NullabilityTests
     {
         public sealed class Query
         {
@@ -67,11 +67,11 @@ namespace OttoTheGeek.Tests
         }
 
         [Fact]
-        public void InputTypes()
+        public async Task InputTypes()
         {
             var server = new Model().CreateServer();
 
-            var rawResult = server.Execute<JObject>(@"{
+            var rawResult = await server.GetResultAsync<JObject>(@"{
                 __type(name:""Query"") {
                     fields {
                         name
@@ -109,11 +109,11 @@ namespace OttoTheGeek.Tests
         }
 
         [Fact]
-        public void OutputTypes()
+        public async Task OutputTypes()
         {
             var server = new Model().CreateServer();
 
-            var rawResult = server.Execute<JObject>(@"{
+            var rawResult = await server.GetResultAsync<JObject>(@"{
                 __type(name:""Query"") {
                     fields {
                         name

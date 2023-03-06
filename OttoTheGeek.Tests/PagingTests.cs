@@ -89,11 +89,11 @@ namespace OttoTheGeek.Tests
         }
 
         [Fact]
-        public void BuildsSchemaType()
+        public async Task BuildsSchemaType()
         {
             var server = new Model().CreateServer();
 
-            var rawResult = server.Execute<JObject>(@"{
+            var rawResult = await server.GetResultAsync<JObject>(@"{
                 __type(name:""Query"") {
                     name
                     kind
@@ -169,11 +169,11 @@ namespace OttoTheGeek.Tests
         }
 
         [Fact]
-        public void ReturnsObjectValues()
+        public async Task ReturnsObjectValues()
         {
             var server = new Model().CreateServer();
 
-            var rawResult = server.Execute<JObject>(@"{
+            var result = await server.GetResultAsync<Connection<ChildObject>>(@"{
                 children(offset: 22, count: 11) {
                     totalCount
                     records {
@@ -182,19 +182,17 @@ namespace OttoTheGeek.Tests
                         value3
                     }
                 }
-            }");
-
-            var result = rawResult["children"].ToObject<Connection<ChildObject>>();
+            }", "children");
 
             result.Should().BeEquivalentTo(ChildrenResolver.GenerateData(22, 11, null));
         }
 
         [Fact]
-        public void ReturnsObjectValuesFromCustomArgs()
+        public async Task ReturnsObjectValuesFromCustomArgs()
         {
             var server = new CustomConnectionArgsModel().CreateServer();
 
-            var rawResult = server.Execute<JObject>(@"{
+            var result = await server.GetResultAsync<Connection<ChildObject>>(@"{
                 children(offset: 22, count: 11, searchText: ""derp"") {
                     totalCount
                     records {
@@ -204,9 +202,7 @@ namespace OttoTheGeek.Tests
                         searchText
                     }
                 }
-            }");
-
-            var result = rawResult["children"].ToObject<Connection<ChildObject>>();
+            }", "children");
 
             result.Should().BeEquivalentTo(ChildrenResolver.GenerateData(22, 11, "derp"));
         }

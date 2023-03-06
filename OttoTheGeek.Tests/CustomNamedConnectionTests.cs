@@ -42,11 +42,11 @@ namespace OttoTheGeek.Tests
         }
 
         [Fact]
-        public void HasCustomName()
+        public async Task HasCustomName()
         {
             var server = new Model().CreateServer();
 
-            var rawResult = server.Execute<JObject>(@"{
+            var queryType = await server.GetResultAsync<ObjectType>(@"{
                 __type(name:""Query"") {
                     name
                     kind
@@ -57,9 +57,7 @@ namespace OttoTheGeek.Tests
                         }
                     }
                 }
-            }");
-
-            var queryType = rawResult["__type"].ToObject<ObjectType>();
+            }", "__type");
 
             queryType.Fields
                 .Single()

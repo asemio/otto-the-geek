@@ -63,11 +63,11 @@ namespace OttoTheGeek.Tests
 
 
         [Fact]
-        public void ReturnsData()
+        public async Task ReturnsData()
         {
             var server = new WorkingModel().CreateServer();
 
-            var rawResult = server.Execute<JObject>(@"{
+            var rawResult = await server.GetResultAsync<JObject>(@"{
                 children {
                     id
                     child {

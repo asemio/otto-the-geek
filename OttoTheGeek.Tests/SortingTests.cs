@@ -161,10 +161,10 @@ namespace OttoTheGeek.Tests
 
         [Theory]
         [MemberData(nameof(ReadsPropertyDefinitionsData))]
-        public void ReadsPropertyDefinitions(OttoServer server, string name)
+        public async Task ReadsPropertyDefinitions(OttoServer server, string name)
         {
             GC.KeepAlive(name);
-            var rawResult = server.Execute<JObject>(@"{
+            var rawResult = await server.GetResultAsync<JObject>(@"{
                 __type(name:""ChildOrderBy"") {
                     name
                     kind
@@ -229,16 +229,16 @@ namespace OttoTheGeek.Tests
 
         [Theory]
         [MemberData(nameof(OrderingTestData))]
-        public void OrdersByProp(string orderingVal, IEnumerable<Child> expected)
+        public async Task OrdersByProp(string orderingVal, IEnumerable<Child> expected)
         {
             var server = new Model().CreateServer();
 
-            var rawResult = server.Execute<JObject>(@"query($orderBy: ChildOrderBy){
+            var rawResult = await server.GetResultAsync<JObject>(@"query($orderBy: ChildOrderBy){
                 children(orderBy: $orderBy) {
                     prop1
                     prop2
                 }
-            }", new { orderBy = orderingVal });
+            }", variables: new { orderBy = orderingVal });
 
             var result = rawResult["children"].ToObject<Child[]>();
             result.Should().BeEquivalentTo(expected, x => x.WithStrictOrdering());

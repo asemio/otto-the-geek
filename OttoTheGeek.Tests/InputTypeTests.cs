@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using FluentAssertions;
 using GraphQL;
@@ -105,9 +106,9 @@ namespace OttoTheGeek.Tests
         }
 
         [Fact]
-        public void ConfiguresScalarArgs()
+        public async Task ConfiguresScalarArgs()
         {
-            var queryType = GetQueryObjectType();
+            var queryType = await GetQueryObjectType();
 
             queryType.Fields.Single().Args.Should().ContainEquivalentOf(
                 new FieldArgument
@@ -133,9 +134,9 @@ namespace OttoTheGeek.Tests
         }
 
         [Fact]
-        public void ConfiguresScalarLists()
+        public async Task ConfiguresScalarLists()
         {
-            var queryType = GetQueryObjectType();
+            var queryType = await GetQueryObjectType();
 
             queryType.Fields.Single().Args.Should().ContainEquivalentOf(
                 new FieldArgument
@@ -156,9 +157,9 @@ namespace OttoTheGeek.Tests
         }
 
         [Fact]
-        public void ConfiguresComplexArgs()
+        public async Task ConfiguresComplexArgs()
         {
-            var queryType = GetQueryObjectType();
+            var queryType = await GetQueryObjectType();
 
             queryType.Fields.Single().Args.Should().ContainEquivalentOf(
                 new FieldArgument
@@ -177,11 +178,11 @@ namespace OttoTheGeek.Tests
                 });
         }
 
-        private static ObjectType GetQueryObjectType()
+        private static async Task<ObjectType> GetQueryObjectType()
         {
             var server = new Model().CreateServer();
 
-            var rawResult = server.Execute<JObject>(@"{
+            var rawResult = await server.GetResultAsync<ObjectType>(@"{
                 __type(name:""Query"") {
                     name
                     kind
@@ -204,18 +205,17 @@ namespace OttoTheGeek.Tests
                         }
                     }
                 }
-            }");
+            }", "__type");
 
-            var queryType = rawResult["__type"].ToObject<ObjectType>();
-            return queryType;
+            return rawResult;
         }
 
         [Fact]
-        public void ConfiguresEnumValues()
+        public async Task ConfiguresEnumValues()
         {
             var server = new Model().CreateServer();
 
-            var rawResult = server.Execute<JObject>(@"{
+            var rawResult = await server.GetResultAsync<JObject>(@"{
                 __type(name:""Texture"") {
                     name
                     kind
@@ -255,11 +255,11 @@ namespace OttoTheGeek.Tests
 
         [Theory]
         [MemberData(nameof(DeserializesArgsData))]
-        public void DeserializesArgs(Args args)
+        public async Task DeserializesArgs(Args args)
         {
             var server = new Model().CreateServer();
 
-            var rawResult = server.Execute<JObject>(@"
+            var rawResult = await server.GetResultAsync<JObject>(@"
             query ($anInt: Int!, $aNullableInt: Int, $texture: Texture, $listOfInts: [Int!], $listOfTextures: [Texture!], $complexThing: ComplexThingInput!, $moreThings: [ComplexThingInput!]) {
                 child(
                         anInt: $anInt,
@@ -278,7 +278,7 @@ namespace OttoTheGeek.Tests
                     complexThing { numericThing stringyValue }
                     moreThings { numericThing stringyValue }
                 }
-            }", new {
+            }", variables: new {
                 anInt = args.AnInt,
                 aNullableInt = args.ANullableInt,
                 texture = args.Texture?.ToString(),

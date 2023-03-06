@@ -44,11 +44,11 @@ namespace OttoTheGeek.Tests
         }
 
         [Fact]
-        public void ConfiguresInputType()
+        public async Task ConfiguresInputType()
         {
             var server = new Model().CreateServer();
 
-            var rawResult = server.Execute<JObject>(@"{
+            var rawResult = await server.GetResultAsync<JObject>(@"{
                 __type(name:""ChildInput"") {
                     name
                     kind
@@ -67,7 +67,7 @@ namespace OttoTheGeek.Tests
 
 
         [Fact]
-        public void ReturnsObjectValues()
+        public async Task ReturnsObjectValues()
         {
             var expectedData = JObject.Parse(@"{
                 child: {
@@ -79,13 +79,13 @@ namespace OttoTheGeek.Tests
 
             var server = new Model().CreateServer();
 
-            var result = server.Execute<JObject>(@"mutation($data: ChildInput!) {
+            var result = await server.GetResultAsync<JObject>(@"mutation($data: ChildInput!) {
                 child(data: $data) {
                     value1
                     value2
                     value3
                 }
-            }", new {
+            }", variables: new {
                 data = new {
                     value1 = "hello",
                     value2 = "world",

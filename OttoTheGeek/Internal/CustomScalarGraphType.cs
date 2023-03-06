@@ -1,5 +1,3 @@
-using System;
-using GraphQL.NewtonsoftJson;
 using GraphQLParser.AST;
 
 namespace OttoTheGeek.Internal
@@ -28,11 +26,11 @@ namespace OttoTheGeek.Internal
 
             if (value.Kind == ASTNodeKind.IntValue)
             {
-                var innerVal = (GraphQLIntValue)value.GetValue();
+                var innerVal = ((GraphQLIntValue) value);
                 return _converter.Parse(new string(innerVal.Value.Span));
             }
 
-            return _converter.Parse(value.GetValue().ToString());
+            return null;
         }
 
         public override object ParseValue(object value)

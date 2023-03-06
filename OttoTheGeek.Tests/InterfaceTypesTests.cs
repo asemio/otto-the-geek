@@ -60,11 +60,11 @@ namespace OttoTheGeek.Tests
         }
 
         [Fact]
-        public void BuildsSchemaType()
+        public async Task BuildsSchemaType()
         {
             var server = new WorkingModel().CreateServer();
 
-            var rawResult = server.Execute<JObject>(@"{
+            var rawResult = await server.GetResultAsync<JObject>(@"{
                 __type(name:""Query"") {
                     name
                     kind
@@ -100,7 +100,7 @@ namespace OttoTheGeek.Tests
         }
 
         [Fact]
-        public void ReturnsObjectValues()
+        public async Task ReturnsObjectValues()
         {
             var expectedData = JObject.Parse(@"{
                 child: {
@@ -112,7 +112,7 @@ namespace OttoTheGeek.Tests
 
             var server = new WorkingModel().CreateServer();
 
-            var result = server.Execute<JObject>(@"{
+            var result = await server.GetResultAsync<JObject>(@"{
                 child {
                     value1
                     ... on ChildObject {

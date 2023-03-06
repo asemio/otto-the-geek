@@ -1,7 +1,6 @@
 using System;
 using System.Threading.Tasks;
 using FluentAssertions;
-using GraphQL.NewtonsoftJson;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json.Linq;
 using Xunit;
@@ -108,7 +107,7 @@ namespace OttoTheGeek.Tests
         }
 
         [Fact]
-        public void ScalarDenyAuthorization()
+        public async Task ScalarDenyAuthorization()
         {
             var backend = new AuthBackend
             {
@@ -117,13 +116,13 @@ namespace OttoTheGeek.Tests
             var server = new ScalarAuthModel()
                 .CreateServer(services => services.AddSingleton(backend));
 
-            var result = server.Execute<JObject>(@"{
+            var result = await server.GetResultAsync<JObject>(@"{
                 child {
                     value1
                     protected
                     value3
                 }
-            }", throwOnError: false);
+            }", "", throwOnError: false);
 
             var data = result["data"]["child"];
             data.Should().BeEquivalentTo(new JObject(
@@ -134,11 +133,11 @@ namespace OttoTheGeek.Tests
 
             var errs = (JArray)result["errors"];
             errs.Count.Should().Be(1);
-            errs[0]["Message"].Value<string>().Should().Be("Not authorized");
+            errs[0]["message"].Value<string>().Should().Be("Not authorized");
         }
 
         [Fact]
-        public void ScalarAllowAuthorization()
+        public async Task ScalarAllowAuthorization()
         {
             var backend = new AuthBackend
             {
@@ -147,15 +146,14 @@ namespace OttoTheGeek.Tests
             var server = new ScalarAuthModel()
                 .CreateServer(services => services.AddSingleton(backend));
 
-            var result = server.Execute<JObject>(@"{
+            var data = await server.GetResultAsync<JObject>(@"{
                 child {
                     value1
                     protected
                     value3
                 }
-            }");
+            }", "child");
 
-            var data = result["child"];
             data.Should().BeEquivalentTo(new JObject(
                 new JProperty("value1", "hello"),
                 new JProperty("protected", "world"),
@@ -164,7 +162,7 @@ namespace OttoTheGeek.Tests
         }
 
         [Fact]
-        public void ScalarAllowAuthorizationAsync()
+        public async Task ScalarAllowAuthorizationAsync()
         {
             var backend = new AuthBackend
             {
@@ -173,13 +171,13 @@ namespace OttoTheGeek.Tests
             var server = new AsyncScalarAuthModel()
                 .CreateServer(services => services.AddSingleton(backend));
 
-            var result = server.Execute<JObject>(@"{
+            var result = await server.GetResultAsync<JObject>(@"{
                 child {
                     value1
                     protected
                     value3
                 }
-            }");
+            }", "");
 
             var data = result["child"];
             data.Should().BeEquivalentTo(new JObject(
@@ -190,7 +188,7 @@ namespace OttoTheGeek.Tests
         }
 
         [Fact]
-        public void ObjectDenyAuthorization()
+        public async Task ObjectDenyAuthorization()
         {
             var backend = new AuthBackend
             {
@@ -199,23 +197,23 @@ namespace OttoTheGeek.Tests
             var server = new ObjectAuthModel()
                 .CreateServer(services => services.AddSingleton(backend));
 
-            var result = server.Execute<JObject>(@"{
+            var result = await server.GetResultAsync<JObject>(@"{
                 child {
                     value1
                     protected
                     value3
                 }
-            }", throwOnError: false);
+            }", "", throwOnError: false);
 
             result["data"]["child"].Should().BeEquivalentTo(new JObject());
 
             var errs = (JArray)result["errors"];
             errs.Count.Should().Be(1);
-            errs[0]["Message"].Value<string>().Should().Be("Not authorized");
+            errs[0]["message"].Value<string>().Should().Be("Not authorized");
         }
 
         [Fact]
-        public void ObjectAllowAuthorization()
+        public async Task ObjectAllowAuthorization()
         {
             var backend = new AuthBackend
             {
@@ -224,7 +222,7 @@ namespace OttoTheGeek.Tests
             var server = new ObjectAuthModel()
                 .CreateServer(services => services.AddSingleton(backend));
 
-            var result = server.Execute<JObject>(@"{
+            var result = await server.GetResultAsync<JObject>(@"{
                 child {
                     value1
                     protected
@@ -232,8 +230,7 @@ namespace OttoTheGeek.Tests
                 }
             }");
 
-            var data = result["child"];
-            data.Should().BeEquivalentTo(new JObject(
+            result["child"].Should().BeEquivalentTo(new JObject(
                 new JProperty("value1", "hello"),
                 new JProperty("protected", "world"),
                 new JProperty("value3", 654)
