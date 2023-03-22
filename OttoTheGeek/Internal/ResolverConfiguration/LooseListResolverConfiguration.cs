@@ -5,12 +5,15 @@ using GraphQL;
 using GraphQL.Resolvers;
 using GraphQL.Types;
 using Microsoft.Extensions.DependencyInjection;
+using OttoTheGeek.TypeModel;
 
 namespace OttoTheGeek.Internal.ResolverConfiguration
 {
     public sealed class LooseListResolverConfiguration<TResolver, TElem> : FieldResolverConfiguration
         where TResolver : class, ILooseListFieldResolver<TElem>
     {
+        public override Type ClrType => typeof(TElem);
+
         private readonly ScalarTypeMap _scalarTypeMap;
 
         public LooseListResolverConfiguration(ScalarTypeMap scalarTypeMap)
@@ -35,7 +38,12 @@ namespace OttoTheGeek.Internal.ResolverConfiguration
             return new ListGraphType(cache.GetOrCreate<TElem>(services));
         }
 
-        protected override void RegisterResolver(IServiceCollection services)
+        protected override IGraphType GetGraphType(OttoSchemaConfig config)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void RegisterResolver(IServiceCollection services)
         {
             services.AddTransient<TResolver>();
         }

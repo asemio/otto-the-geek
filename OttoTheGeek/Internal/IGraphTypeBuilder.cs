@@ -1,5 +1,6 @@
 using GraphQL.Types;
 using Microsoft.Extensions.DependencyInjection;
+using OttoTheGeek.TypeModel;
 
 namespace OttoTheGeek.Internal
 {
@@ -10,5 +11,7 @@ namespace OttoTheGeek.Internal
         bool NeedsRegistration { get; }
         string GraphTypeName { get; }
         IComplexGraphType BuildGraphType(GraphTypeCache cache, IServiceCollection services);
+        
+        OttoTypeConfig TypeConfig { get; }
     }
 }

@@ -5,12 +5,15 @@ using GraphQL.DataLoader;
 using GraphQL.Resolvers;
 using GraphQL.Types;
 using Microsoft.Extensions.DependencyInjection;
+using OttoTheGeek.TypeModel;
 
 namespace OttoTheGeek.Internal.ResolverConfiguration
 {
     internal sealed class ListContextResolverConfiguration<TResolver, TModel, TField> : FieldResolverConfiguration
         where TResolver : class, IListFieldResolver<TModel, TField>
     {
+        public override Type ClrType { get; }
+
         protected override IFieldResolver CreateGraphQLResolver()
         {
             return new ResolverProxy();
@@ -21,7 +24,12 @@ namespace OttoTheGeek.Internal.ResolverConfiguration
             return new ListGraphType(cache.GetOrCreate<TField>(services));
         }
 
-        protected override void RegisterResolver(IServiceCollection services)
+        protected override IGraphType GetGraphType(OttoSchemaConfig config)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void RegisterResolver(IServiceCollection services)
         {
             services.AddTransient<TResolver>();
         }

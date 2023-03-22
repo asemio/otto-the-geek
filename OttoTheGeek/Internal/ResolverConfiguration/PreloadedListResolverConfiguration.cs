@@ -3,12 +3,15 @@ using System.Linq;
 using GraphQL.Resolvers;
 using GraphQL.Types;
 using Microsoft.Extensions.DependencyInjection;
+using OttoTheGeek.TypeModel;
 
 namespace OttoTheGeek.Internal.ResolverConfiguration
 {
     public sealed class PreloadedListResolverConfiguration<TModel, TProp> : FieldResolverConfiguration
     {
         private readonly ScalarTypeMap _scalarTypeMap;
+
+        public override Type ClrType => typeof(TProp);
 
         public PreloadedListResolverConfiguration(ScalarTypeMap scalarTypeMap)
         {
@@ -38,7 +41,12 @@ namespace OttoTheGeek.Internal.ResolverConfiguration
             return new ListGraphType(cache.GetOrCreate(typeof(TProp), services));
         }
 
-        protected override void RegisterResolver(IServiceCollection services)
+        protected override IGraphType GetGraphType(OttoSchemaConfig config)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void RegisterResolver(IServiceCollection services)
         {
         }
     }

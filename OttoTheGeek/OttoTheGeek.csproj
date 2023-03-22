@@ -1,12 +1,14 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <TargetFramework>net5.0</TargetFramework>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <PackageId>OttoTheGeek</PackageId>
     <Authors>Asemio, LLC</Authors>
     <Company>Asemio, LLC</Company>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <LangVersion>10</LangVersion>
+    <WarningsNotAsErrors>CS0612</WarningsNotAsErrors>
   </PropertyGroup>
 
   <ItemGroup>

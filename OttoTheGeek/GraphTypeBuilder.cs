@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.ComponentModel;
 using System.Linq;
 using System.Linq.Expressions;
@@ -10,24 +11,36 @@ using OttoTheGeek.Connections;
 using OttoTheGeek.Internal;
 using OttoTheGeek.Internal.Authorization;
 using OttoTheGeek.Internal.ResolverConfiguration;
+using OttoTheGeek.TypeModel;
 using SchemaBuilderCallback = System.Func<OttoTheGeek.SchemaBuilder, OttoTheGeek.SchemaBuilder>;
 
 namespace OttoTheGeek {
     public sealed class GraphTypeBuilder<TModel> : IGraphTypeBuilder
     where TModel : class {
+        [Obsolete]
         internal readonly GraphTypeConfiguration<TModel> _config;
 
         private readonly IEnumerable<SchemaBuilderCallback> _schemaBuilderCallbacks;
 
-        public GraphTypeBuilder (ScalarTypeMap scalarTypeMap) : this (new GraphTypeConfiguration<TModel> (scalarTypeMap), new SchemaBuilderCallback[0]) {
+        public GraphTypeBuilder (ScalarTypeMap scalarTypeMap) : this (
+            new GraphTypeConfiguration<TModel> (scalarTypeMap),
+            new SchemaBuilderCallback[0],
+            OttoTypeConfig.ForType<TModel>()
+            ) {
 
         }
-        private GraphTypeBuilder (GraphTypeConfiguration<TModel> config, IEnumerable<SchemaBuilderCallback> schemaBuilderCallbacks) {
+        private GraphTypeBuilder(
+            GraphTypeConfiguration<TModel> config,
+            IEnumerable<SchemaBuilderCallback> schemaBuilderCallbacks,
+            OttoTypeConfig typeConfig
+            ) {
             _config = config;
             _schemaBuilderCallbacks = schemaBuilderCallbacks;
+            TypeConfig = typeConfig;
         }
 
         public bool NeedsRegistration => _config.NeedsRegistration;
+        public OttoTypeConfig TypeConfig { get; }
 
         public ScalarFieldBuilder<TModel, TProp> ScalarField<TProp> (Expression<Func<TModel, TProp>> propertyExpression) {
             var prop = propertyExpression.PropertyInfoForSimpleGet ();
@@ -61,23 +74,35 @@ namespace OttoTheGeek {
             var prop = propertyExpression.PropertyInfoForSimpleGet ();
             var props = _config.PropsToIgnore.Concat (new [] { prop }).ToArray ();
 
-            return Clone (_config.Clone (propertiesToIgnore: props));
+            return Clone (
+                _config.Clone (propertiesToIgnore: props),
+                TypeConfig with { IgnoredProperties = TypeConfig.IgnoredProperties.Add(prop.Name) }
+                );
         }
 
         public GraphTypeBuilder<TModel> NonNullable<TProp> (Expression<Func<TModel, TProp>> propertyExpression)
         {
-            return Clone(_config.ConfigureField(propertyExpression, x => x.WithNullable(Nullability.NonNull)));
+            return Clone(
+                _config.ConfigureField(propertyExpression, x => x.WithNullable(Nullability.NonNull)),
+                TypeConfig.ConfigureField(propertyExpression, x => x with { Nullability = Nullability.NonNull })
+                );
         }
 
         public GraphTypeBuilder<TModel> Nullable<TProp> (Expression<Func<TModel, TProp>> propertyExpression)
         {
-            return Clone(_config.ConfigureField(propertyExpression, x => x.WithNullable(Nullability.Nullable)));
+            return Clone(
+                _config.ConfigureField(propertyExpression, x => x.WithNullable(Nullability.Nullable)),
+                TypeConfig.ConfigureField(propertyExpression, x => x with { Nullability = Nullability.Nullable })
+                );
         }
 
         public GraphTypeBuilder<TModel> ConfigureOrderBy<TEntity> (
             Expression<Func<TModel, OrderValue<TEntity>>> propSelector, Func<OrderByBuilder<TEntity>, OrderByBuilder<TEntity>> configurator
         ) {
-            return Clone (_config.ConfigureField(propSelector, f => f.ConfigureOrderBy(configurator)));
+            return Clone (
+                _config.ConfigureField(propSelector, f => f.ConfigureOrderBy(configurator)),
+                TypeConfig.ConfigureField(propSelector, cfg => cfg.ConfigureOrderBy(configurator))
+                );
         }
 
         public AuthorizationBuilder<TModel, TProp> Authorize<TProp>(Expression<Func<TModel, TProp>> propertyExpression)
@@ -95,21 +120,27 @@ namespace OttoTheGeek {
 
             var interfaces = _config.Interfaces.Concat (new [] { tIface }).Distinct ().ToArray ();
 
-            return Clone (_config.Clone (interfaces: interfaces));
+            return Clone (
+                _config.Clone (interfaces: interfaces),
+                TypeConfig with { Interfaces = TypeConfig.Interfaces.Add(typeof(TInterface)) }
+                );
         }
 
         public GraphTypeBuilder<TModel> Named (string name) {
-            return Clone (_config.Clone (customName: name));
+            return Clone (_config.Clone (customName: name), TypeConfig with { Name = name });
         }
 
         internal GraphTypeBuilder<TModel> WithResolverConfiguration (PropertyInfo prop, FieldResolverConfiguration config)
         {
-            return Clone(_config.ConfigureField(prop, x => x.WithResolverConfiguration(config)));
+            return Clone(
+                _config.ConfigureField(prop, x => x.WithResolverConfiguration(config)),
+                TypeConfig.ConfigureField(prop, x => x with { ResolverConfiguration = config })
+                );
         }
 
         internal GraphTypeBuilder<TModel> WithGraphTypeOverride (PropertyInfo prop, Type graphType)
         {
-            return Clone(_config.ConfigureField(prop, x => x.OverrideGraphType(graphType)));
+            return Clone(_config.ConfigureField(prop, x => x.OverrideGraphType(graphType)), TypeConfig);
         }
 
         IComplexGraphType IGraphTypeBuilder.BuildGraphType (GraphTypeCache cache, IServiceCollection services)
@@ -170,7 +201,7 @@ namespace OttoTheGeek {
         /// </summary>
         public GraphTypeBuilder<TModel> WithSchemaBuilderCallback(SchemaBuilderCallback callback)
         {
-            return new GraphTypeBuilder<TModel>(_config, _schemaBuilderCallbacks.Concat(new[] { callback }).ToArray());
+            return new GraphTypeBuilder<TModel>(_config, _schemaBuilderCallbacks.Concat(new[] { callback }).ToArray(), TypeConfig);
         }
 
         internal (SchemaBuilder, GraphTypeBuilder<TModel>) RunSchemaBuilderCallbacks(SchemaBuilder builder)
@@ -182,11 +213,11 @@ namespace OttoTheGeek {
 
             builder = _schemaBuilderCallbacks.Aggregate(builder, (b, func) => func(b));
 
-            return (builder, new GraphTypeBuilder<TModel>(_config, new SchemaBuilderCallback[0]));
+            return (builder, new GraphTypeBuilder<TModel>(_config, new SchemaBuilderCallback[0], TypeConfig));
         }
 
-        internal GraphTypeBuilder<TModel> Clone (GraphTypeConfiguration<TModel> config) {
-            return new GraphTypeBuilder<TModel> (config, _schemaBuilderCallbacks);
+        internal GraphTypeBuilder<TModel> Clone (GraphTypeConfiguration<TModel> config, OttoTypeConfig typeConfig) {
+            return new GraphTypeBuilder<TModel> (config, _schemaBuilderCallbacks, typeConfig);
         }
 
         public string GraphTypeName =>

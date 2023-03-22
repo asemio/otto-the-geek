@@ -20,6 +20,12 @@ namespace OttoTheGeek
             _schema = schema;
             _provider = provider;
         }
+        
+        internal OttoServer(IServiceProvider provider)
+        {
+            _provider = provider;
+            _schema = provider.GetRequiredService<Schema>();
+        }
 
         public async Task<string> ExecuteAsync(string queryText, object inputData = null, bool throwOnError = true)
         {

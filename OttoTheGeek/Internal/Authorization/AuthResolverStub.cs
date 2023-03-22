@@ -7,23 +7,34 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace OttoTheGeek.Internal.Authorization
 {
-    internal abstract class AuthResolverStub
+    public abstract class AuthResolverStub
     {
         public abstract IFieldResolver GetResolver(IServiceCollection services, IFieldResolver wrapped);
+        public abstract IFieldResolver GetResolver(IFieldResolver wrapped);
+        public abstract void RegisterResolver(IServiceCollection services);
         public abstract void ValidateGraphqlType(Type t, PropertyInfo prop);
     }
 
-    internal sealed class NullAuthResolverStub : AuthResolverStub
+    public sealed class NullAuthResolverStub : AuthResolverStub
     {
         public override IFieldResolver GetResolver(IServiceCollection services, IFieldResolver wrapped)
         {
+            return GetResolver(wrapped);
+        }
+
+        public override IFieldResolver GetResolver(IFieldResolver wrapped)
+        {
             return wrapped;
+        }
+
+        public override void RegisterResolver(IServiceCollection services)
+        {
         }
 
         public override void ValidateGraphqlType(Type t, PropertyInfo prop) { }
     }
 
-    internal sealed class AuthResolverStub<TAuthorizer> : AuthResolverStub
+    public sealed class AuthResolverStub<TAuthorizer> : AuthResolverStub
         where TAuthorizer : class
     {
         private readonly Func<TAuthorizer, Task<bool>> _cb;
@@ -40,9 +51,19 @@ namespace OttoTheGeek.Internal.Authorization
 
         public override IFieldResolver GetResolver(IServiceCollection services, IFieldResolver wrapped)
         {
-            services.AddTransient<TAuthorizer>();
+            RegisterResolver(services);
 
+            return GetResolver(wrapped);
+        }
+
+        public override IFieldResolver GetResolver(IFieldResolver wrapped)
+        {
             return new AuthResolver<TAuthorizer>(_cb, wrapped);
+        }
+
+        public override void RegisterResolver(IServiceCollection services)
+        {
+            services.AddTransient<TAuthorizer>();
         }
 
         public override void ValidateGraphqlType(Type t, PropertyInfo prop)

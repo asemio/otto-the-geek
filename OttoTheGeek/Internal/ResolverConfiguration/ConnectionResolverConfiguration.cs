@@ -5,6 +5,7 @@ using GraphQL.Resolvers;
 using GraphQL.Types;
 using Microsoft.Extensions.DependencyInjection;
 using OttoTheGeek.Connections;
+using OttoTheGeek.TypeModel;
 
 namespace OttoTheGeek.Internal.ResolverConfiguration
 {
@@ -12,6 +13,7 @@ namespace OttoTheGeek.Internal.ResolverConfiguration
         where TResolver : class, IConnectionResolver<TModel, TArgs>
         where TArgs : PagingArgs<TModel>
     {
+        public override Type ClrType => typeof(Connection<TModel>);
         protected override IFieldResolver CreateGraphQLResolver()
         {
             return new ResolverProxy();
@@ -22,7 +24,12 @@ namespace OttoTheGeek.Internal.ResolverConfiguration
             return cache.GetOrCreate<Connection<TModel>>(services);
         }
 
-        protected override void RegisterResolver(IServiceCollection services)
+        protected override IGraphType GetGraphType(OttoSchemaConfig config)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void RegisterResolver(IServiceCollection services)
         {
             services.AddTransient<TResolver>();
         }

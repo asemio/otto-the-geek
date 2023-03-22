@@ -11,8 +11,8 @@ namespace OttoTheGeek
     public sealed class SchemaBuilder
     {
         private readonly Type _schemaType;
-        private readonly Dictionary<Type, IGraphTypeBuilder> _builders;
-        private readonly ScalarTypeMap _scalarTypeMap;
+        internal readonly Dictionary<Type, IGraphTypeBuilder> _builders;
+        internal readonly ScalarTypeMap _scalarTypeMap;
 
         internal SchemaBuilder(Type schemaType) : this(schemaType, new Dictionary<Type, IGraphTypeBuilder>(), new ScalarTypeMap())
         {

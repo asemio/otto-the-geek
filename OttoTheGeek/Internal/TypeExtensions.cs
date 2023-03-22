@@ -49,8 +49,12 @@ namespace OttoTheGeek.Internal
                 t = t.BaseType;
             }
 
-
             return false;
+        }
+
+        public static bool IsNullable(this Type t)
+        {
+            return t.IsGenericFor(typeof(Nullable<>));
         }
 
         public static Type MakeNonNullable(this Type t)

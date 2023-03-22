@@ -1,0 +1,87 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Collections.Immutable;
+using System.ComponentModel;
+using System.Linq;
+using System.Linq.Expressions;
+using System.Reflection;
+using GraphQL.Types;
+using OttoTheGeek.Internal;
+
+namespace OttoTheGeek.TypeModel;
+
+public record OttoTypeConfig(
+    string Name,
+    Type ClrType,
+    ImmutableHashSet<string> IgnoredProperties,
+    ImmutableHashSet<Type> Interfaces,
+    ImmutableDictionary<string, OttoFieldConfig> Fields
+)
+{
+    private static ImmutableHashSet<string> EmptyProperties => ImmutableHashSet<string>.Empty;
+    private static ImmutableHashSet<Type> EmptyInterfaces => ImmutableHashSet<Type>.Empty;
+    
+    OttoTypeConfig(string name, Type clrType)
+        : this(name, clrType, EmptyProperties, EmptyInterfaces, FieldsForType(clrType))
+    {
+        
+    }
+
+    public static OttoTypeConfig ForType<T>()
+    {
+        return ForType(typeof(T));
+    }
+    public static OttoTypeConfig ForType(Type t)
+    {
+        return new OttoTypeConfig(t.Name, t);
+    }
+
+    public OttoTypeConfig ConfigureField(PropertyInfo prop, Func<OttoFieldConfig, OttoFieldConfig> configTransform)
+    {
+        var existing = GetFieldConfig(prop);
+
+        return this with
+        {
+            Fields = Fields.SetItem(prop.Name, configTransform(existing))
+        };
+    }
+
+    public OttoTypeConfig ConfigureField<T, TProp>(Expression<Func<T, TProp>> propExpr, Func<OttoFieldConfig, OttoFieldConfig> configTransform)
+    {
+        var prop = propExpr.PropertyInfoForSimpleGet();
+
+        return ConfigureField(prop, configTransform);
+    }
+
+    public IComplexGraphType ToGqlNetGraphType(OttoSchemaConfig config)
+    {
+        var graphType = CreatGraphTypeStub();
+        graphType.Name = Name;
+        graphType.Description = ClrType.GetCustomAttribute<DescriptionAttribute>()?.Description;
+
+        return graphType;
+    }
+    
+    private IComplexGraphType CreatGraphTypeStub()
+    {
+        if (ClrType.IsInterface)
+        {
+            return new InterfaceGraphType();
+        }
+
+        return new ObjectGraphType();
+    }
+    
+    private OttoFieldConfig GetFieldConfig(PropertyInfo prop)
+    {
+        var existing = Fields.GetValueOrDefault(prop.Name, OttoFieldConfig.ForProperty(prop));
+        return existing;
+    }
+
+    private static ImmutableDictionary<string, OttoFieldConfig> FieldsForType(Type t)
+    {
+        return t.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+            .ToImmutableDictionary(x => x.Name, x => OttoFieldConfig.ForProperty(x));
+    }
+
+}
