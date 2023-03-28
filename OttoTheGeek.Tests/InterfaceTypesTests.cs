@@ -53,7 +53,7 @@ namespace OttoTheGeek.Tests
         public void ThrowsUnableToResolveForChildProp()
         {
             var model = new Model();
-            new Action(() => model.CreateServer())
+            new Action(() => model.CreateServer2())
                 .Should()
                 .Throw<UnableToResolveException>()
                 .WithMessage($"Unable to resolve property Child on class Query");
@@ -62,7 +62,7 @@ namespace OttoTheGeek.Tests
         [Fact]
         public async Task BuildsSchemaType()
         {
-            var server = new WorkingModel().CreateServer();
+            var server = new WorkingModel().CreateServer2();
 
             var rawResult = await server.GetResultAsync<JObject>(@"{
                 __type(name:""Query"") {
@@ -110,7 +110,7 @@ namespace OttoTheGeek.Tests
                 }
             }");
 
-            var server = new WorkingModel().CreateServer();
+            var server = new WorkingModel().CreateServer2();
 
             var result = await server.GetResultAsync<JObject>(@"{
                 child {

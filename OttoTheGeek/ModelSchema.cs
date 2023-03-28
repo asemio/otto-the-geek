@@ -43,11 +43,18 @@ namespace OttoTheGeek
             ValidateNoDuplicates(outputGraphTypes);
 
             var inputGraphTypes = new Dictionary<Type, IInputObjectGraphType>();
+
+            var interfaceImpls = new HashSet<Type>();
             
             foreach (var t in outputGraphTypes.Keys)
             {
                 var graphType = outputGraphTypes[t];
                 var typeConfig = typeMap[t];
+                foreach (var iface in typeConfig.Interfaces)
+                {
+                    ((IObjectGraphType)graphType).AddResolvedInterface((IInterfaceGraphType)outputGraphTypes[iface]);
+                    interfaceImpls.Add(t);
+                }
 
                 foreach (var f in typeConfig.Fields.Values)
                 {
@@ -64,6 +71,13 @@ namespace OttoTheGeek
             if (mutationType.Fields.Any())
             {
                 Mutation = (IObjectGraphType)mutationType;
+            }
+
+            foreach (var impl in interfaceImpls)
+            {
+                var implGraphType = (ObjectGraphType)outputGraphTypes[impl];
+                implGraphType.IsTypeOf = x => impl.IsAssignableFrom(x?.GetType());
+                RegisterType(implGraphType);
             }
         }
         

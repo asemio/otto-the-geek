@@ -120,10 +120,10 @@ namespace OttoTheGeek {
 
             var interfaces = _config.Interfaces.Concat (new [] { tIface }).Distinct ().ToArray ();
 
-            return Clone (
-                _config.Clone (interfaces: interfaces),
-                TypeConfig with { Interfaces = TypeConfig.Interfaces.Add(typeof(TInterface)) }
-                );
+            return Clone(
+                _config.Clone(interfaces: interfaces),
+                TypeConfig with {Interfaces = TypeConfig.Interfaces.Add(typeof(TInterface))}
+            );
         }
 
         public GraphTypeBuilder<TModel> Named (string name) {

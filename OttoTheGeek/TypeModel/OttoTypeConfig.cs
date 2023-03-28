@@ -22,14 +22,15 @@ public record OttoTypeConfig(
     Type ClrType,
     ImmutableHashSet<string> IgnoredProperties,
     ImmutableHashSet<Type> Interfaces,
+    ImmutableHashSet<Type> Implementations,
     ImmutableDictionary<string, OttoFieldConfig> Fields
 )
 {
     private static ImmutableHashSet<string> EmptyProperties => ImmutableHashSet<string>.Empty;
-    private static ImmutableHashSet<Type> EmptyInterfaces => ImmutableHashSet<Type>.Empty;
+    private static ImmutableHashSet<Type> EmptyTypes => ImmutableHashSet<Type>.Empty;
     
     private OttoTypeConfig(string name, Type clrType)
-        : this(name, clrType, EmptyProperties, EmptyInterfaces, FieldsForType(clrType))
+        : this(name, clrType, EmptyProperties, EmptyTypes, EmptyTypes, FieldsForType(clrType))
     {
         
     }
