@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Immutable;
 using System.ComponentModel;
+using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using GraphQL.Types;
@@ -44,7 +45,7 @@ public record OttoTypeConfig(
 
     private static OttoTypeConfig ForType(Type t)
     {
-        return new OttoTypeConfig(t.Name, t);
+        return new OttoTypeConfig(DefaultName(t), t);
     }
 
     public OttoTypeConfig ConfigureField(PropertyInfo prop, Func<OttoFieldConfig, OttoFieldConfig> configTransform)
@@ -104,4 +105,34 @@ public record OttoTypeConfig(
             .ToImmutableDictionary(x => x.Name, x => OttoFieldConfig.ForProperty(x));
     }
 
+    private static string DefaultName(Type clrType)
+    {
+        if (IsConnection(clrType))
+        {
+            return $"{GetConnectionElemType(clrType).Name}Connection";
+        }
+
+        return SanitizedTypeName(clrType);
+    }
+
+    private static bool IsConnection(Type clrType) => clrType.IsConstructedGenericType &&
+        clrType.GetGenericTypeDefinition () == typeof (Connections.Connection<>);
+
+    private static Type GetConnectionElemType (Type clrType) => clrType.GetGenericArguments().Single();
+
+    private static string SanitizedTypeName(Type clrType)
+    {
+        var typeName = clrType.Name;
+
+        if(!clrType.IsGenericType)
+        {
+            return typeName;
+        }
+
+        var closedType = clrType.GetGenericArguments()[0];
+
+        var trimmedName = typeName.Substring(0, typeName.IndexOf('`'));
+
+        return $"{trimmedName}Of{closedType.Name}";
+    }
 }

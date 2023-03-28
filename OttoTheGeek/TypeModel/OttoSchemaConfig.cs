@@ -30,6 +30,17 @@ public record OttoSchemaConfig(
         {
             r.RegisterResolver(services);
         }
+        
+        var authResolvers = LegacyBuilders.Values
+            .Select(x => x.TypeConfig)
+            .SelectMany(x => x.Fields)
+            .Select(x => x.Value.AuthResolver)
+            .Where(x => x != null);
+
+        foreach (var r in authResolvers)
+        {
+            r.RegisterResolver(services);
+        }
     }
 
     public static OttoSchemaConfig Empty(Type queryType, Type mutationType)

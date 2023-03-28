@@ -46,6 +46,7 @@ namespace OttoTheGeek
             );
         }
 
+        [Obsolete]
         public virtual OttoServer CreateServer(Action<IServiceCollection> configurator = null)
         {
             var services = new ServiceCollection();
@@ -61,6 +62,23 @@ namespace OttoTheGeek
             Schema schema = new ModelSchema<OttoModel<TQuery, TMutation, TSubscription>>(BuildOttoSchema(services), provider);
 
             return new OttoServer(schema, provider);
+        }
+        
+        public virtual OttoServer CreateServer2(Action<IServiceCollection> configurator = null)
+        {
+            var services = new ServiceCollection();
+            services
+                .AddOtto2(this);
+
+            if(configurator != null)
+            {
+                configurator(services);
+            }
+
+            var provider = services.BuildServiceProvider();
+            var schema = provider.GetRequiredService<ISchema>();
+
+            return new OttoServer((Schema)schema, provider);
         }
 
         public override OttoSchemaInfo BuildOttoSchema(IServiceCollection services)

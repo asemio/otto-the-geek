@@ -114,7 +114,7 @@ namespace OttoTheGeek.Tests
                 IsAuthorized = false
             };
             var server = new ScalarAuthModel()
-                .CreateServer(services => services.AddSingleton(backend));
+                .CreateServer2(services => services.AddSingleton(backend));
 
             var result = await server.GetResultAsync<JObject>(@"{
                 child {
@@ -144,7 +144,7 @@ namespace OttoTheGeek.Tests
                 IsAuthorized = true
             };
             var server = new ScalarAuthModel()
-                .CreateServer(services => services.AddSingleton(backend));
+                .CreateServer2(services => services.AddSingleton(backend));
 
             var data = await server.GetResultAsync<JObject>(@"{
                 child {
@@ -169,7 +169,7 @@ namespace OttoTheGeek.Tests
                 IsAuthorized = true
             };
             var server = new AsyncScalarAuthModel()
-                .CreateServer(services => services.AddSingleton(backend));
+                .CreateServer2(services => services.AddSingleton(backend));
 
             var result = await server.GetResultAsync<JObject>(@"{
                 child {
@@ -195,7 +195,7 @@ namespace OttoTheGeek.Tests
                 IsAuthorized = false
             };
             var server = new ObjectAuthModel()
-                .CreateServer(services => services.AddSingleton(backend));
+                .CreateServer2(services => services.AddSingleton(backend));
 
             var result = await server.GetResultAsync<JObject>(@"{
                 child {
@@ -220,7 +220,7 @@ namespace OttoTheGeek.Tests
                 IsAuthorized = true
             };
             var server = new ObjectAuthModel()
-                .CreateServer(services => services.AddSingleton(backend));
+                .CreateServer2(services => services.AddSingleton(backend));
 
             var result = await server.GetResultAsync<JObject>(@"{
                 child {
@@ -240,7 +240,7 @@ namespace OttoTheGeek.Tests
         [Fact]
         public void NullableMismatchThrows()
         {
-            new Action(() => new NullableMismatchAuthModel().CreateServer())
+            new Action(() => new NullableMismatchAuthModel().CreateServer2())
                 .Should()
                 .Throw<AuthorizationConfigurationException>()
                 .And.Message.Should()

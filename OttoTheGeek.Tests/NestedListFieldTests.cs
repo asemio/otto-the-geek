@@ -47,6 +47,7 @@ namespace OttoTheGeek.Tests
                     );
             }
 
+            [Obsolete]
             public override OttoServer CreateServer(Action<IServiceCollection> configurator = null)
             {
                 return base.CreateServer(x => x.AddSingleton(this));

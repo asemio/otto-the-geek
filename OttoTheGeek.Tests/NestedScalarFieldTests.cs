@@ -53,6 +53,7 @@ namespace OttoTheGeek.Tests
                 return builder.IgnoreProperty(x => x.CircularRelationship);
             }
 
+            [Obsolete]
             public override OttoServer CreateServer(Action<IServiceCollection> configurator = null)
             {
                 return base.CreateServer(x => x.AddSingleton(this));
