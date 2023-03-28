@@ -25,7 +25,7 @@ namespace OttoTheGeek {
         public GraphTypeBuilder (ScalarTypeMap scalarTypeMap) : this (
             new GraphTypeConfiguration<TModel> (scalarTypeMap),
             new SchemaBuilderCallback[0],
-            OttoTypeConfig.ForType<TModel>()
+            OttoTypeConfig.ForOutputType<TModel>()
             ) {
 
         }
@@ -143,6 +143,11 @@ namespace OttoTheGeek {
             return Clone(_config.ConfigureField(prop, x => x.OverrideGraphType(graphType)), TypeConfig);
         }
 
+        internal GraphTypeBuilder<TModel> WithTypeConfig(Func<OttoTypeConfig, OttoTypeConfig> configurator)
+        {
+            return Clone(_config, configurator(TypeConfig));
+        }
+
         IComplexGraphType IGraphTypeBuilder.BuildGraphType (GraphTypeCache cache, IServiceCollection services)
             => BuildGraphType (cache, services);
 
@@ -192,6 +197,14 @@ namespace OttoTheGeek {
         public QueryArguments BuildQueryArguments (GraphTypeCache cache, IServiceCollection services) {
             var args = GetRelevantProperties()
                 .Select (prop => ToQueryArgument (prop, cache));
+
+            return new QueryArguments (args);
+        }
+
+        public QueryArguments BuildQueryArguments(OttoSchemaConfig config, Dictionary<Type, IInputObjectGraphType> inputTypesCache)
+        {
+            var args = GetRelevantProperties()
+                .Select (prop => ToQueryArgument (prop, config, inputTypesCache));
 
             return new QueryArguments (args);
         }
@@ -309,6 +322,48 @@ namespace OttoTheGeek {
             };
         }
 
+        private QueryArgument ToQueryArgument (PropertyInfo prop, OttoSchemaConfig config, Dictionary<Type, IInputObjectGraphType> inputTypesCache) {
+            var fieldConfig = _config.GetFieldConfig(prop);
+
+            var desc = prop.GetCustomAttribute<DescriptionAttribute>()?.Description;
+
+            if (fieldConfig.TryGetScalarGraphType (out var graphType)) {
+                return new QueryArgument (graphType) {
+                    Name = prop.Name,
+                    Description = desc
+                };
+            }
+
+            if (typeof (OrderValue).IsAssignableFrom (prop.PropertyType)) {
+                var builder = fieldConfig.OrderByBuilder ??
+                    OrderByBuilder.FromPropertyInfo (prop);
+
+                var enumGraphType = builder.BuildGraphType ();
+                if (fieldConfig.Nullability == Nullability.NonNull) {
+                    enumGraphType = new NonNullGraphType (enumGraphType);
+                }
+                return new QueryArgument (enumGraphType) {
+                    Name = prop.Name,
+                    Description = desc,
+                };
+            }
+            var elemType = prop.PropertyType.GetEnumerableElementType ();
+            if (elemType != null)
+            {
+                if (_config.ScalarTypeMap.TryGetGraphType(elemType, out var scalarElemGraphType))
+                {
+                    var listGraphType = typeof(ListGraphType<>).MakeGenericType(scalarElemGraphType);
+
+                    return new QueryArgument(listGraphType)
+                    {
+                        Name = prop.Name,
+                        Description = desc,
+                    };
+                }
+            }
+
+            throw new NotImplementedException();
+        }
         private ComplexGraphType<TModel> CreateGraphTypeCore (GraphTypeCache cache, IServiceCollection services) {
             if (typeof (TModel).IsInterface) {
                 return new InterfaceGraphType<TModel> ();

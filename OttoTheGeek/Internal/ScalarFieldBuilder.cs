@@ -34,6 +34,7 @@ namespace OttoTheGeek.Internal
         }
 
         public ScalarFieldWithArgsBuilder<TModel, TProp, TArgs> WithArgs<TArgs>()
+            where TArgs : class
         {
             return new ScalarFieldWithArgsBuilder<TModel, TProp, TArgs>(_parentBuilder, _prop);
         }

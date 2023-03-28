@@ -8,7 +8,7 @@ namespace OttoTheGeek.Internal
 {
     public sealed class GraphTypeCache
     {
-        private readonly Dictionary<Type, IGraphTypeBuilder> _builders;
+        private readonly IReadOnlyDictionary<Type, IGraphTypeBuilder> _builders;
         private readonly Dictionary<Type, IGraphType> _cache = new Dictionary<Type, IGraphType>();
         private readonly Dictionary<Type, IGraphType> _inputTypeCache = new Dictionary<Type, IGraphType>();
         private readonly Dictionary<Type, QueryArguments> _argsCache = new Dictionary<Type, QueryArguments>();
@@ -18,7 +18,7 @@ namespace OttoTheGeek.Internal
         {
 
         }
-        public GraphTypeCache(Dictionary<Type, IGraphTypeBuilder> builders, ScalarTypeMap scalarTypeMap)
+        public GraphTypeCache(IReadOnlyDictionary<Type, IGraphTypeBuilder> builders, ScalarTypeMap scalarTypeMap)
         {
             _scalarTypeMap = scalarTypeMap;
             _builders = builders;

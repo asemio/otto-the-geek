@@ -5,7 +5,6 @@ using GraphQL;
 using GraphQL.Resolvers;
 using GraphQL.Types;
 using Microsoft.Extensions.DependencyInjection;
-using OttoTheGeek.TypeModel;
 
 namespace OttoTheGeek.Internal.ResolverConfiguration
 {
@@ -36,11 +35,6 @@ namespace OttoTheGeek.Internal.ResolverConfiguration
             }
 
             return new ListGraphType(cache.GetOrCreate<TElem>(services));
-        }
-
-        protected override IGraphType GetGraphType(OttoSchemaConfig config)
-        {
-            throw new NotImplementedException();
         }
 
         public override void RegisterResolver(IServiceCollection services)

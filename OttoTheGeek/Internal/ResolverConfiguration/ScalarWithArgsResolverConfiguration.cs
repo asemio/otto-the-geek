@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Reflection;
 using System.Threading.Tasks;
 using GraphQL;
 using GraphQL.Resolvers;
@@ -9,7 +11,7 @@ using OttoTheGeek.TypeModel;
 namespace OttoTheGeek.Internal.ResolverConfiguration
 {
     public sealed class ScalarWithArgsResolverConfiguration<TResolver, TProp, TArgs> : FieldWithArgsResolverConfiguration<TArgs>
-        where TResolver : class, ILooseScalarFieldWithArgsResolver<TProp, TArgs>
+        where TResolver : class, ILooseScalarFieldWithArgsResolver<TProp, TArgs> where TArgs : class
     {
         public override Type ClrType => typeof(TProp);
 
@@ -23,9 +25,10 @@ namespace OttoTheGeek.Internal.ResolverConfiguration
             return cache.GetOrCreate<TProp>(services);
         }
 
-        protected override IGraphType GetGraphType(OttoSchemaConfig config)
+        protected override QueryArguments GetQueryArguments(OttoSchemaConfig config,
+            Dictionary<Type, IInputObjectGraphType> inputTypes)
         {
-            throw new NotImplementedException();
+            return config.GetGqlNetArguments<TArgs>(inputTypes);
         }
 
         public override void RegisterResolver(IServiceCollection services)

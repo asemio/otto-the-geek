@@ -3,7 +3,6 @@ using System.Linq;
 using GraphQL.Resolvers;
 using GraphQL.Types;
 using Microsoft.Extensions.DependencyInjection;
-using OttoTheGeek.TypeModel;
 
 namespace OttoTheGeek.Internal.ResolverConfiguration
 {
@@ -39,11 +38,6 @@ namespace OttoTheGeek.Internal.ResolverConfiguration
             }
 
             return new ListGraphType(cache.GetOrCreate(typeof(TProp), services));
-        }
-
-        protected override IGraphType GetGraphType(OttoSchemaConfig config)
-        {
-            throw new NotImplementedException();
         }
 
         public override void RegisterResolver(IServiceCollection services)

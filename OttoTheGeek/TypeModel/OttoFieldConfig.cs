@@ -36,7 +36,8 @@ public record OttoFieldConfig(
         return this with { OrderByBuilder = configurator((OrderByBuilder<TEntity>) builder) };
     }
 
-    public FieldType ToGqlNetField(OttoSchemaConfig config, Dictionary<Type, IComplexGraphType> graphTypes)
+    public FieldType ToGqlNetField(OttoSchemaConfig config,
+        Dictionary<Type, IComplexGraphType> graphTypes, Dictionary<Type, IInputObjectGraphType> inputGraphTypes)
     {
         FieldType field;
         if (TryGetScalarGraphType (config.Scalars, out var graphQlType))
@@ -56,10 +57,39 @@ public record OttoFieldConfig(
                 throw new UnableToResolveException (Property, Property.DeclaringType);
             }
 
-            field = ResolverConfiguration.ConfigureField (Property, config, graphTypes[Property.PropertyType]);
+            field = ResolverConfiguration.ConfigureField(Property, config, graphTypes[Property.PropertyType], inputGraphTypes);
             field.Resolver = AuthResolver.GetResolver(field.Resolver);
         }
 
+        var descAttr = Property.GetCustomAttribute<DescriptionAttribute>();
+        field.Description = descAttr?.Description;
+
+        return field;
+    }
+    
+    public FieldType ToGqlNetInputField(OttoSchemaConfig config, Dictionary<Type, IInputObjectGraphType> graphTypes)
+    {
+        FieldType field;
+        if (TryGetScalarGraphType (config.Scalars, out var graphQlType))
+        {
+            field = new FieldType
+            {
+                Type = graphQlType,
+                Name = Property.Name,
+            };
+        }
+        else
+        {
+            var inputType = TryWrapNonNull(graphTypes[Property.PropertyType]);
+
+            field = new FieldType
+            {
+                ResolvedType = inputType,
+                Type = Property.PropertyType,
+                Name = Property.Name
+            };
+        }
+        
         var descAttr = Property.GetCustomAttribute<DescriptionAttribute>();
         field.Description = descAttr?.Description;
 
@@ -86,5 +116,13 @@ public record OttoFieldConfig(
         }
 
         return true;
+    }
+
+    public IGraphType TryWrapNonNull(IGraphType inputType)
+    {
+        if (Nullability == Nullability.Nullable)
+            return inputType;
+
+        return new NonNullGraphType(inputType);
     }
 }

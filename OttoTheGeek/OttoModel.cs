@@ -84,10 +84,7 @@ namespace OttoTheGeek
         {
             var builder = ConfigureSchema(new SchemaBuilder(typeof(Schema<TQuery, TMutation, TSubscription>)));
 
-            var types = builder._builders
-                .ToImmutableDictionary(x => x.Key, x => x.Value.TypeConfig);
-
-            return new OttoSchemaConfig<TQuery, TMutation>(types, OttoScalarTypeMap.Default);
+            return builder._schemaConfig;
         }
     }
 }

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 using GraphQL;
 using GraphQL.Resolvers;
@@ -16,14 +17,14 @@ namespace OttoTheGeek.Internal.ResolverConfiguration
         protected abstract IFieldResolver CreateGraphQLResolver();
 
         protected abstract IGraphType GetGraphType(GraphTypeCache cache, IServiceCollection services);
-        protected abstract IGraphType GetGraphType(OttoSchemaConfig config);
 
         protected virtual QueryArguments GetQueryArguments(GraphTypeCache cache, IServiceCollection services)
         {
             return null;
         }
         
-        protected virtual QueryArguments GetQueryArguments(OttoSchemaConfig config)
+        protected virtual QueryArguments GetQueryArguments(OttoSchemaConfig config,
+            Dictionary<Type, IInputObjectGraphType> inputTypes)
         {
             return null;
         }
@@ -34,30 +35,46 @@ namespace OttoTheGeek.Internal.ResolverConfiguration
 
             var graphType = GetGraphType(cache, services);
 
-            var unresolvedType = OverrideForScalarList(graphType);
+            var (t, resT) = GetGraphTypeConfiguration(graphType);
 
             return new FieldType {
                 Name = prop.Name,
-                Type = unresolvedType,
-                ResolvedType = unresolvedType == null ? graphType : null,
                 Resolver = CreateGraphQLResolver(),
-                Arguments = GetQueryArguments(cache, services)
+                Arguments = GetQueryArguments(cache, services),
+                Type = t,
+                ResolvedType = resT,
             };
         }
 
-        public FieldType ConfigureField(PropertyInfo prop, OttoSchemaConfig config, IGraphType graphType)
+        public FieldType ConfigureField(PropertyInfo prop,
+            OttoSchemaConfig config,
+            IGraphType graphType,
+            Dictionary<Type, IInputObjectGraphType> inputGraphTypes
+            )
         {
-            var unresolvedType = OverrideForScalarList(graphType);
+            var (t, resT) = GetGraphTypeConfiguration(graphType);
             
             return new FieldType {
                 Name = prop.Name,
                 Resolver = CreateGraphQLResolver(),
-                Arguments = GetQueryArguments(config),
-                Type = unresolvedType,
-                ResolvedType = unresolvedType == null ? graphType : null,
+                Arguments = GetQueryArguments(config, inputGraphTypes),
+                Type = t,
+                ResolvedType = resT,
             };
         }
 
+        private (Type, IGraphType) GetGraphTypeConfiguration(IGraphType graphType)
+        {
+            var unresolvedType = OverrideForScalarList(graphType);
+
+            if (unresolvedType == null)
+            {
+                return (null, graphType);
+            }
+
+            return (unresolvedType, null);
+        }
+        
         private Type OverrideForScalarList(IGraphType graphType)
         {
             var graphTypeType = graphType.GetType();
@@ -81,5 +98,6 @@ namespace OttoTheGeek.Internal.ResolverConfiguration
 
             return null;
         }
+
     }
 }

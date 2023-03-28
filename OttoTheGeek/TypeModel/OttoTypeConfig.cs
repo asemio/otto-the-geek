@@ -1,14 +1,20 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.ComponentModel;
-using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using GraphQL.Types;
 using OttoTheGeek.Internal;
 
 namespace OttoTheGeek.TypeModel;
+
+[Flags]
+public enum InputOutputKind
+{
+    Output = 1,
+    Input = 2,
+    Both = Input | Output,
+}
 
 public record OttoTypeConfig(
     string Name,
@@ -21,17 +27,22 @@ public record OttoTypeConfig(
     private static ImmutableHashSet<string> EmptyProperties => ImmutableHashSet<string>.Empty;
     private static ImmutableHashSet<Type> EmptyInterfaces => ImmutableHashSet<Type>.Empty;
     
-    OttoTypeConfig(string name, Type clrType)
+    private OttoTypeConfig(string name, Type clrType)
         : this(name, clrType, EmptyProperties, EmptyInterfaces, FieldsForType(clrType))
     {
         
     }
 
-    public static OttoTypeConfig ForType<T>()
+    public static OttoTypeConfig ForOutputType<T>()
     {
-        return ForType(typeof(T));
+        return ForOutputType(typeof(T));
     }
-    public static OttoTypeConfig ForType(Type t)
+    public static OttoTypeConfig ForOutputType(Type t)
+    {
+        return ForType(t);
+    }
+
+    private static OttoTypeConfig ForType(Type t)
     {
         return new OttoTypeConfig(t.Name, t);
     }
@@ -56,6 +67,15 @@ public record OttoTypeConfig(
     public IComplexGraphType ToGqlNetGraphType(OttoSchemaConfig config)
     {
         var graphType = CreatGraphTypeStub();
+        graphType.Name = Name;
+        graphType.Description = ClrType.GetCustomAttribute<DescriptionAttribute>()?.Description;
+
+        return graphType;
+    }
+    
+    public IInputObjectGraphType ToGqlNetInputGraphType(OttoSchemaConfig config)
+    {
+        var graphType = new InputObjectGraphType();
         graphType.Name = Name;
         graphType.Description = ClrType.GetCustomAttribute<DescriptionAttribute>()?.Description;
 

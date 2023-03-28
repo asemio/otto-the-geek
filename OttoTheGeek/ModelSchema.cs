@@ -36,27 +36,29 @@ namespace OttoTheGeek
         {
             var typeMap = GetTypeMap(config);
 
-            var graphTypes = typeMap
+            var outputGraphTypes = typeMap
                 .Select(x => KeyValuePair.Create(x.Key, x.Value.ToGqlNetGraphType(config)))
                 .ToDictionary(x => x.Key, x => x.Value);
 
-            foreach (var t in typeMap.Keys)
+            var inputGraphTypes = new Dictionary<Type, IInputObjectGraphType>();
+            
+            foreach (var t in outputGraphTypes.Keys)
             {
-                var graphType = graphTypes[t];
+                var graphType = outputGraphTypes[t];
                 var typeConfig = typeMap[t];
 
                 foreach (var f in typeConfig.Fields.Values)
                 {
-                    graphType.AddField(f.ToGqlNetField(config, graphTypes));
+                    graphType.AddField(f.ToGqlNetField(config, outputGraphTypes, inputGraphTypes));
                 }
             }
 
-            var queryType = graphTypes[config.QueryClrType];
+            var queryType = outputGraphTypes[config.QueryClrType];
             if (queryType.Fields.Any())
             {
                 Query = (IObjectGraphType)queryType;
             }
-            var mutationType = graphTypes[config.MutationClrType];
+            var mutationType = outputGraphTypes[config.MutationClrType];
             if (mutationType.Fields.Any())
             {
                 Mutation = (IObjectGraphType)mutationType;
@@ -67,7 +69,10 @@ namespace OttoTheGeek
         {
             var visited = new HashSet<Type>();
 
-            var map = UpdateMap(config.QueryClrType, config.Types, visited, config.Scalars);
+            var map = config.LegacyBuilders
+                .ToImmutableDictionary(x => x.Key, x => x.Value.TypeConfig);
+
+            map = UpdateMap(config.QueryClrType, map, visited, config.Scalars);
             map = UpdateMap(config.MutationClrType, map, visited, config.Scalars);
 
             return map;
@@ -87,7 +92,7 @@ namespace OttoTheGeek
 
             visited.Add(t);
             
-            var config = map.GetValueOrDefault(t, OttoTypeConfig.ForType(t));
+            var config = map.GetValueOrDefault(t, OttoTypeConfig.ForOutputType(t));
             if (!map.ContainsKey(t))
             {
                 map = map.Add(t, config);
