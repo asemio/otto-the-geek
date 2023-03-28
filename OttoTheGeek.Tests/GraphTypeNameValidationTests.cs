@@ -30,7 +30,7 @@ namespace OttoTheGeek.Tests
         [Fact]
         public void ThrowsValidationError()
         {
-            new Action(() => new Model().CreateServer())
+            new Action(() => new Model().CreateServer2())
                 .Should()
                 .Throw<DuplicateTypeNameException>()
                 .And

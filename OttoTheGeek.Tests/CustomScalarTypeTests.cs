@@ -114,7 +114,7 @@ namespace OttoTheGeek.Tests
         [Fact]
         public async Task NamesCustomType()
         {
-            var server = new Model().CreateServer();
+            var server = new Model().CreateServer2();
 
             var result = await server.GetResultAsync<JObject>(@"{
                 __type(name: ""FancyInt"") {
@@ -132,7 +132,7 @@ namespace OttoTheGeek.Tests
         [Fact]
         public async Task ResolvesFields()
         {
-            var server = new Model().CreateServer();
+            var server = new Model().CreateServer2();
 
             var result = await server.GetResultAsync<JObject>(@"{
                 child {
@@ -150,7 +150,7 @@ namespace OttoTheGeek.Tests
         [Fact]
         public async Task ParsesFieldArgumentAsString()
         {
-            var server = new Model().CreateServer();
+            var server = new Model().CreateServer2();
 
             var result = await server.GetResultAsync<JObject>(@"query ($intValue: FancyInt!){
                 child(intValue: $intValue) {
@@ -167,7 +167,7 @@ namespace OttoTheGeek.Tests
         [Fact]
         public async Task ParsesStringFieldArgument()
         {
-            var server = new Model().CreateServer();
+            var server = new Model().CreateServer2();
 
             var result = await server.GetResultAsync<JObject>(@"{
                 child(strValue: ""--wat--"") {
@@ -182,7 +182,7 @@ namespace OttoTheGeek.Tests
         [Fact]
         public async Task ParsesFieldArgumentAsInt()
         {
-            var server = new Model().CreateServer();
+            var server = new Model().CreateServer2();
 
             var result = await server.GetResultAsync<JObject>(@"{
                 child(intValue: 234) {

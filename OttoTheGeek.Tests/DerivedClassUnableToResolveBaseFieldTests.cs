@@ -25,7 +25,7 @@ namespace OttoTheGeek.Tests
         public void ThrowsUnableToResolveForChildProp()
         {
             var model = new Model();
-            new Action(() => model.CreateServer())
+            new Action(() => model.CreateServer2())
                 .Should()
                 .Throw<UnableToResolveException>()
                 .WithMessage($"Unable to resolve property Child on class Query");

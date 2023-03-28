@@ -13,6 +13,7 @@ namespace OttoTheGeek.TypeModel;
 
 public record OttoFieldConfig(
     PropertyInfo Property,
+    Type ModelType,
     Nullability Nullability,
     Type ArgumentsType,
     FieldResolverConfiguration ResolverConfiguration,
@@ -20,9 +21,9 @@ public record OttoFieldConfig(
     AuthResolverStub AuthResolver
 )
 {
-    public static OttoFieldConfig ForProperty(PropertyInfo prop)
+    public static OttoFieldConfig ForProperty(PropertyInfo prop, Type modelType)
     {
-        return new OttoFieldConfig(prop, Nullability.Unspecified, null, null, null, new NullAuthResolverStub());
+        return new OttoFieldConfig(prop, modelType, Nullability.Unspecified, null, null, null, new NullAuthResolverStub());
     }
 
     public OttoFieldConfig ConfigureOrderBy<TEntity>(Func<OrderByBuilder<TEntity>, OrderByBuilder<TEntity>> configurator)
@@ -54,10 +55,10 @@ public record OttoFieldConfig(
         {
             if(ResolverConfiguration == null)
             {
-                throw new UnableToResolveException (Property, Property.DeclaringType);
+                throw new UnableToResolveException (Property, ModelType);
             }
-
-            field = ResolverConfiguration.ConfigureField(Property, config, graphTypes[Property.PropertyType], inputGraphTypes);
+            
+            field = ResolverConfiguration.ConfigureField(Property, config, graphTypes[ResolverConfiguration.ClrType], inputGraphTypes);
             field.Resolver = AuthResolver.GetResolver(field.Resolver);
         }
 

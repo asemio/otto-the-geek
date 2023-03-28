@@ -44,7 +44,7 @@ namespace OttoTheGeek.Tests
         [Fact]
         public async Task HasCustomName()
         {
-            var server = new Model().CreateServer();
+            var server = new Model().CreateServer2();
 
             var queryType = await server.GetResultAsync<ObjectType>(@"{
                 __type(name:""Query"") {

@@ -45,4 +45,12 @@ public record OttoScalarTypeMap(ImmutableDictionary<Type, Type> Map)
         
         return builder.ToImmutable();
     }
+
+    public OttoScalarTypeMap Add(Type clrType, Type graphType)
+    {
+        return this with
+        {
+            Map = Map.Add(clrType, graphType)
+        };
+    }
 }

@@ -79,4 +79,14 @@ public record OttoSchemaConfig(
 
         return (GraphTypeBuilder<T>) untypedBuilder;
     }
+
+    public OttoSchemaConfig AddScalarType(Type clrType, Type graphType)
+    {
+        var newScalars = Scalars.Add(clrType, graphType);
+
+        return this with
+        {
+            Scalars = newScalars
+        };
+    }
 }

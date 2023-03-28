@@ -57,7 +57,7 @@ namespace OttoTheGeek.Tests
         [Fact]
         public async Task ReadsDescriptionForField()
         {
-            var server = new Model().CreateServer();
+            var server = new Model().CreateServer2();
 
             var rawResult = await server.GetResultAsync<JObject>(@"{
                 __type(name:""Query"") {
@@ -82,7 +82,7 @@ namespace OttoTheGeek.Tests
         [Fact]
         public async Task ReadsDescriptionForFieldArgument()
         {
-            var server = new Model().CreateServer();
+            var server = new Model().CreateServer2();
 
             var rawResult = await server.GetResultAsync<JObject>(@"{
                 __type(name:""Query"") {
@@ -109,7 +109,7 @@ namespace OttoTheGeek.Tests
         [Fact]
         public async Task ReadsDescriptionForClass()
         {
-            var server = new Model().CreateServer();
+            var server = new Model().CreateServer2();
 
             var rawResult = await server.GetResultAsync<JObject>(@"{
                 __type(name:""ChildObject"") {

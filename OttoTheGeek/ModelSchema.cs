@@ -39,6 +39,8 @@ namespace OttoTheGeek
             var outputGraphTypes = typeMap
                 .Select(x => KeyValuePair.Create(x.Key, x.Value.ToGqlNetGraphType(config)))
                 .ToDictionary(x => x.Key, x => x.Value);
+            
+            ValidateNoDuplicates(outputGraphTypes);
 
             var inputGraphTypes = new Dictionary<Type, IInputObjectGraphType>();
             
@@ -108,6 +110,22 @@ namespace OttoTheGeek
             }
 
             return map;
+        }
+        
+        private void ValidateNoDuplicates(Dictionary<Type, IComplexGraphType> graphTypes)
+        {
+            var groups = graphTypes
+                .GroupBy(x => x.Value.Name)
+                .Where(x => x.Count() > 1);
+
+            var group = groups.FirstOrDefault();
+
+            if(group == null)
+            {
+                return;
+            }
+
+            throw new DuplicateTypeNameException(group.Key, group.Select(x => x.Key));
         }
     }
 }

@@ -95,14 +95,14 @@ public record OttoTypeConfig(
     
     private OttoFieldConfig GetFieldConfig(PropertyInfo prop)
     {
-        var existing = Fields.GetValueOrDefault(prop.Name, OttoFieldConfig.ForProperty(prop));
+        var existing = Fields.GetValueOrDefault(prop.Name, OttoFieldConfig.ForProperty(prop, ClrType));
         return existing;
     }
 
     private static ImmutableDictionary<string, OttoFieldConfig> FieldsForType(Type t)
     {
         return t.GetProperties(BindingFlags.Public | BindingFlags.Instance)
-            .ToImmutableDictionary(x => x.Name, x => OttoFieldConfig.ForProperty(x));
+            .ToImmutableDictionary(x => x.Name, x => OttoFieldConfig.ForProperty(x, t));
     }
 
     private static string DefaultName(Type clrType)
