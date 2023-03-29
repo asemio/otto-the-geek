@@ -10,7 +10,7 @@ namespace OttoTheGeek.Internal.ResolverConfiguration
     {
         private readonly ScalarTypeMap _scalarTypeMap;
 
-        public override Type ClrType => typeof(TProp);
+        public override Type CoreClrType => typeof(TProp);
 
         public PreloadedListResolverConfiguration(ScalarTypeMap scalarTypeMap)
         {

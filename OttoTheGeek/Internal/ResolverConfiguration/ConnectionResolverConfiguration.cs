@@ -12,7 +12,7 @@ namespace OttoTheGeek.Internal.ResolverConfiguration
         where TResolver : class, IConnectionResolver<TModel, TArgs>
         where TArgs : PagingArgs<TModel>
     {
-        public override Type ClrType => typeof(Connection<TModel>);
+        public override Type CoreClrType => typeof(Connection<TModel>);
         protected override IFieldResolver CreateGraphQLResolver()
         {
             return new ResolverProxy();

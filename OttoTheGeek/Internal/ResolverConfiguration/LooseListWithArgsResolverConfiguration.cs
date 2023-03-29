@@ -11,7 +11,7 @@ namespace OttoTheGeek.Internal.ResolverConfiguration
     public sealed class LooseListWithArgsResolverConfiguration<TResolver, TElem, TArgs> : FieldWithArgsResolverConfiguration<TArgs>
         where TResolver : class, ILooseListFieldWithArgsResolver<TElem, TArgs>
     {
-        public override Type ClrType => typeof(TElem);
+        public override Type CoreClrType => typeof(TElem);
 
         private readonly ScalarTypeMap _scalarTypeMap;
 

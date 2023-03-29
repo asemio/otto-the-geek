@@ -50,16 +50,18 @@ namespace OttoTheGeek
             {
                 var graphType = outputGraphTypes[t];
                 var typeConfig = typeMap[t];
+                
+                foreach (var f in typeConfig.Fields.Values)
+                {
+                    graphType.AddField(f.ToGqlNetField(config, outputGraphTypes, inputGraphTypes));
+                }
+                
                 foreach (var iface in typeConfig.Interfaces)
                 {
                     ((IObjectGraphType)graphType).AddResolvedInterface((IInterfaceGraphType)outputGraphTypes[iface]);
                     interfaceImpls.Add(t);
                 }
 
-                foreach (var f in typeConfig.Fields.Values)
-                {
-                    graphType.AddField(f.ToGqlNetField(config, outputGraphTypes, inputGraphTypes));
-                }
             }
 
             var queryType = outputGraphTypes[config.QueryClrType];
@@ -120,7 +122,7 @@ namespace OttoTheGeek
                 {
                     continue;
                 }
-                map = UpdateMap(field.ResolverConfiguration.ClrType, map, visited, scalars);
+                map = UpdateMap(field.ResolverConfiguration.CoreClrType, map, visited, scalars);
             }
 
             return map;

@@ -7,7 +7,7 @@ namespace OttoTheGeek.Internal.ResolverConfiguration
 {
     public sealed class PreloadedScalarResolverConfiguration<TModel, TProp> : FieldResolverConfiguration
     {
-        public override Type ClrType => typeof(TProp);
+        public override Type CoreClrType => typeof(TProp);
 
         protected override IGraphType GetGraphType(GraphTypeCache cache, IServiceCollection services)
         {

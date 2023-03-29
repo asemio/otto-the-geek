@@ -11,7 +11,7 @@ namespace OttoTheGeek.Internal.ResolverConfiguration
     public sealed class LooseListResolverConfiguration<TResolver, TElem> : FieldResolverConfiguration
         where TResolver : class, ILooseListFieldResolver<TElem>
     {
-        public override Type ClrType => typeof(TElem);
+        public override Type CoreClrType => typeof(TElem);
 
         private readonly ScalarTypeMap _scalarTypeMap;
 
@@ -35,6 +35,11 @@ namespace OttoTheGeek.Internal.ResolverConfiguration
             }
 
             return new ListGraphType(cache.GetOrCreate<TElem>(services));
+        }
+
+        protected override IGraphType TransformGraphType(IGraphType coreGraphType)
+        {
+            return new ListGraphType(coreGraphType);
         }
 
         public override void RegisterResolver(IServiceCollection services)

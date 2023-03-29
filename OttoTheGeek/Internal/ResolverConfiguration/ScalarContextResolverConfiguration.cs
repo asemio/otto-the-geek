@@ -11,7 +11,7 @@ namespace OttoTheGeek.Internal.ResolverConfiguration
     internal sealed class ScalarContextResolverConfiguration<TResolver, TModel, TChild> : FieldResolverConfiguration
         where TResolver : class, IScalarFieldResolver<TModel, TChild>
     {
-        public override Type ClrType => typeof(TChild);
+        public override Type CoreClrType => typeof(TChild);
 
         protected override IFieldResolver CreateGraphQLResolver()
         {

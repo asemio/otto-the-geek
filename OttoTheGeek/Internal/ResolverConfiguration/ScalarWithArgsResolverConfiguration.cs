@@ -13,7 +13,7 @@ namespace OttoTheGeek.Internal.ResolverConfiguration
     public sealed class ScalarWithArgsResolverConfiguration<TResolver, TProp, TArgs> : FieldWithArgsResolverConfiguration<TArgs>
         where TResolver : class, ILooseScalarFieldWithArgsResolver<TProp, TArgs> where TArgs : class
     {
-        public override Type ClrType => typeof(TProp);
+        public override Type CoreClrType => typeof(TProp);
 
         protected override IFieldResolver CreateGraphQLResolver()
         {

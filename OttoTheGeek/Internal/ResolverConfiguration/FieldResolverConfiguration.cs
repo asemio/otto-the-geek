@@ -11,7 +11,7 @@ namespace OttoTheGeek.Internal.ResolverConfiguration
 {
     public abstract class FieldResolverConfiguration
     {
-        public abstract Type ClrType { get; }
+        public abstract Type CoreClrType { get; }
         public abstract void RegisterResolver(IServiceCollection services);
 
         protected abstract IFieldResolver CreateGraphQLResolver();
@@ -48,10 +48,11 @@ namespace OttoTheGeek.Internal.ResolverConfiguration
 
         public FieldType ConfigureField(PropertyInfo prop,
             OttoSchemaConfig config,
-            IGraphType graphType,
+            IGraphType coreGraphType,
             Dictionary<Type, IInputObjectGraphType> inputGraphTypes
             )
         {
+            var graphType = TransformGraphType(coreGraphType);
             var (t, resT) = GetGraphTypeConfiguration(graphType);
             
             return new FieldType {
@@ -61,6 +62,11 @@ namespace OttoTheGeek.Internal.ResolverConfiguration
                 Type = t,
                 ResolvedType = resT,
             };
+        }
+
+        protected virtual IGraphType TransformGraphType(IGraphType coreGraphType)
+        {
+            return coreGraphType;
         }
 
         private (Type, IGraphType) GetGraphTypeConfiguration(IGraphType graphType)

@@ -11,7 +11,7 @@ namespace OttoTheGeek.Internal.ResolverConfiguration
     internal sealed class ListContextWithArgsResolverConfiguration<TResolver, TModel, TField, TArgs> : FieldWithArgsResolverConfiguration<TArgs>
         where TResolver : class, IListFieldWithArgsResolver<TModel, TField, TArgs>
     {
-        public override Type ClrType => typeof(TField);
+        public override Type CoreClrType => typeof(TField);
 
         protected override IFieldResolver CreateGraphQLResolver()
         {

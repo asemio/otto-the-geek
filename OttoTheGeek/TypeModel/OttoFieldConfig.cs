@@ -58,7 +58,7 @@ public record OttoFieldConfig(
                 throw new UnableToResolveException (Property, ModelType);
             }
             
-            field = ResolverConfiguration.ConfigureField(Property, config, graphTypes[ResolverConfiguration.ClrType], inputGraphTypes);
+            field = ResolverConfiguration.ConfigureField(Property, config, graphTypes[ResolverConfiguration.CoreClrType], inputGraphTypes);
             field.Resolver = AuthResolver.GetResolver(field.Resolver);
         }
 
