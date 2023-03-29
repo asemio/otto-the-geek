@@ -75,7 +75,7 @@ public record OttoSchemaConfig(
         return builder.BuildQueryArguments(this, inputTypesCache);
     }
 
-    private IGraphTypeBuilder GetOrCreateBuilder(Type argsType)
+    public IGraphTypeBuilder GetOrCreateBuilder(Type argsType)
     {
         if (!LegacyBuilders.TryGetValue(argsType, out var untypedBuilder))
         {

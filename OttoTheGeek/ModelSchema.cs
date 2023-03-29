@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using GraphQL.Types;
-using OttoTheGeek.Internal;
 using OttoTheGeek.TypeModel;
 
 namespace OttoTheGeek
@@ -35,8 +34,10 @@ namespace OttoTheGeek
         public ModelSchema(OttoSchemaConfig config, IServiceProvider provider) : base(provider)
         {
             var typeMap = GetTypeMap(config);
+            var reachabilityMap = new ReachabilityMap(config);
 
             var outputGraphTypes = typeMap
+                .Where(x => reachabilityMap.OutputTypes.ContainsKey(x.Key))
                 .Select(x => KeyValuePair.Create(x.Key, x.Value.ToGqlNetGraphType(config)))
                 .ToDictionary(x => x.Key, x => x.Value);
             

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using GraphQL.Types;
 using OttoTheGeek.Internal;
@@ -52,5 +53,17 @@ public record OttoScalarTypeMap(ImmutableDictionary<Type, Type> Map)
         {
             Map = Map.Add(clrType, graphType)
         };
+    }
+
+    public bool IsScalarOrEnumerableOfScalar(Type fieldClrType)
+    {
+        if (Map.ContainsKey(fieldClrType))
+        {
+            return true;
+        }
+
+        var enumerableElementType = fieldClrType.GetEnumerableElementType();
+
+        return enumerableElementType != null && Map.ContainsKey(enumerableElementType);
     }
 }
