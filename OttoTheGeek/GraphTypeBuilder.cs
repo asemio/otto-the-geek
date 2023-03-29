@@ -159,7 +159,7 @@ namespace OttoTheGeek {
                 return cache.GetOrCreate<TModel> (services);
             }
 
-            foreach (var prop in GetRelevantProperties())
+            foreach (var prop in TypeConfig.GetRelevantProperties())
             {
                 var fieldConfig = _config.GetFieldConfig(prop);
                 fieldConfig.ConfigureField(graphType, cache, services);
@@ -185,7 +185,7 @@ namespace OttoTheGeek {
                 return (InputObjectGraphType<TModel>)cache.GetOrCreateInputType(typeof(TModel));
             }
 
-            foreach (var prop in GetRelevantProperties())
+            foreach (var prop in TypeConfig.GetRelevantProperties())
             {
                 var fieldConfig = _config.GetFieldConfig(prop);
                 fieldConfig.ConfigureInputTypeField(graphType, cache);
@@ -194,7 +194,7 @@ namespace OttoTheGeek {
         }
 
         public QueryArguments BuildQueryArguments (GraphTypeCache cache, IServiceCollection services) {
-            var args = GetRelevantProperties()
+            var args = TypeConfig.GetRelevantProperties()
                 .Select (prop => ToQueryArgument (prop, cache));
 
             return new QueryArguments (args);
@@ -202,7 +202,7 @@ namespace OttoTheGeek {
 
         public QueryArguments BuildQueryArguments(OttoSchemaConfig config, Dictionary<Type, IInputObjectGraphType> inputTypesCache)
         {
-            var args = GetRelevantProperties()
+            var args = TypeConfig.GetRelevantProperties()
                 .Select (prop => ToQueryArgument (prop, config, inputTypesCache));
 
             return new QueryArguments (args);
@@ -370,16 +370,6 @@ namespace OttoTheGeek {
 
             var objectGraphType = new ObjectGraphType<TModel> ();
             return objectGraphType;
-        }
-
-        private IEnumerable<PropertyInfo> GetRelevantProperties()
-        {
-            var props = typeof(TModel)
-                .GetProperties()
-                .Where(x => !_config.IsPropertyIgnored(x))
-                .Where(x => x.CanRead && x.GetMethod?.IsStatic == false);
-
-            return props;
         }
     }
 }

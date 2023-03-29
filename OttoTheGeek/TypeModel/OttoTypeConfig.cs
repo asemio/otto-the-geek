@@ -89,7 +89,8 @@ public record OttoTypeConfig(
         var props = ClrType
             .GetProperties()
             .Where(x => !IgnoredProperties.Contains(x.Name))
-            .Where(x => x.CanRead && x.GetMethod?.IsStatic == false);
+            .Where(x => x.CanRead && x.GetMethod?.IsStatic == false)
+            .ToArray();
 
         return props;
     }
