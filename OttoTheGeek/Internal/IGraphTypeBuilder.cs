@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using GraphQL.Types;
 using Microsoft.Extensions.DependencyInjection;
 using OttoTheGeek.TypeModel;
@@ -13,5 +15,6 @@ namespace OttoTheGeek.Internal
         IComplexGraphType BuildGraphType(GraphTypeCache cache, IServiceCollection services);
         
         OttoTypeConfig TypeConfig { get; }
+        QueryArguments BuildQueryArguments(OttoSchemaConfig config, Dictionary<Type, IInputObjectGraphType> inputTypesCache);
     }
 }

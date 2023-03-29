@@ -21,6 +21,7 @@ namespace OttoTheGeek.Internal
         {
             return _parentBuilder.WithResolverConfiguration(_prop,
                     new ScalarContextWithArgsResolverConfiguration<TResolver, TModel, TProp, TArgs>())
+                    .WithTypeConfig(x => x.ConfigureField(_prop, cfg => cfg with { ArgumentsType = typeof(TArgs) }))
                 ;
         }
     }

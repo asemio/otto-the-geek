@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.ComponentModel;
 using System.Linq;
@@ -22,7 +23,6 @@ public record OttoTypeConfig(
     Type ClrType,
     ImmutableHashSet<string> IgnoredProperties,
     ImmutableHashSet<Type> Interfaces,
-    ImmutableHashSet<Type> Implementations,
     ImmutableDictionary<string, OttoFieldConfig> Fields
 )
 {
@@ -30,7 +30,7 @@ public record OttoTypeConfig(
     private static ImmutableHashSet<Type> EmptyTypes => ImmutableHashSet<Type>.Empty;
     
     private OttoTypeConfig(string name, Type clrType)
-        : this(name, clrType, EmptyProperties, EmptyTypes, EmptyTypes, FieldsForType(clrType))
+        : this(name, clrType, EmptyProperties, EmptyTypes, FieldsForType(clrType))
     {
         
     }
@@ -83,7 +83,17 @@ public record OttoTypeConfig(
 
         return graphType;
     }
-    
+
+    public IEnumerable<PropertyInfo> GetRelevantProperties()
+    {
+        var props = ClrType
+            .GetProperties()
+            .Where(x => !IgnoredProperties.Contains(x.Name))
+            .Where(x => x.CanRead && x.GetMethod?.IsStatic == false);
+
+        return props;
+    }
+
     private IComplexGraphType CreatGraphTypeStub()
     {
         if (ClrType.IsInterface)

@@ -25,12 +25,6 @@ namespace OttoTheGeek.Internal.ResolverConfiguration
             return cache.GetOrCreate<TProp>(services);
         }
 
-        protected override QueryArguments GetQueryArguments(OttoSchemaConfig config,
-            Dictionary<Type, IInputObjectGraphType> inputTypes)
-        {
-            return config.GetGqlNetArguments<TArgs>(inputTypes);
-        }
-
         public override void RegisterResolver(IServiceCollection services)
         {
             services.AddTransient<TResolver>();

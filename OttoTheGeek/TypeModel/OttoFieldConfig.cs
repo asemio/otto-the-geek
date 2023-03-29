@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics.Contracts;
 using System.Reflection;
 using GraphQL;
 using GraphQL.Resolvers;
@@ -60,6 +61,7 @@ public record OttoFieldConfig(
             
             field = ResolverConfiguration.ConfigureField(Property, config, graphTypes[ResolverConfiguration.CoreClrType], inputGraphTypes);
             field.Resolver = AuthResolver.GetResolver(field.Resolver);
+            field.Arguments = config.GetGqlNetArguments(ArgumentsType, inputGraphTypes);
         }
 
         var descAttr = Property.GetCustomAttribute<DescriptionAttribute>();

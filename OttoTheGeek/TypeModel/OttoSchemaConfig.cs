@@ -63,21 +63,27 @@ public record OttoSchemaConfig(
         };
     }
 
-    public QueryArguments GetGqlNetArguments<TArgs>(Dictionary<Type, IInputObjectGraphType> inputTypesCache) where TArgs : class
+    public QueryArguments GetGqlNetArguments(Type argsType, Dictionary<Type, IInputObjectGraphType> inputTypesCache)
     {
-        var builder = GetOrCreateBuilder<TArgs>();
+        if (argsType == null)
+        {
+            return null;
+        }
+
+        var builder = GetOrCreateBuilder(argsType);
 
         return builder.BuildQueryArguments(this, inputTypesCache);
     }
 
-    private GraphTypeBuilder<T> GetOrCreateBuilder<T>() where T : class
+    private IGraphTypeBuilder GetOrCreateBuilder(Type argsType)
     {
-        if (!LegacyBuilders.TryGetValue(typeof(T), out var untypedBuilder))
+        if (!LegacyBuilders.TryGetValue(argsType, out var untypedBuilder))
         {
-            untypedBuilder = new GraphTypeBuilder<T>(LegacyScalars);
+            var builderType = typeof(GraphTypeBuilder<>).MakeGenericType(argsType);
+            untypedBuilder = (IGraphTypeBuilder)Activator.CreateInstance(builderType, new object[] {LegacyScalars});
         }
 
-        return (GraphTypeBuilder<T>) untypedBuilder;
+        return untypedBuilder;
     }
 
     public OttoSchemaConfig AddScalarType(Type clrType, Type graphType)

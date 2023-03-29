@@ -23,12 +23,6 @@ namespace OttoTheGeek.Internal.ResolverConfiguration
             return null;
         }
         
-        protected virtual QueryArguments GetQueryArguments(OttoSchemaConfig config,
-            Dictionary<Type, IInputObjectGraphType> inputTypes)
-        {
-            return null;
-        }
-
         public FieldType ConfigureField(PropertyInfo prop, GraphTypeCache cache, IServiceCollection services)
         {
             RegisterResolver(services);
@@ -58,7 +52,6 @@ namespace OttoTheGeek.Internal.ResolverConfiguration
             return new FieldType {
                 Name = prop.Name,
                 Resolver = CreateGraphQLResolver(),
-                Arguments = GetQueryArguments(config, inputGraphTypes),
                 Type = t,
                 ResolvedType = resT,
             };

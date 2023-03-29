@@ -46,7 +46,8 @@ namespace OttoTheGeek.Internal
         public GraphTypeBuilder<TModel> ResolvesVia<TResolver>()
             where TResolver : class, ILooseScalarFieldWithArgsResolver<TProp, TArgs>
         {
-            return _parentBuilder.WithResolverConfiguration(_prop, new ScalarWithArgsResolverConfiguration<TResolver, TProp, TArgs>());
+            return _parentBuilder.WithResolverConfiguration(_prop, new ScalarWithArgsResolverConfiguration<TResolver, TProp, TArgs>())
+                .WithTypeConfig(x => x.ConfigureField(_prop, cfg => cfg with { ArgumentsType = typeof(TArgs) }));
         }
     }
 }
