@@ -11,16 +11,26 @@ public sealed class ReachabilityMap
     public ReachabilityMap(OttoSchemaConfig config)
     {
         var outputTypes = new Dictionary<Type, OttoTypeConfig>();
+        var inputTypes = new Dictionary<Type, OttoTypeConfig>();
+        var argumentsTypes = new HashSet<Type>();
         
-        AddReachableTypes(config.GetOrCreateBuilder(config.QueryClrType).TypeConfig, config, outputTypes);
-        AddReachableTypes(config.GetOrCreateBuilder(config.MutationClrType).TypeConfig, config, outputTypes);
+        AddReachableOutputTypes(config.GetOrCreateBuilder(config.QueryClrType).TypeConfig, config, outputTypes, argumentsTypes);
+        AddReachableOutputTypes(config.GetOrCreateBuilder(config.MutationClrType).TypeConfig, config, outputTypes, argumentsTypes);
 
+        foreach (var t in argumentsTypes)
+        {
+            AddInputTypes(t, config, inputTypes);
+        }
+        
         OutputTypes = outputTypes.ToImmutableDictionary();
+        InputTypes = inputTypes.ToImmutableDictionary();
     }
     
     public ImmutableDictionary<Type, OttoTypeConfig> OutputTypes { get; }
+    public ImmutableDictionary<Type, OttoTypeConfig> InputTypes { get; }
 
-    private void AddReachableTypes(OttoTypeConfig typeConfig, OttoSchemaConfig config, Dictionary<Type, OttoTypeConfig> existingTypes)
+    private void AddReachableOutputTypes(OttoTypeConfig typeConfig, OttoSchemaConfig config,
+        Dictionary<Type, OttoTypeConfig> existingTypes, HashSet<Type> argumentsTypes)
     {
         if (existingTypes.ContainsKey(typeConfig.ClrType))
         {
@@ -31,27 +41,26 @@ public sealed class ReachabilityMap
 
         foreach (var field in typeConfig.GetRelevantProperties())
         {
-            if (config.Scalars.IsScalarOrEnumerableOfScalar(field.PropertyType))
-            {
-                continue;
-            }
-
-            if (field.PropertyType.IsEnum)
-            {
-                continue;
-            }
-
             var fieldConfig = typeConfig.Fields[field.Name];
+            if (fieldConfig.ArgumentsType != null)
+            {
+                argumentsTypes.Add(fieldConfig.ArgumentsType);
+            }
+            
+            var coreType = field.PropertyType.UnwrapNullableAndEnumerable();
+            if (fieldConfig.IsScalarLike(config))
+            {
+                continue;
+            }
+
             var connexType = fieldConfig.ResolverConfiguration?.ConnectionType;
 
             if (connexType != null)
             {
-                AddReachableTypes(config.GetOrCreateBuilder(connexType).TypeConfig, config, existingTypes);
+                AddReachableOutputTypes(config.GetOrCreateBuilder(connexType).TypeConfig, config, existingTypes, argumentsTypes);
             }
-                
-            var coreType = field.PropertyType.GetEnumerableElementType() ?? field.PropertyType;
             
-            AddReachableTypes(config.GetOrCreateBuilder(coreType).TypeConfig, config, existingTypes);
+            AddReachableOutputTypes(config.GetOrCreateBuilder(coreType).TypeConfig, config, existingTypes, argumentsTypes);
 
             if (coreType.IsInterface)
             {
@@ -61,9 +70,29 @@ public sealed class ReachabilityMap
 
                 foreach (var impl in implementations)
                 {
-                    AddReachableTypes(impl, config, existingTypes);
+                    AddReachableOutputTypes(impl, config, existingTypes, argumentsTypes);
                 }
             }
+        }
+    }
+
+    private void AddInputTypes(Type parent, OttoSchemaConfig config, Dictionary<Type, OttoTypeConfig> existingInputTypes)
+    {
+        if (existingInputTypes.ContainsKey(parent))
+        {
+            return;
+        }
+
+        var typeConfig = config.GetOrCreateBuilder(parent).TypeConfig;
+
+        existingInputTypes[parent] = typeConfig;
+
+        var fields = typeConfig.GetRelevantFieldConfigs()
+            .Where(x => !config.Scalars.IsScalarOrEnumerableOfScalar(x.Property.PropertyType));
+
+        foreach (var field in fields)
+        {
+            AddInputTypes(field.Property.PropertyType, config, existingInputTypes);
         }
     }
 }

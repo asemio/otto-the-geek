@@ -9,14 +9,7 @@ namespace OttoTheGeek.Internal
     {
         public static Type GetEnumerableElementType(this Type t)
         {
-            if(!t.IsConstructedGenericType)
-            {
-                return null;
-            }
-
-            var genericType = t.GetGenericTypeDefinition();
-
-            if(genericType != typeof(IEnumerable<>))
+            if(!t.IsEnumerable())
             {
                 return null;
             }
@@ -24,7 +17,7 @@ namespace OttoTheGeek.Internal
             return t.GetGenericArguments().Single();
         }
 
-        public static Type UnwrapNonNullable(this Type t)
+        public static Type UnwrapGqlNetNonNullable(this Type t)
         {
             if(t.IsNonNullGraphType())
             {
@@ -32,6 +25,11 @@ namespace OttoTheGeek.Internal
             }
 
             return t;
+        }
+
+        public static bool IsEnumerable(this Type t)
+        {
+            return t.IsGenericFor(typeof(IEnumerable<>));
         }
 
         public static bool IsGenericFor(this Type t, Type baseType)
@@ -50,6 +48,21 @@ namespace OttoTheGeek.Internal
             }
 
             return false;
+        }
+
+        public static Type UnwrapNullable(this Type t)
+        {
+            if (t.IsNullable())
+            {
+                return t.GetGenericArguments().First();
+            }
+
+            return t;
+        }
+
+        public static Type UnwrapNullableAndEnumerable(this Type t)
+        {
+            return GetEnumerableElementType(t) ?? t.UnwrapNullable();
         }
 
         public static bool IsNullable(this Type t)

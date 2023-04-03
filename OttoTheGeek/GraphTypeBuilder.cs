@@ -202,10 +202,7 @@ namespace OttoTheGeek {
 
         public QueryArguments BuildQueryArguments(OttoSchemaConfig config, Dictionary<Type, IInputObjectGraphType> inputTypesCache)
         {
-            var args = TypeConfig.GetRelevantProperties()
-                .Select (prop => ToQueryArgument (prop, config, inputTypesCache));
-
-            return new QueryArguments (args);
+            return TypeConfig.ToGqlNetArguments(config, inputTypesCache);
         }
 
         /// <summary>
@@ -321,48 +318,6 @@ namespace OttoTheGeek {
             };
         }
 
-        private QueryArgument ToQueryArgument (PropertyInfo prop, OttoSchemaConfig config, Dictionary<Type, IInputObjectGraphType> inputTypesCache) {
-            var fieldConfig = _config.GetFieldConfig(prop);
-
-            var desc = prop.GetCustomAttribute<DescriptionAttribute>()?.Description;
-
-            if (fieldConfig.TryGetScalarGraphType (out var graphType)) {
-                return new QueryArgument (graphType) {
-                    Name = prop.Name,
-                    Description = desc
-                };
-            }
-
-            if (typeof (OrderValue).IsAssignableFrom (prop.PropertyType)) {
-                var builder = fieldConfig.OrderByBuilder ??
-                    OrderByBuilder.FromPropertyInfo (prop);
-
-                var enumGraphType = builder.BuildGraphType ();
-                if (fieldConfig.Nullability == Nullability.NonNull) {
-                    enumGraphType = new NonNullGraphType (enumGraphType);
-                }
-                return new QueryArgument (enumGraphType) {
-                    Name = prop.Name,
-                    Description = desc,
-                };
-            }
-            var elemType = prop.PropertyType.GetEnumerableElementType ();
-            if (elemType != null)
-            {
-                if (_config.ScalarTypeMap.TryGetGraphType(elemType, out var scalarElemGraphType))
-                {
-                    var listGraphType = typeof(ListGraphType<>).MakeGenericType(scalarElemGraphType);
-
-                    return new QueryArgument(listGraphType)
-                    {
-                        Name = prop.Name,
-                        Description = desc,
-                    };
-                }
-            }
-
-            throw new NotImplementedException();
-        }
         private ComplexGraphType<TModel> CreateGraphTypeCore (GraphTypeCache cache, IServiceCollection services) {
             if (typeof (TModel).IsInterface) {
                 return new InterfaceGraphType<TModel> ();

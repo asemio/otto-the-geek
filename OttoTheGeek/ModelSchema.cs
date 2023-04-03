@@ -43,9 +43,22 @@ namespace OttoTheGeek
             
             ValidateNoDuplicates(outputGraphTypes);
 
-            var inputGraphTypes = new Dictionary<Type, IInputObjectGraphType>();
+            var inputGraphTypes = reachabilityMap.InputTypes
+                .Select(x => KeyValuePair.Create(x.Key, x.Value.ToGqlNetInputGraphType(config)))
+                .ToDictionary(x => x.Key, x => x.Value);
 
             var interfaceImpls = new HashSet<Type>();
+
+            foreach (var t in inputGraphTypes.Keys)
+            {
+                var graphType = inputGraphTypes[t];
+                var typeConfig = config.GetOrCreateBuilder(t).TypeConfig;
+
+                foreach (var field in typeConfig.GetRelevantFieldConfigs())
+                {
+                    graphType.AddField(field.ToGqlNetInputField(config, inputGraphTypes));
+                }
+            }
             
             foreach (var t in outputGraphTypes.Keys)
             {

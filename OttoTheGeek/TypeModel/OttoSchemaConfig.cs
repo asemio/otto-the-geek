@@ -72,14 +72,14 @@ public record OttoSchemaConfig(
 
         var builder = GetOrCreateBuilder(argsType);
 
-        return builder.BuildQueryArguments(this, inputTypesCache);
+        return builder.TypeConfig.ToGqlNetArguments(this, inputTypesCache);
     }
 
-    public IGraphTypeBuilder GetOrCreateBuilder(Type argsType)
+    public IGraphTypeBuilder GetOrCreateBuilder(Type modelType)
     {
-        if (!LegacyBuilders.TryGetValue(argsType, out var untypedBuilder))
+        if (!LegacyBuilders.TryGetValue(modelType, out var untypedBuilder))
         {
-            var builderType = typeof(GraphTypeBuilder<>).MakeGenericType(argsType);
+            var builderType = typeof(GraphTypeBuilder<>).MakeGenericType(modelType);
             untypedBuilder = (IGraphTypeBuilder)Activator.CreateInstance(builderType, new object[] {LegacyScalars});
         }
 

@@ -110,7 +110,7 @@ namespace OttoTheGeek.Internal
             if (Nullability == Nullability.NonNull) {
                 type = type.MakeNonNullable ();
             } else if (Nullability == Nullability.Nullable) {
-                type = type.UnwrapNonNullable ();
+                type = type.UnwrapGqlNetNonNullable ();
             }
             return true;
         }

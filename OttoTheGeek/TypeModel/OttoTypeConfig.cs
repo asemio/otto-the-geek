@@ -84,6 +84,16 @@ public record OttoTypeConfig(
         return graphType;
     }
 
+    public QueryArguments ToGqlNetArguments(OttoSchemaConfig config, Dictionary<Type, IInputObjectGraphType> inputTypes)
+    {
+        var args = Fields.Values
+            .Where(x => !IgnoredProperties.Contains(x.Property.Name))
+            .Select(x => x.ToGqlNetQueryArgument(config, inputTypes))
+            .ToArray();
+
+        return new QueryArguments(args);
+    }
+
     public IEnumerable<PropertyInfo> GetRelevantProperties()
     {
         var props = ClrType
@@ -93,6 +103,12 @@ public record OttoTypeConfig(
             .ToArray();
 
         return props;
+    }
+
+    public IEnumerable<OttoFieldConfig> GetRelevantFieldConfigs()
+    {
+        return Fields.Values
+            .Where(x => !IgnoredProperties.Contains(x.Property.Name));
     }
 
     private IComplexGraphType CreatGraphTypeStub()

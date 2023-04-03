@@ -55,15 +55,17 @@ public record OttoScalarTypeMap(ImmutableDictionary<Type, Type> Map)
         };
     }
 
-    public bool IsScalarOrEnumerableOfScalar(Type fieldClrType)
+    public bool IsScalarOrEnumerableOfScalar(Type t)
     {
-        if (Map.ContainsKey(fieldClrType))
+        var coreType = t.GetEnumerableElementType() ?? t;
+
+        if (Map.ContainsKey(coreType))
         {
             return true;
         }
 
-        var enumerableElementType = fieldClrType.GetEnumerableElementType();
+        var unwrapped = t.UnwrapNullable();
 
-        return enumerableElementType != null && Map.ContainsKey(enumerableElementType);
+        return unwrapped.IsEnum;
     }
 }
