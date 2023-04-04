@@ -18,7 +18,7 @@ namespace OttoTheGeek.Internal.ResolverConfiguration
         {
         }
 
-        protected override IFieldResolver CreateGraphQLResolver()
+        public override IFieldResolver CreateGraphQLResolver()
         {
             return new PreloadedFieldResolver<TModel>();
         }

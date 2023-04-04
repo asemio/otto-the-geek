@@ -42,13 +42,13 @@ namespace OttoTheGeek
                 var nullableType = typeof(Nullable<>).MakeGenericType(typeof(TScalar));
                 _schemaConfig.LegacyScalars.AddGraphType(nullableType, typeof(CustomScalarGraphType<TScalar, TConverter>));
                 newConfig = _schemaConfig
-                    .AddScalarType(typeof(TScalar), typeof(NonNullGraphType<CustomScalarGraphType<TScalar, TConverter>>))
+                    .AddScalarType(typeof(TScalar), typeof(CustomScalarGraphType<TScalar, TConverter>))
                     .AddScalarType(nullableType, typeof(CustomScalarGraphType<TScalar, TConverter>));
             }
             else
             {
                 _schemaConfig.LegacyScalars.AddGraphType(typeof(TScalar), typeof(CustomScalarGraphType<TScalar, TConverter>));
-                newConfig = _schemaConfig.AddScalarType(typeof(TScalar), typeof(NonNullGraphType<CustomScalarGraphType<TScalar, TConverter>>));
+                newConfig = _schemaConfig.AddScalarType(typeof(TScalar), typeof(CustomScalarGraphType<TScalar, TConverter>));
             }
 
             return new SchemaBuilder(_schemaType, newConfig);

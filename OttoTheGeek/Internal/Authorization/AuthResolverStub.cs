@@ -13,6 +13,7 @@ namespace OttoTheGeek.Internal.Authorization
         public abstract IFieldResolver GetResolver(IFieldResolver wrapped);
         public abstract void RegisterResolver(IServiceCollection services);
         public abstract void ValidateGraphqlType(Type t, PropertyInfo prop);
+        public abstract void ValidateGraphqlType(IGraphType gt, PropertyInfo prop);
     }
 
     public sealed class NullAuthResolverStub : AuthResolverStub
@@ -32,6 +33,7 @@ namespace OttoTheGeek.Internal.Authorization
         }
 
         public override void ValidateGraphqlType(Type t, PropertyInfo prop) { }
+        public override void ValidateGraphqlType(IGraphType gt, PropertyInfo prop) { }
     }
 
     public sealed class AuthResolverStub<TAuthorizer> : AuthResolverStub
@@ -73,6 +75,14 @@ namespace OttoTheGeek.Internal.Authorization
                 throw new AuthorizationConfigurationException(prop);
             }
 
+        }
+
+        public override void ValidateGraphqlType(IGraphType gt, PropertyInfo prop)
+        {
+            if (gt is NonNullGraphType || gt.GetType().IsGenericFor(typeof(NonNullGraphType<>)))
+            {
+                throw new AuthorizationConfigurationException(prop);
+            }
         }
     }
 }

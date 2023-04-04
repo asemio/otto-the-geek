@@ -15,7 +15,7 @@ namespace OttoTheGeek.Internal.ResolverConfiguration
         public virtual Type ConnectionType => null;
         public abstract void RegisterResolver(IServiceCollection services);
 
-        protected abstract IFieldResolver CreateGraphQLResolver();
+        public abstract IFieldResolver CreateGraphQLResolver();
 
         protected abstract IGraphType GetGraphType(GraphTypeCache cache, IServiceCollection services);
 

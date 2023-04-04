@@ -15,7 +15,7 @@ namespace OttoTheGeek.Internal.ResolverConfiguration
     {
         public override Type CoreClrType => typeof(TProp);
 
-        protected override IFieldResolver CreateGraphQLResolver()
+        public override IFieldResolver CreateGraphQLResolver()
         {
             return new ResolverProxy();
         }

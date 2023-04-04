@@ -4,7 +4,6 @@ using System.ComponentModel;
 using System.Reflection;
 using GraphQL.Resolvers;
 using GraphQL.Types;
-using OttoTheGeek.Connections;
 using OttoTheGeek.Internal;
 using OttoTheGeek.Internal.Authorization;
 using OttoTheGeek.Internal.ResolverConfiguration;
@@ -40,48 +39,35 @@ public record OttoFieldConfig(
     public FieldType ToGqlNetField(OttoSchemaConfig config,
         Dictionary<Type, IComplexGraphType> graphTypes, Dictionary<Type, IInputObjectGraphType> inputGraphTypes)
     {
-        FieldType field;
-        if (TryGetScalarGraphType (config.Scalars, out var graphQlType))
+        var desc = Property.GetCustomAttribute<DescriptionAttribute>()?.Description;
+        var (gtt, gt) = GetGraphTypeConfiguration(config, graphTypes);
+        if (gtt != null)
         {
-            AuthResolver.ValidateGraphqlType(graphQlType, Property);
-            field = new FieldType
+            AuthResolver.ValidateGraphqlType(gtt, Property);
+            return new FieldType
             {
-                Type = graphQlType,
+                Type = gtt,
                 Name = Property.Name,
+                Description = desc,
                 Resolver = AuthResolver.GetResolver(NameFieldResolver.Instance)
             };
         }
-        else if (Property.PropertyType.UnwrapNullable().IsEnum)
+        
+        if(ResolverConfiguration == null)
         {
-            var enumGraphType = typeof(OttoEnumGraphType<>).MakeGenericType(Property.PropertyType.UnwrapNullable());
-            enumGraphType = Property.PropertyType.IsNullable()
-                ? enumGraphType
-                : typeof(NonNullGraphType<>).MakeGenericType(enumGraphType);
-            
-            AuthResolver.ValidateGraphqlType(enumGraphType, Property);
-            field = new FieldType
-            {
-                Type = enumGraphType,
-                Name = Property.Name,
-                Resolver = AuthResolver.GetResolver(NameFieldResolver.Instance),
-            };
-        }
-        else
-        {
-            if(ResolverConfiguration == null)
-            {
-                throw new UnableToResolveException (Property, ModelType);
-            }
-
-            var graphType = GetResolvableGraphType(config, graphTypes);
-
-            field = ResolverConfiguration.ConfigureField(Property, config, graphType, inputGraphTypes);
-            field.Resolver = AuthResolver.GetResolver(field.Resolver);
-            field.Arguments = config.GetGqlNetArguments(ArgumentsType, inputGraphTypes);
+            throw new UnableToResolveException (Property, ModelType);
         }
 
-        var descAttr = Property.GetCustomAttribute<DescriptionAttribute>();
-        field.Description = descAttr?.Description;
+        AuthResolver.ValidateGraphqlType(gt, Property);
+        var field = new FieldType
+        {
+            Name = Property.Name,
+            Description = desc,
+            Arguments = config.GetGqlNetArguments(ArgumentsType, inputGraphTypes),
+            ResolvedType = gt
+        };
+
+        field.Resolver = AuthResolver.GetResolver(ResolverConfiguration.CreateGraphQLResolver());
 
         return field;
     }
@@ -99,34 +85,6 @@ public record OttoFieldConfig(
             Name = Property.Name,
             Description = description,
         };
-    }
-    
-    public bool TryGetScalarGraphType (OttoScalarTypeMap scalars, out Type type)
-    {
-        var t = Property.PropertyType;
-        return TryGetScalarGraphType(t, scalars, out type);
-    }
-
-    private bool TryGetScalarGraphType(Type t, OttoScalarTypeMap scalars, out Type type)
-    {
-        if (!scalars.Map.TryGetValue(t, out type))
-        {
-            return false;
-        }
-
-        switch (Nullability)
-        {
-            case Nullability.Unspecified:
-                return true;
-            case Nullability.NonNull:
-                type = type.MakeNonNullable();
-                break;
-            case Nullability.Nullable:
-                type = type.UnwrapGqlNetNonNullable();
-                break;
-        }
-
-        return true;
     }
 
     public QueryArgument ToGqlNetQueryArgument(OttoSchemaConfig config, Dictionary<Type, IInputObjectGraphType> inputTypes)
@@ -171,18 +129,23 @@ public record OttoFieldConfig(
                 typeof(ScalarGraphType).IsAssignableFrom(graphTypeType)
                 || typeof(EnumerationGraphType).IsAssignableFrom(graphTypeType);
 
-            var needsNonNull =
-                (isClrScalar && !Property.PropertyType.IsNullable())
-                || (Nullability != Nullability.Nullable);
+            var defaultNullability = isClrScalar ? Nullability.NonNull : Nullability.Nullable;
 
-            needsNonNull = needsNonNull && !graphTypeType.IsGenericFor(typeof(NonNullGraphType<>));
-
-            if (needsNonNull)
+            var computedNullability =
+                Nullability == Nullability.Unspecified ?
+                    (
+                        Property.PropertyType.IsNullable()
+                            ? Nullability.Nullable
+                            : defaultNullability
+                    )
+                    : Nullability;
+            
+            if(computedNullability == Nullability.NonNull)
             {
                 return (typeof(NonNullGraphType<>).MakeGenericType(graphTypeType), null);
             }
 
-            return (graphTypeType.UnwrapGqlNetNonNullable(), null);
+            return (graphTypeType, null);
         }
 
         if (Property.PropertyType.IsEnumerable())
@@ -195,7 +158,7 @@ public record OttoFieldConfig(
             return (null, cachedGraphTypes[ResolverConfiguration.ConnectionType]);
         }
 
-        if (Nullability != Nullability.Nullable)
+        if (Nullability == Nullability.NonNull)
         {
             return (null, new NonNullGraphType(graphType));
         }
@@ -228,7 +191,14 @@ public record OttoFieldConfig(
             return (null, enumGraphType);
         }
 
-        return (null, cachedGraphTypes[coreType]);
+        if (!cachedGraphTypes.TryGetValue(coreType, out var graphType))
+        {
+            var builder = config.GetOrCreateBuilder(coreType);
+
+            graphType = (TObjectGraphType)builder.TypeConfig.ToGqlNetGraphType(config);
+        }
+
+        return (null, graphType);
     }
 
     public bool IsScalarLike(OttoSchemaConfig config)
@@ -245,24 +215,5 @@ public record OttoFieldConfig(
         }
 
         return false;
-    }
-
-    private IGraphType GetResolvableGraphType(OttoSchemaConfig config,
-        Dictionary<Type, IComplexGraphType> graphTypes)
-    {
-        if (Property.PropertyType.GetEnumerableElementType() == ResolverConfiguration.CoreClrType)
-        {
-            if (config.Scalars.Map.TryGetValue(Property.PropertyType, out var scalarGraphType))
-            {
-                return (IGraphType)Activator.CreateInstance(scalarGraphType);
-            }
-        }
-        
-        if (!graphTypes.TryGetValue(ResolverConfiguration.CoreClrType, out var graphType))
-        {
-            throw new UnableToResolveException(Property, ModelType);
-        }
-
-        return graphType;
     }
 }

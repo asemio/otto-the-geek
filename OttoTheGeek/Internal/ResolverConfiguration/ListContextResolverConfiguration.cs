@@ -13,7 +13,7 @@ namespace OttoTheGeek.Internal.ResolverConfiguration
     {
         public override Type CoreClrType { get; }
 
-        protected override IFieldResolver CreateGraphQLResolver()
+        public override IFieldResolver CreateGraphQLResolver()
         {
             return new ResolverProxy();
         }

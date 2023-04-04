@@ -17,7 +17,7 @@ namespace OttoTheGeek.Internal.ResolverConfiguration
             _scalarTypeMap = scalarTypeMap;
         }
 
-        protected override IFieldResolver CreateGraphQLResolver()
+        public override IFieldResolver CreateGraphQLResolver()
         {
             return new PreloadedFieldResolver<TModel>();
         }
