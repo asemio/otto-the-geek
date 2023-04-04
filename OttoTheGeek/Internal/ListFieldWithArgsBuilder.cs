@@ -18,7 +18,9 @@ namespace OttoTheGeek.Internal
         public GraphTypeBuilder<TModel> ResolvesVia<TResolver>()
             where TResolver : class, IListFieldWithArgsResolver<TModel, TElem, TArgs>
         {
-            return _parentBuilder.WithResolverConfiguration(_prop, new ListContextWithArgsResolverConfiguration<TResolver, TModel, TElem, TArgs>());
+            return _parentBuilder
+                .WithResolverConfiguration(_prop, new ListContextWithArgsResolverConfiguration<TResolver, TModel, TElem, TArgs>())
+                .WithTypeConfig(cfg => cfg.ConfigureField(_prop, fld => fld with { ArgumentsType = typeof(TArgs) }));
         }
     }
 }

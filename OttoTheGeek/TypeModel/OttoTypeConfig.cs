@@ -49,6 +49,18 @@ public record OttoTypeConfig(
         return new OttoTypeConfig(DefaultName(t), t);
     }
 
+    public OttoTypeConfig IgnoreProperty(PropertyInfo prop)
+    {
+        var newFields = Fields.Remove(prop.Name);
+        var newIgnored = IgnoredProperties.Add(prop.Name);
+
+        return this with
+        {
+            Fields = newFields,
+            IgnoredProperties = newIgnored,
+        };
+    }
+
     public OttoTypeConfig ConfigureField(PropertyInfo prop, Func<OttoFieldConfig, OttoFieldConfig> configTransform)
     {
         var existing = GetFieldConfig(prop);
@@ -78,7 +90,7 @@ public record OttoTypeConfig(
     public IInputObjectGraphType ToGqlNetInputGraphType(OttoSchemaConfig config)
     {
         var graphType = new InputObjectGraphType();
-        graphType.Name = Name;
+        graphType.Name = $"{Name}Input";
         graphType.Description = ClrType.GetCustomAttribute<DescriptionAttribute>()?.Description;
 
         return graphType;

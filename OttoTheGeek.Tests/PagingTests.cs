@@ -91,7 +91,7 @@ namespace OttoTheGeek.Tests
         [Fact]
         public async Task BuildsSchemaType()
         {
-            var server = new Model().CreateServer();
+            var server = new Model().CreateServer2();
 
             var rawResult = await server.GetResultAsync<JObject>(@"{
                 __type(name:""Query"") {
@@ -171,7 +171,7 @@ namespace OttoTheGeek.Tests
         [Fact]
         public async Task ReturnsObjectValues()
         {
-            var server = new Model().CreateServer();
+            var server = new Model().CreateServer2();
 
             var result = await server.GetResultAsync<Connection<ChildObject>>(@"{
                 children(offset: 22, count: 11) {
@@ -190,7 +190,7 @@ namespace OttoTheGeek.Tests
         [Fact]
         public async Task ReturnsObjectValuesFromCustomArgs()
         {
-            var server = new CustomConnectionArgsModel().CreateServer();
+            var server = new CustomConnectionArgsModel().CreateServer2();
 
             var result = await server.GetResultAsync<Connection<ChildObject>>(@"{
                 children(offset: 22, count: 11, searchText: ""derp"") {

@@ -51,6 +51,11 @@ namespace OttoTheGeek.Tests
             {
                 return base.CreateServer(x => x.AddSingleton(this));
             }
+            
+            public override OttoServer CreateServer2(Action<IServiceCollection> configurator = null)
+            {
+                return base.CreateServer2(x => x.AddSingleton(this));
+            }
         }
 
         public sealed class ChildrenResolver : ILooseListFieldResolver<ChildObject>
@@ -100,7 +105,7 @@ namespace OttoTheGeek.Tests
         [Fact]
         public async Task GeneratesSchema()
         {
-            var server = new Model().CreateServer();
+            var server = new Model().CreateServer2();
 
             var rawResult = await server.GetResultAsync<JObject>(@"{
                 __type(name:""ChildObject"") {
@@ -140,7 +145,7 @@ namespace OttoTheGeek.Tests
         [Fact]
         public async Task ReturnsData()
         {
-            var server = new Model().CreateServer();
+            var server = new Model().CreateServer2();
 
             var rawResult = await server.GetResultAsync<JObject>(@"{
                 children {

@@ -31,7 +31,9 @@ namespace OttoTheGeek.Internal
                             .ListField(x => x.Records)
                             .Preloaded()
                     )
-                );
+                )
+                .WithTypeConfig(cfg => cfg.ConfigureField(prop, fld => fld with { ArgumentsType = typeof(PagingArgs<TElem>) }))
+                ;
         }
 
         public ConnectionFieldWithArgsBuilder<T, TElem, TArgs> WithArgs<TArgs>()
@@ -61,6 +63,7 @@ namespace OttoTheGeek.Internal
             var config = new ConnectionResolverConfiguration<TElem, TArgs, TResolver>();
             return _parent
                 .WithResolverConfiguration(prop, config)
+                .WithTypeConfig(cfg => cfg.ConfigureField(prop, fld => fld with { ArgumentsType = typeof(TArgs) }))
                 .WithSchemaBuilderCallback(b =>
                     b.GraphType<Connection<TElem>>(
                         b2 => b2

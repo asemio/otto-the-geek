@@ -58,6 +58,11 @@ namespace OttoTheGeek.Tests
             {
                 return base.CreateServer(x => x.AddSingleton(this));
             }
+            
+            public override OttoServer CreateServer2(Action<IServiceCollection> configurator = null)
+            {
+                return base.CreateServer2(x => x.AddSingleton(this));
+            }
         }
 
         public class DeepNestedWorkingModel : WorkingModel
@@ -154,7 +159,7 @@ namespace OttoTheGeek.Tests
         public void ThrowsUnableToResolveForChildProp()
         {
             var model = new Model();
-            new Action(() => model.CreateServer())
+            new Action(() => model.CreateServer2())
                 .Should()
                 .Throw<UnableToResolveException>()
                 .WithMessage("Unable to resolve property Child on class ChildObject");
@@ -163,7 +168,7 @@ namespace OttoTheGeek.Tests
         [Fact]
         public async Task GeneratesSchema()
         {
-            var server = new WorkingModel().CreateServer();
+            var server = new WorkingModel().CreateServer2();
 
             var queryType = await server.GetResultAsync<ObjectType>(@"{
                 __type(name:""ChildObject"") {
@@ -201,7 +206,7 @@ namespace OttoTheGeek.Tests
         [Fact]
         public async Task ReturnsData()
         {
-            var server = new WorkingModel().CreateServer();
+            var server = new WorkingModel().CreateServer2();
 
             var rawResult = await server.GetResultAsync<JObject>(@"{
                 children {
@@ -228,7 +233,7 @@ namespace OttoTheGeek.Tests
         public async Task AvoidsNPlusOne()
         {
             var model = new WorkingModel();
-            var server = model.CreateServer();
+            var server = model.CreateServer2();
 
             await server.GetResultAsync<JObject>(@"{
                 children {
@@ -247,7 +252,7 @@ namespace OttoTheGeek.Tests
         [Fact]
         public async Task ReturnsDeeplyNestedData()
         {
-            var server = new DeepNestedWorkingModel().CreateServer();
+            var server = new DeepNestedWorkingModel().CreateServer2();
 
             var rawResult = await server.GetResultAsync<JObject>(@"{
                 children {

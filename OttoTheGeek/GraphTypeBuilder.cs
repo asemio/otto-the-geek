@@ -75,7 +75,7 @@ namespace OttoTheGeek {
 
             return Clone (
                 _config.Clone (propertiesToIgnore: props),
-                TypeConfig with { IgnoredProperties = TypeConfig.IgnoredProperties.Add(prop.Name) }
+                TypeConfig.IgnoreProperty(prop)
                 );
         }
 

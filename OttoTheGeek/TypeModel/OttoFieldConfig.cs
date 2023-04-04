@@ -44,12 +44,19 @@ public record OttoFieldConfig(
         if (gtt != null)
         {
             AuthResolver.ValidateGraphqlType(gtt, Property);
+            if (gtt.IsGenericFor(typeof(ListGraphType<>)))
+            {
+                if(ResolverConfiguration == null)
+                {
+                    throw new UnableToResolveException (Property, ModelType);
+                }
+            }
             return new FieldType
             {
                 Type = gtt,
                 Name = Property.Name,
                 Description = desc,
-                Resolver = AuthResolver.GetResolver(NameFieldResolver.Instance)
+                Resolver = AuthResolver.GetResolver(ResolverConfiguration?.CreateGraphQLResolver() ?? NameFieldResolver.Instance)
             };
         }
         
@@ -81,7 +88,7 @@ public record OttoFieldConfig(
         return new FieldType
         {
             Type = gt,
-            ResolvedType = gtt ?? (IGraphType)Activator.CreateInstance(gt),
+            ResolvedType = gtt,
             Name = Property.Name,
             Description = description,
         };
@@ -120,7 +127,7 @@ public record OttoFieldConfig(
         {
             if (Property.PropertyType.IsEnumerable())
             {
-                graphTypeType = typeof(ListGraphType<>).MakeGenericType(graphTypeType);
+                graphTypeType = typeof(ListGraphType<>).MakeGenericType(graphTypeType.MakeNonNullable());
 
                 return (graphTypeType, null);
             }

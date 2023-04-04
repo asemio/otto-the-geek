@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+using System.Reflection;
 using OttoTheGeek.Internal;
 
 namespace OttoTheGeek.TypeModel;
@@ -88,7 +89,8 @@ public sealed class ReachabilityMap
         existingInputTypes[parent] = typeConfig;
 
         var fields = typeConfig.GetRelevantFieldConfigs()
-            .Where(x => !config.Scalars.IsScalarOrEnumerableOfScalar(x.Property.PropertyType));
+            .Where(x => !config.Scalars.IsScalarOrEnumerableOfScalar(x.Property.PropertyType))
+            .Where(x => !typeof(OrderValue).IsAssignableFrom(x.Property.PropertyType));
 
         foreach (var field in fields)
         {

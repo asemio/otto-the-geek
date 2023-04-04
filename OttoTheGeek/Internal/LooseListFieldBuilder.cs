@@ -60,7 +60,8 @@ namespace OttoTheGeek.Internal
             where TResolver : class, ILooseListFieldWithArgsResolver<TElem, TArgs>
         {
             var prop = _propExpr.PropertyInfoForSimpleGet();
-            return _parentBuilder.WithResolverConfiguration(prop, new LooseListWithArgsResolverConfiguration<TResolver, TElem, TArgs>(_scalarTypeMap));
+            return _parentBuilder.WithResolverConfiguration(prop, new LooseListWithArgsResolverConfiguration<TResolver, TElem, TArgs>(_scalarTypeMap))
+                .WithTypeConfig(cfg => cfg.ConfigureField(prop, fld => fld with { ArgumentsType = typeof(TArgs) }));
         }
     }
 }

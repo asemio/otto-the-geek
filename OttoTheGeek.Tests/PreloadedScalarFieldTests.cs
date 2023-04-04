@@ -65,7 +65,7 @@ namespace OttoTheGeek.Tests
         [Fact]
         public async Task ReturnsData()
         {
-            var server = new WorkingModel().CreateServer();
+            var server = new WorkingModel().CreateServer2();
 
             var rawResult = await server.GetResultAsync<JObject>(@"{
                 children {
