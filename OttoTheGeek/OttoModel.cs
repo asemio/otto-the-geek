@@ -46,29 +46,11 @@ namespace OttoTheGeek
             );
         }
 
-        [Obsolete]
         public virtual OttoServer CreateServer(Action<IServiceCollection> configurator = null)
         {
             var services = new ServiceCollection();
             services
                 .AddOtto(this);
-
-            if(configurator != null)
-            {
-                configurator(services);
-            }
-
-            var provider = services.BuildServiceProvider();
-            Schema schema = new ModelSchema<OttoModel<TQuery, TMutation, TSubscription>>(BuildOttoSchema(services), provider);
-
-            return new OttoServer(schema, provider);
-        }
-        
-        public virtual OttoServer CreateServer2(Action<IServiceCollection> configurator = null)
-        {
-            var services = new ServiceCollection();
-            services
-                .AddOtto2(this);
 
             if(configurator != null)
             {

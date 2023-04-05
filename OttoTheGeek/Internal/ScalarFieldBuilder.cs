@@ -1,5 +1,4 @@
 using System.Reflection;
-using GraphQL.Types;
 using OttoTheGeek.Internal.ResolverConfiguration;
 
 namespace OttoTheGeek.Internal
@@ -25,12 +24,6 @@ namespace OttoTheGeek.Internal
         public GraphTypeBuilder<TModel> Preloaded()
         {
             return _parentBuilder.WithResolverConfiguration(_prop, new PreloadedScalarResolverConfiguration<TModel, TProp>());
-        }
-
-        public GraphTypeBuilder<TModel> AsGraphType<TGraphType>()
-            where TGraphType : IGraphType
-        {
-            return _parentBuilder.WithGraphTypeOverride(_prop, typeof(TGraphType));
         }
 
         public ScalarFieldWithArgsBuilder<TModel, TProp, TArgs> WithArgs<TArgs>()

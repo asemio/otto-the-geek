@@ -21,7 +21,7 @@ namespace OttoTheGeek.Tests
             {
                 var model = new Model();
 
-                services.AddOtto2(model);
+                services.AddOtto(model);
             }
 
             public void Configure(IApplicationBuilder app)

@@ -46,14 +46,9 @@ namespace OttoTheGeek.Tests
                     );
             }
 
-            [Obsolete]
             public override OttoServer CreateServer(Action<IServiceCollection> configurator = null)
             {
                 return base.CreateServer(x => x.AddSingleton(this));
-            }
-            public override OttoServer CreateServer2(Action<IServiceCollection> configurator = null)
-            {
-                return base.CreateServer2(x => x.AddSingleton(this));
             }
         }
 
@@ -107,7 +102,7 @@ namespace OttoTheGeek.Tests
         [Fact]
         public async Task GeneratesSchema()
         {
-            var server = new Model().CreateServer2();
+            var server = new Model().CreateServer();
 
             var rawResult = await server.GetResultAsync<JObject>(@"{
                 __type(name:""ChildObject"") {
@@ -147,7 +142,7 @@ namespace OttoTheGeek.Tests
         [Fact]
         public async Task ReturnsData()
         {
-            var server = new Model().CreateServer2();
+            var server = new Model().CreateServer();
 
             var rawResult = await server.GetResultAsync<JObject>(@"{
                 children {
@@ -178,7 +173,7 @@ namespace OttoTheGeek.Tests
         public async Task AvoidsNPlusOne()
         {
             var model = new Model();
-            var server = model.CreateServer2();
+            var server = model.CreateServer();
 
             await server.GetResultAsync<JObject>(@"{
                 children {

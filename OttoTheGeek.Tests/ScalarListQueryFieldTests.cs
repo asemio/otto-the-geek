@@ -75,7 +75,7 @@ namespace OttoTheGeek.Tests
         [Fact]
         public async Task BuildsSchemaType()
         {
-            var server = new Model().CreateServer2();
+            var server = new Model().CreateServer();
 
             var rawResult = await server.GetResultAsync<JObject>(@"{
                 __type(name:""Query"") {
@@ -135,7 +135,7 @@ namespace OttoTheGeek.Tests
         [Fact]
         public async Task ReturnsObjectValues()
         {
-            var server = new Model().CreateServer2();
+            var server = new Model().CreateServer();
 
             var rawResult = await server.GetResultAsync<JObject>(@"{
                 things

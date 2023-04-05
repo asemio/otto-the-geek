@@ -180,7 +180,7 @@ namespace OttoTheGeek.Tests
 
         private static async Task<ObjectType> GetQueryObjectType()
         {
-            var server = new Model().CreateServer2();
+            var server = new Model().CreateServer();
 
             var rawResult = await server.GetResultAsync<ObjectType>(@"{
                 __type(name:""Query"") {
@@ -213,7 +213,7 @@ namespace OttoTheGeek.Tests
         [Fact]
         public async Task ConfiguresEnumValues()
         {
-            var server = new Model().CreateServer2();
+            var server = new Model().CreateServer();
 
             var rawResult = await server.GetResultAsync<JObject>(@"{
                 __type(name:""Texture"") {
@@ -257,7 +257,7 @@ namespace OttoTheGeek.Tests
         [MemberData(nameof(DeserializesArgsData))]
         public async Task DeserializesArgs(Args args)
         {
-            var server = new Model().CreateServer2();
+            var server = new Model().CreateServer();
 
             var rawResult = await server.GetResultAsync<JObject>(@"
             query ($anInt: Int!, $aNullableInt: Int, $texture: Texture, $listOfInts: [Int!], $listOfTextures: [Texture!], $complexThing: ComplexThingInput!, $moreThings: [ComplexThingInput!]) {

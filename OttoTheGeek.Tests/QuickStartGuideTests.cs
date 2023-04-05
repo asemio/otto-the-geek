@@ -45,7 +45,7 @@ namespace OttoTheGeek.Tests
         [Fact]
         public async Task QsgRuns()
         {
-            var server = new Model().CreateServer2();
+            var server = new Model().CreateServer();
 
             var rawResult = await server.ExecuteAsync(@"{
                 child {

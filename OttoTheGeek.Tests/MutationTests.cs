@@ -46,7 +46,7 @@ namespace OttoTheGeek.Tests
         [Fact]
         public async Task ConfiguresInputType()
         {
-            var server = new Model().CreateServer2();
+            var server = new Model().CreateServer();
 
             var rawResult = await server.GetResultAsync<JObject>(@"{
                 __type(name:""ChildInput"") {
@@ -77,7 +77,7 @@ namespace OttoTheGeek.Tests
                 }
             }");
 
-            var server = new Model().CreateServer2();
+            var server = new Model().CreateServer();
 
             var result = await server.GetResultAsync<JObject>(@"mutation($data: ChildInput!) {
                 child(data: $data) {

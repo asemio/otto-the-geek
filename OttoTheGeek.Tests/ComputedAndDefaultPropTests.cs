@@ -37,7 +37,7 @@ namespace OttoTheGeek.Tests
         [Fact]
         public async Task ResolvesDefaultPropertyValue()
         {
-            var server = new Model().CreateServer2();
+            var server = new Model().CreateServer();
 
             var result = await server.GetResultAsync<JObject>(@"{
                 defaultChild {
@@ -57,7 +57,7 @@ namespace OttoTheGeek.Tests
         [Fact]
         public async Task ResolvesComputedPropertyValue()
         {
-            var server = new Model().CreateServer2();
+            var server = new Model().CreateServer();
 
             var result = await server.GetResultAsync<JObject>(@"{
                 computedChild {

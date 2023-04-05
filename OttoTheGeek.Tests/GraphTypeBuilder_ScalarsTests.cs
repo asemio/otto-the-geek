@@ -102,22 +102,5 @@ namespace OttoTheGeek.Tests
 
             fieldDefinition.Type.Should().Be<OttoEnumGraphType<ExampleEnum>>();
         }
-
-        [Fact]
-        public void OverrideToId()
-        {
-            var map = new Internal.ScalarTypeMap();
-            var graphType =  new GraphTypeBuilder<Model>(map)
-                .ScalarField(x => x.StringVal)
-                    .AsGraphType<IdGraphType>()
-                .BuildGraphType(new Internal.GraphTypeCache(map), new ServiceCollection());
-
-            graphType.Fields
-                .SingleOrDefault(x => x.Name == nameof(Model.StringVal))
-                .Should()
-                .BeEquivalentTo(new {
-                    Type = typeof(IdGraphType),
-                });
-        }
     }
 }

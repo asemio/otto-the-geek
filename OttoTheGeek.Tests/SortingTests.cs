@@ -155,8 +155,8 @@ namespace OttoTheGeek.Tests
 
         public static IEnumerable<object[]> ReadsPropertyDefinitionsData()
         {
-            yield return new object[] { new Model().CreateServer2(), nameof(Model) };
-            yield return new object[] { new ConnectionModel().CreateServer2(), nameof(ConnectionModel) };
+            yield return new object[] { new Model().CreateServer(), nameof(Model) };
+            yield return new object[] { new ConnectionModel().CreateServer(), nameof(ConnectionModel) };
         }
 
         [Theory]
@@ -231,7 +231,7 @@ namespace OttoTheGeek.Tests
         [MemberData(nameof(OrderingTestData))]
         public async Task OrdersByProp(string orderingVal, IEnumerable<Child> expected)
         {
-            var server = new Model().CreateServer2();
+            var server = new Model().CreateServer();
 
             var rawResult = await server.GetResultAsync<JObject>(@"query($orderBy: ChildOrderBy){
                 children(orderBy: $orderBy) {

@@ -69,7 +69,7 @@ namespace OttoTheGeek.Tests
         [Fact]
         public async Task InputTypes()
         {
-            var server = new Model().CreateServer2();
+            var server = new Model().CreateServer();
 
             var rawResult = await server.GetResultAsync<JObject>(@"{
                 __type(name:""Query"") {
@@ -111,7 +111,7 @@ namespace OttoTheGeek.Tests
         [Fact]
         public async Task OutputTypes()
         {
-            var server = new Model().CreateServer2();
+            var server = new Model().CreateServer();
 
             var rawResult = await server.GetResultAsync<JObject>(@"{
                 __type(name:""Query"") {

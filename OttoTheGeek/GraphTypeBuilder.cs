@@ -175,31 +175,6 @@ namespace OttoTheGeek {
             return graphType;
         }
 
-        public InputObjectGraphType<TModel> BuildInputGraphType (GraphTypeCache cache) {
-            var graphType = new InputObjectGraphType<TModel>
-            {
-                Name = GraphTypeName + "Input"
-            };
-
-            if (!cache.TryPrimeInput (graphType)) {
-                return (InputObjectGraphType<TModel>)cache.GetOrCreateInputType(typeof(TModel));
-            }
-
-            foreach (var prop in TypeConfig.GetRelevantProperties())
-            {
-                var fieldConfig = _config.GetFieldConfig(prop);
-                fieldConfig.ConfigureInputTypeField(graphType, cache);
-            }
-            return graphType;
-        }
-
-        public QueryArguments BuildQueryArguments (GraphTypeCache cache, IServiceCollection services) {
-            var args = TypeConfig.GetRelevantProperties()
-                .Select (prop => ToQueryArgument (prop, cache));
-
-            return new QueryArguments (args);
-        }
-
         public QueryArguments BuildQueryArguments(OttoSchemaConfig config, Dictionary<Type, IInputObjectGraphType> inputTypesCache)
         {
             return TypeConfig.ToGqlNetArguments(config, inputTypesCache);
