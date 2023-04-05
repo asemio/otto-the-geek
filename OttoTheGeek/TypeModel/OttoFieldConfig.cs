@@ -83,7 +83,7 @@ public record OttoFieldConfig(
     {
         var description = Property.GetCustomAttribute<DescriptionAttribute>()?.Description;
 
-        var (gt, gtt) = GetGraphTypeConfiguration(config, graphTypes);
+        var (gt, gtt) = GetGraphTypeConfiguration(config, graphTypes, isInputType: true);
 
         return new FieldType
         {
@@ -98,7 +98,7 @@ public record OttoFieldConfig(
     {
         var desc = Property.GetCustomAttribute<DescriptionAttribute>()?.Description;
 
-        var (gtt, gt) = GetGraphTypeConfiguration(config, inputTypes);
+        var (gtt, gt) = GetGraphTypeConfiguration(config, inputTypes, isInputType: true);
 
         if (gt == null)
         {
@@ -118,7 +118,8 @@ public record OttoFieldConfig(
 
     public (Type, IGraphType) GetGraphTypeConfiguration<TObjectGraphType>(
         OttoSchemaConfig config,
-        IDictionary<Type, TObjectGraphType> cachedGraphTypes)
+        IDictionary<Type, TObjectGraphType> cachedGraphTypes,
+        bool isInputType = false)
         where TObjectGraphType : IGraphType
     {
         var (graphTypeType, graphType) = GetCoreGraphTypeConfiguration(config, cachedGraphTypes);
@@ -132,11 +133,12 @@ public record OttoFieldConfig(
                 return (graphTypeType, null);
             }
 
-            var isClrScalar =
+            var treatAsScalar =
                 typeof(ScalarGraphType).IsAssignableFrom(graphTypeType)
-                || typeof(EnumerationGraphType).IsAssignableFrom(graphTypeType);
+                || typeof(EnumerationGraphType).IsAssignableFrom(graphTypeType)
+                ;
 
-            var defaultNullability = isClrScalar ? Nullability.NonNull : Nullability.Nullable;
+            var defaultNullability = treatAsScalar ? Nullability.NonNull : Nullability.Nullable;
 
             var computedNullability =
                 Nullability == Nullability.Unspecified ?
@@ -157,15 +159,20 @@ public record OttoFieldConfig(
 
         if (Property.PropertyType.IsEnumerable())
         {
-            if (ResolverConfiguration.ConnectionType == null)
+            if (ResolverConfiguration?.ConnectionType == null)
             {
+                if (isInputType)
+                {
+                    return (null, new ListGraphType(new NonNullGraphType(graphType)));
+                }
+                
                 return (null, new ListGraphType(graphType));
             }
 
             return (null, cachedGraphTypes[ResolverConfiguration.ConnectionType]);
         }
 
-        if (Nullability == Nullability.NonNull)
+        if (Nullability == Nullability.NonNull || isInputType && !(graphType is EnumerationGraphType))
         {
             return (null, new NonNullGraphType(graphType));
         }
