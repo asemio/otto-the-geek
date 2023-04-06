@@ -73,7 +73,7 @@ namespace OttoTheGeek {
 
         public GraphTypeBuilder<TModel> Nullable<TProp> (Expression<Func<TModel, TProp>> propertyExpression)
         {
-            return Clone(//.ConfigureField(propertyExpression, x => x.WithNullable(Nullability.Nullable)),
+            return Clone(
                 TypeConfig.ConfigureField(propertyExpression, x => x with { Nullability = Nullability.Nullable })
                 );
         }

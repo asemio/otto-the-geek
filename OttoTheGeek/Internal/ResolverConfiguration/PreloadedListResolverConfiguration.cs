@@ -8,10 +8,6 @@ namespace OttoTheGeek.Internal.ResolverConfiguration
     {
         public override Type CoreClrType => typeof(TProp);
 
-        public PreloadedListResolverConfiguration()
-        {
-        }
-
         public override IFieldResolver CreateGraphQLResolver()
         {
             return new PreloadedFieldResolver<TModel>();

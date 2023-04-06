@@ -1,11 +1,8 @@
 using System;
-using System.Collections.Generic;
-using System.Reflection;
 using System.Threading.Tasks;
 using GraphQL;
 using GraphQL.Resolvers;
 using Microsoft.Extensions.DependencyInjection;
-using OttoTheGeek.TypeModel;
 
 namespace OttoTheGeek.Internal.ResolverConfiguration
 {
