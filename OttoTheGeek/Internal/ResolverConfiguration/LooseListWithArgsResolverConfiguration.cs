@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using GraphQL;
 using GraphQL.Resolvers;
-using GraphQL.Types;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace OttoTheGeek.Internal.ResolverConfiguration
@@ -11,31 +10,14 @@ namespace OttoTheGeek.Internal.ResolverConfiguration
     public sealed class LooseListWithArgsResolverConfiguration<TResolver, TElem, TArgs> : FieldWithArgsResolverConfiguration<TArgs>
         where TResolver : class, ILooseListFieldWithArgsResolver<TElem, TArgs>
     {
-        private readonly ScalarTypeMap _scalarTypeMap;
+        public override Type CoreClrType => typeof(TElem);
 
-        public LooseListWithArgsResolverConfiguration(ScalarTypeMap scalarTypeMap)
-        {
-            _scalarTypeMap = scalarTypeMap;
-        }
-
-        protected override IFieldResolver CreateGraphQLResolver()
+        public override IFieldResolver CreateGraphQLResolver()
         {
             return new ResolverProxy();
         }
 
-        protected override IGraphType GetGraphType(GraphTypeCache cache, IServiceCollection services)
-        {
-            if(_scalarTypeMap.TryGetGraphType(typeof(TElem), out var scalarGraphType))
-            {
-                var listType = typeof(ListGraphType<>).MakeGenericType(scalarGraphType);
-
-                return (IGraphType)Activator.CreateInstance(listType);
-            }
-
-            return new ListGraphType(cache.GetOrCreate<TElem>(services));
-        }
-
-        protected override void RegisterResolver(IServiceCollection services)
+        public override void RegisterResolver(IServiceCollection services)
         {
             services.AddTransient<TResolver>();
         }

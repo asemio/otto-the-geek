@@ -1,21 +1,18 @@
+using System;
 using GraphQL.Resolvers;
-using GraphQL.Types;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace OttoTheGeek.Internal.ResolverConfiguration
 {
     public sealed class PreloadedScalarResolverConfiguration<TModel, TProp> : FieldResolverConfiguration
     {
-        protected override IGraphType GetGraphType(GraphTypeCache cache, IServiceCollection services)
-        {
-            return cache.GetOrCreate<TProp>(services);
-        }
+        public override Type CoreClrType => typeof(TProp);
 
-        protected override void RegisterResolver(IServiceCollection services)
+        public override void RegisterResolver(IServiceCollection services)
         {
         }
 
-        protected override IFieldResolver CreateGraphQLResolver()
+        public override IFieldResolver CreateGraphQLResolver()
         {
             return new PreloadedFieldResolver<TModel>();
         }

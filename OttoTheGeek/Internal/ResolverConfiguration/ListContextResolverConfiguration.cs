@@ -3,7 +3,6 @@ using System.Threading.Tasks;
 using GraphQL;
 using GraphQL.DataLoader;
 using GraphQL.Resolvers;
-using GraphQL.Types;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace OttoTheGeek.Internal.ResolverConfiguration
@@ -11,17 +10,14 @@ namespace OttoTheGeek.Internal.ResolverConfiguration
     internal sealed class ListContextResolverConfiguration<TResolver, TModel, TField> : FieldResolverConfiguration
         where TResolver : class, IListFieldResolver<TModel, TField>
     {
-        protected override IFieldResolver CreateGraphQLResolver()
+        public override Type CoreClrType => typeof(TField);
+
+        public override IFieldResolver CreateGraphQLResolver()
         {
             return new ResolverProxy();
         }
 
-        protected override IGraphType GetGraphType(GraphTypeCache cache, IServiceCollection services)
-        {
-            return new ListGraphType(cache.GetOrCreate<TField>(services));
-        }
-
-        protected override void RegisterResolver(IServiceCollection services)
+        public override void RegisterResolver(IServiceCollection services)
         {
             services.AddTransient<TResolver>();
         }

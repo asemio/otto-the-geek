@@ -1,7 +1,6 @@
 using System;
 using System.Linq;
 using GraphQL;
-using GraphQL.DataLoader;
 using GraphQL.DI;
 using GraphQL.Execution;
 using GraphQLParser.AST;
@@ -11,23 +10,40 @@ namespace OttoTheGeek
 {
     public static class ServiceCollectionExtensions
     {
-        public static IServiceCollection AddOtto<TModel>(this IServiceCollection services, TModel model, Action<IGraphQLBuilder> configureAction = null)
+        public static IServiceCollection AddOtto<TModel>(
+            this IServiceCollection services,
+            TModel model,
+            Action<IGraphQLBuilder> configureAction = null
+            )
             where TModel : OttoModel
         {
-            services.TryRegisterGraphQLServer(configureAction);
+            var schemaConfig = model.BuildConfig();
+            schemaConfig.RegisterResolvers(services);
             
-            var ottoSchema = model.BuildOttoSchema(services);
-
-            return services
-                .AddScoped(ctx => {
-                    var schema = new ModelSchema<TModel>(ottoSchema, ctx);
-
-                    return schema;
-                })
-                .AddSingleton<IDataLoaderContextAccessor, DataLoaderContextAccessor>()
-                .AddSingleton<DataLoaderDocumentListener>()
+            services
+                .AddGraphQL(builder =>
+                {
+                    builder
+                        .AddSystemTextJson()
+                        .AddGraphTypes()
+                        .AddDataLoader()
+                        .AddSchema(sp => new ModelSchema<TModel>(schemaConfig, sp))
+                        .AddExecutionStrategy<SerialExecutionStrategy>(OperationType.Query)
+                        .ConfigureExecutionOptions(opts =>
+                        {
+                            opts.EnableMetrics = false;
+                        })
+                        ;
+                    configureAction?.Invoke(builder);
+                });
+            
+            services
+                .AddSingleton<IDocumentExecuter, Internal.OttoDocumentExecuter>()
                 ;
+
+            return services;
         }
+        
 
         private static IServiceCollection TryRegisterGraphQLServer(this IServiceCollection services, Action<IGraphQLBuilder> configureAction)
         {

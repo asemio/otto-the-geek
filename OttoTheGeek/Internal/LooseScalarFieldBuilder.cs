@@ -21,7 +21,7 @@ namespace OttoTheGeek.Internal
             return _parentBuilder.WithResolverConfiguration(_prop, new ScalarResolverConfiguration<TResolver, TProp>());
         }
 
-        public LooseScalarFieldWithArgsBuilder<TModel, TProp, TArgs> WithArgs<TArgs>()
+        public LooseScalarFieldWithArgsBuilder<TModel, TProp, TArgs> WithArgs<TArgs>() where TArgs : class
         {
             return new LooseScalarFieldWithArgsBuilder<TModel, TProp, TArgs>(_parentBuilder, _prop);
         }
@@ -32,7 +32,7 @@ namespace OttoTheGeek.Internal
     }
 
     public sealed class LooseScalarFieldWithArgsBuilder<TModel, TProp, TArgs>
-        where TModel : class
+        where TModel : class where TArgs : class
     {
         private readonly GraphTypeBuilder<TModel> _parentBuilder;
         private readonly PropertyInfo _prop;
@@ -46,7 +46,8 @@ namespace OttoTheGeek.Internal
         public GraphTypeBuilder<TModel> ResolvesVia<TResolver>()
             where TResolver : class, ILooseScalarFieldWithArgsResolver<TProp, TArgs>
         {
-            return _parentBuilder.WithResolverConfiguration(_prop, new ScalarWithArgsResolverConfiguration<TResolver, TProp, TArgs>());
+            return _parentBuilder.WithResolverConfiguration(_prop, new ScalarWithArgsResolverConfiguration<TResolver, TProp, TArgs>())
+                .WithTypeConfig(x => x.ConfigureField(_prop, cfg => cfg with { ArgumentsType = typeof(TArgs) }));
         }
     }
 }

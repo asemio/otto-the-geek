@@ -8,13 +8,11 @@ namespace OttoTheGeek.Internal
     public sealed class LooseListFieldBuilder<TModel, TElem>
         where TModel : class
     {
-        private readonly ScalarTypeMap _scalarTypeMap;
         private readonly GraphTypeBuilder<TModel> _parentBuilder;
         private readonly Expression<Func<TModel, IEnumerable<TElem>>> _propExpr;
 
-        internal LooseListFieldBuilder(GraphTypeBuilder<TModel> parentBuilder, Expression<Func<TModel, IEnumerable<TElem>>> propExpr, ScalarTypeMap scalarTypeMap)
+        internal LooseListFieldBuilder(GraphTypeBuilder<TModel> parentBuilder, Expression<Func<TModel, IEnumerable<TElem>>> propExpr)
         {
-            _scalarTypeMap = scalarTypeMap;
             _parentBuilder = parentBuilder;
             _propExpr = propExpr;
         }
@@ -23,18 +21,18 @@ namespace OttoTheGeek.Internal
             where TResolver : class, ILooseListFieldResolver<TElem>
         {
             var prop = _propExpr.PropertyInfoForSimpleGet();
-            return _parentBuilder.WithResolverConfiguration(prop, new LooseListResolverConfiguration<TResolver, TElem>(_scalarTypeMap));
+            return _parentBuilder.WithResolverConfiguration(prop, new LooseListResolverConfiguration<TResolver, TElem>());
         }
 
         public LooseListFieldWithArgsBuilder<TModel, TElem, TArgs> WithArgs<TArgs>()
         {
-            return new LooseListFieldWithArgsBuilder<TModel, TElem, TArgs>(_parentBuilder, _propExpr, _scalarTypeMap);
+            return new LooseListFieldWithArgsBuilder<TModel, TElem, TArgs>(_parentBuilder, _propExpr);
         }
 
         public GraphTypeBuilder<TModel> Preloaded()
         {
             var prop = _propExpr.PropertyInfoForSimpleGet();
-            return _parentBuilder.WithResolverConfiguration(prop, new PreloadedListResolverConfiguration<TModel, TElem>(_scalarTypeMap));
+            return _parentBuilder.WithResolverConfiguration(prop, new PreloadedListResolverConfiguration<TModel, TElem>());
         }
     }
 
@@ -43,24 +41,22 @@ namespace OttoTheGeek.Internal
     {
         private readonly GraphTypeBuilder<TModel> _parentBuilder;
         private readonly Expression<Func<TModel, IEnumerable<TElem>>> _propExpr;
-        private readonly ScalarTypeMap _scalarTypeMap;
 
         internal LooseListFieldWithArgsBuilder(
             GraphTypeBuilder<TModel> parentBuilder,
-            Expression<Func<TModel, IEnumerable<TElem>>> propExpr,
-            ScalarTypeMap scalarTypeMap
+            Expression<Func<TModel, IEnumerable<TElem>>> propExpr
             )
         {
             _parentBuilder = parentBuilder;
             _propExpr = propExpr;
-            _scalarTypeMap = scalarTypeMap;
         }
 
         public GraphTypeBuilder<TModel> ResolvesVia<TResolver>()
             where TResolver : class, ILooseListFieldWithArgsResolver<TElem, TArgs>
         {
             var prop = _propExpr.PropertyInfoForSimpleGet();
-            return _parentBuilder.WithResolverConfiguration(prop, new LooseListWithArgsResolverConfiguration<TResolver, TElem, TArgs>(_scalarTypeMap));
+            return _parentBuilder.WithResolverConfiguration(prop, new LooseListWithArgsResolverConfiguration<TResolver, TElem, TArgs>())
+                .WithTypeConfig(cfg => cfg.ConfigureField(prop, fld => fld with { ArgumentsType = typeof(TArgs) }));
         }
     }
 }

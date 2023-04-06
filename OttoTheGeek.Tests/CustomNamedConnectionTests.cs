@@ -1,8 +1,6 @@
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using FluentAssertions;
-using Newtonsoft.Json.Linq;
 using OttoTheGeek.Connections;
 using OttoTheGeek.RuntimeSchema;
 using Xunit;

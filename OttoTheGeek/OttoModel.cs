@@ -2,10 +2,10 @@ using System;
 using System.Linq;
 using System.Reflection;
 using GraphQL;
-using GraphQL.DataLoader;
 using GraphQL.Types;
 using Microsoft.Extensions.DependencyInjection;
 using OttoTheGeek.Internal;
+using OttoTheGeek.TypeModel;
 
 namespace OttoTheGeek
 {
@@ -13,7 +13,7 @@ namespace OttoTheGeek
     {
         internal OttoModel() {}
 
-        public abstract OttoSchemaInfo BuildOttoSchema(IServiceCollection services);
+        public abstract OttoSchemaConfig BuildConfig();
     }
     public abstract class OttoModel<TQuery> : OttoModel<TQuery, object, object> {}
     public abstract class OttoModel<TQuery, TMutation> : OttoModel<TQuery, TMutation, object> {}
@@ -54,26 +54,16 @@ namespace OttoTheGeek
             }
 
             var provider = services.BuildServiceProvider();
-            Schema schema = new ModelSchema<OttoModel<TQuery, TMutation, TSubscription>>(BuildOttoSchema(services), provider);
+            var schema = provider.GetRequiredService<ISchema>();
 
-            return new OttoServer(schema, provider);
+            return new OttoServer((Schema)schema, provider);
         }
 
-        public override OttoSchemaInfo BuildOttoSchema(IServiceCollection services)
+        public override OttoSchemaConfig BuildConfig()
         {
             var builder = ConfigureSchema(new SchemaBuilder(typeof(Schema<TQuery, TMutation, TSubscription>)));
-            var ottoSchema = builder.Build(services);
 
-            services.AddSingleton<IDocumentExecuter, DocumentExecuter>();
-            services.AddSingleton<IDataLoaderContextAccessor, DataLoaderContextAccessor>();
-            services.AddSingleton<DataLoaderDocumentListener>();
-            services.AddTransient(typeof(QueryFieldGraphqlResolverProxy<>));
-            services.AddTransient<TimeSpanGraphType>();
-            services.AddTransient(typeof(OttoEnumGraphType<>));
-            services.AddTransient(typeof(NonNullGraphType<>));
-            services.AddTransient(typeof(IntGraphType));
-
-            return ottoSchema;
+            return builder._schemaConfig;
         }
     }
 }

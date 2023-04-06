@@ -1,7 +1,7 @@
 using System;
 using System.IO;
+using System.Text;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using GraphQL;
 using GraphQL.Execution;
@@ -19,6 +19,12 @@ namespace OttoTheGeek
         {
             _schema = schema;
             _provider = provider;
+        }
+        
+        internal OttoServer(IServiceProvider provider)
+        {
+            _provider = provider;
+            _schema = provider.GetRequiredService<Schema>();
         }
 
         public async Task<string> ExecuteAsync(string queryText, object inputData = null, bool throwOnError = true)
@@ -38,6 +44,7 @@ namespace OttoTheGeek
                 Schema = _schema,
                 RequestServices = _provider,
                 Variables = inputs,
+                ThrowOnUnhandledException = true,
             };
             opts.Listeners.AddRange(_provider.GetServices<IDocumentExecutionListener>());
             var resultAsync = executer.ExecuteAsync(opts);
@@ -47,7 +54,9 @@ namespace OttoTheGeek
             {
                 if (throwOnError)
                 {
-                    throw new InvalidOperationException("Errors found: " + JsonSerializer.Serialize(executionResult.Errors));
+                    var errorStream = new MemoryStream();
+                    await serializer.WriteAsync(errorStream, executionResult.Errors);
+                    throw new InvalidOperationException("Errors found: " + Encoding.UTF8.GetString(errorStream.ToArray()));
                 }
             }
             

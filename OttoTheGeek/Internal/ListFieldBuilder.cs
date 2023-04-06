@@ -8,13 +8,11 @@ namespace OttoTheGeek.Internal
     {
         private readonly GraphTypeBuilder<TModel> _parentBuilder;
         private readonly PropertyInfo _prop;
-        private readonly ScalarTypeMap _scalarTypeMap;
 
-        internal ListFieldBuilder(GraphTypeBuilder<TModel> parentBuilder, PropertyInfo prop, ScalarTypeMap scalarTypeMap)
+        internal ListFieldBuilder(GraphTypeBuilder<TModel> parentBuilder, PropertyInfo prop)
         {
             _parentBuilder = parentBuilder;
             _prop = prop;
-            _scalarTypeMap = scalarTypeMap;
         }
 
         public GraphTypeBuilder<TModel> ResolvesVia<TResolver>()
@@ -25,7 +23,7 @@ namespace OttoTheGeek.Internal
 
         public GraphTypeBuilder<TModel> Preloaded()
         {
-            return _parentBuilder.WithResolverConfiguration(_prop, new PreloadedListResolverConfiguration<TModel, TElem>(_scalarTypeMap));
+            return _parentBuilder.WithResolverConfiguration(_prop, new PreloadedListResolverConfiguration<TModel, TElem>());
         }
 
         public ListFieldWithArgsBuilder<TModel, TElem, TArgs> WithArgs<TArgs>()

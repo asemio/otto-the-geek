@@ -2,25 +2,21 @@ using System;
 using System.Threading.Tasks;
 using GraphQL;
 using GraphQL.Resolvers;
-using GraphQL.Types;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace OttoTheGeek.Internal.ResolverConfiguration
 {
     public sealed class ScalarWithArgsResolverConfiguration<TResolver, TProp, TArgs> : FieldWithArgsResolverConfiguration<TArgs>
-        where TResolver : class, ILooseScalarFieldWithArgsResolver<TProp, TArgs>
+        where TResolver : class, ILooseScalarFieldWithArgsResolver<TProp, TArgs> where TArgs : class
     {
-        protected override IFieldResolver CreateGraphQLResolver()
+        public override Type CoreClrType => typeof(TProp);
+
+        public override IFieldResolver CreateGraphQLResolver()
         {
             return new ResolverProxy();
         }
 
-        protected override IGraphType GetGraphType(GraphTypeCache cache, IServiceCollection services)
-        {
-            return cache.GetOrCreate<TProp>(services);
-        }
-
-        protected override void RegisterResolver(IServiceCollection services)
+        public override void RegisterResolver(IServiceCollection services)
         {
             services.AddTransient<TResolver>();
         }

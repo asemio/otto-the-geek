@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Newtonsoft.Json.Linq;
@@ -127,6 +128,47 @@ namespace OttoTheGeek.Tests
                 Name = "FancyInt",
                 Kind = ObjectKinds.Scalar
             });
+        }
+        
+        [Fact]
+        public async Task HandlesNullability()
+        {
+            var server = new Model().CreateServer();
+
+            var result = await server.GetResultAsync<JObject>(@"{
+                __type(name: ""Query"") {
+                    fields {
+                        args {
+                            name
+                            type {
+                                name
+                                kind
+                            }
+                        }
+                    }
+                }
+            }");
+
+            result["__type"].ToObject<ObjectType>().Fields.Single().Args.Should().BeEquivalentTo(
+                new FieldArgument
+                {
+                    Name = "intValue",
+                    Type = new ObjectType
+                    {
+                        Name = "FancyInt",
+                        Kind = ObjectKinds.Scalar
+                    }
+                },
+                new FieldArgument
+                {
+                    Name = "strValue",
+                    Type = new ObjectType
+                    {
+                        Name = "FancyString",
+                        Kind = ObjectKinds.Scalar
+                    }
+                }
+            );
         }
 
         [Fact]
