@@ -209,7 +209,14 @@ public record OttoFieldConfig(
         {
             var builder = config.GetOrCreateBuilder(coreType);
 
-            graphType = (TObjectGraphType)builder.TypeConfig.ToGqlNetGraphType(config);
+            if (typeof(TObjectGraphType) == typeof(IInputObjectGraphType))
+            {
+                graphType = (TObjectGraphType)builder.TypeConfig.ToGqlNetInputGraphType(config);
+            }
+            else
+            {
+                graphType = (TObjectGraphType)builder.TypeConfig.ToGqlNetGraphType(config);
+            }
         }
 
         return (null, graphType);
