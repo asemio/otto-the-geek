@@ -17,16 +17,6 @@ namespace OttoTheGeek.Internal
             return t.GetGenericArguments().Single();
         }
 
-        public static Type UnwrapGqlNetNonNullable(this Type t)
-        {
-            if(t.IsNonNullGraphType())
-            {
-                return t.GetGenericArguments().Single();
-            }
-
-            return t;
-        }
-
         public static bool IsEnumerable(this Type t)
         {
             return t.IsGenericFor(typeof(IEnumerable<>));
