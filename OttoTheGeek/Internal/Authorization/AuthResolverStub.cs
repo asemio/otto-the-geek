@@ -9,7 +9,6 @@ namespace OttoTheGeek.Internal.Authorization
 {
     public abstract class AuthResolverStub
     {
-        public abstract IFieldResolver GetResolver(IServiceCollection services, IFieldResolver wrapped);
         public abstract IFieldResolver GetResolver(IFieldResolver wrapped);
         public abstract void RegisterResolver(IServiceCollection services);
         public abstract void ValidateGraphqlType(Type t, PropertyInfo prop);
@@ -18,11 +17,6 @@ namespace OttoTheGeek.Internal.Authorization
 
     public sealed class NullAuthResolverStub : AuthResolverStub
     {
-        public override IFieldResolver GetResolver(IServiceCollection services, IFieldResolver wrapped)
-        {
-            return GetResolver(wrapped);
-        }
-
         public override IFieldResolver GetResolver(IFieldResolver wrapped)
         {
             return wrapped;
@@ -49,13 +43,6 @@ namespace OttoTheGeek.Internal.Authorization
         public AuthResolverStub(Func<TAuthorizer, Task<bool>> cb)
         {
             _cb = cb;
-        }
-
-        public override IFieldResolver GetResolver(IServiceCollection services, IFieldResolver wrapped)
-        {
-            RegisterResolver(services);
-
-            return GetResolver(wrapped);
         }
 
         public override IFieldResolver GetResolver(IFieldResolver wrapped)

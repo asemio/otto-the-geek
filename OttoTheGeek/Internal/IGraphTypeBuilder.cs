@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using GraphQL.Types;
-using Microsoft.Extensions.DependencyInjection;
 using OttoTheGeek.TypeModel;
 
 namespace OttoTheGeek.Internal
@@ -10,11 +6,7 @@ namespace OttoTheGeek.Internal
     {
         // indicates whether the type represented by this builder needs to be
         // registered in the schema via RegisterType()
-        bool NeedsRegistration { get; }
-        string GraphTypeName { get; }
-        IComplexGraphType BuildGraphType(GraphTypeCache cache, IServiceCollection services);
-        
+
         OttoTypeConfig TypeConfig { get; }
-        QueryArguments BuildQueryArguments(OttoSchemaConfig config, Dictionary<Type, IInputObjectGraphType> inputTypesCache);
     }
 }

@@ -19,18 +19,14 @@ namespace OttoTheGeek.Internal.Authorization
         public GraphTypeBuilder<TModel> Via<TAuth>(Func<TAuth, bool> authorizeCallback)
             where TAuth : class
         {
-            return _parent.Clone(
-                _parent._config.ConfigureField(_expr, x => x.WithAuthorization(authorizeCallback)),
-                _parent.TypeConfig.ConfigureField(_expr, x => x with { AuthResolver = new AuthResolverStub<TAuth>(authorizeCallback) })
+            return _parent.Clone(_parent.TypeConfig.ConfigureField(_expr, x => x with { AuthResolver = new AuthResolverStub<TAuth>(authorizeCallback) })
                 );
         }
 
         public GraphTypeBuilder<TModel> Via<TAuth>(Func<TAuth, Task<bool>> authorizeAsyncCallback)
             where TAuth : class
         {
-            return _parent.Clone(
-                _parent._config.ConfigureField(_expr, x => x.WithAuthorization(authorizeAsyncCallback)),
-                _parent.TypeConfig.ConfigureField(_expr, x => x with { AuthResolver = new AuthResolverStub<TAuth>(authorizeAsyncCallback) })
+            return _parent.Clone(_parent.TypeConfig.ConfigureField(_expr, x => x with { AuthResolver = new AuthResolverStub<TAuth>(authorizeAsyncCallback) })
             );
         }
     }

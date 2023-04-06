@@ -80,7 +80,7 @@ public record OttoSchemaConfig(
         if (!LegacyBuilders.TryGetValue(modelType, out var untypedBuilder))
         {
             var builderType = typeof(GraphTypeBuilder<>).MakeGenericType(modelType);
-            untypedBuilder = (IGraphTypeBuilder)Activator.CreateInstance(builderType, new object[] {LegacyScalars});
+            untypedBuilder = (IGraphTypeBuilder)Activator.CreateInstance(builderType);
         }
 
         return untypedBuilder;

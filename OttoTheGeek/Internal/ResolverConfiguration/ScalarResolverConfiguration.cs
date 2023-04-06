@@ -2,7 +2,6 @@ using System;
 using System.Threading.Tasks;
 using GraphQL;
 using GraphQL.Resolvers;
-using GraphQL.Types;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace OttoTheGeek.Internal.ResolverConfiguration
@@ -15,11 +14,6 @@ namespace OttoTheGeek.Internal.ResolverConfiguration
         public override IFieldResolver CreateGraphQLResolver()
         {
             return new ScalarQueryFieldResolverProxy();
-        }
-
-        protected override IGraphType GetGraphType(GraphTypeCache cache, IServiceCollection services)
-        {
-            return cache.GetOrCreate<TProp>(services);
         }
 
         public override void RegisterResolver(IServiceCollection services)
