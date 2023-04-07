@@ -86,14 +86,15 @@ public sealed class ReachabilityMap
         var typeConfig = config.GetOrCreateBuilder(parent).TypeConfig;
 
         existingInputTypes[parent] = typeConfig;
-
+        
         var fields = typeConfig.GetRelevantFieldConfigs()
             .Where(x => !config.Scalars.IsScalarOrEnumerableOfScalar(x.Property.PropertyType))
             .Where(x => !typeof(OrderValue).IsAssignableFrom(x.Property.PropertyType));
 
         foreach (var field in fields)
         {
-            AddInputTypes(field.Property.PropertyType, config, existingInputTypes);
+            var coreType = field.Property.PropertyType.UnwrapNullableAndEnumerable();
+            AddInputTypes(coreType, config, existingInputTypes);
         }
     }
 }

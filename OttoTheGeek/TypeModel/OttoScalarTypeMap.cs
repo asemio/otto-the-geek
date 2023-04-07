@@ -63,7 +63,7 @@ public record OttoScalarTypeMap(ImmutableDictionary<Type, Type> Map)
             return true;
         }
 
-        var unwrapped = t.UnwrapNullable();
+        var unwrapped = coreType.UnwrapNullable();
 
         return unwrapped.IsEnum;
     }
