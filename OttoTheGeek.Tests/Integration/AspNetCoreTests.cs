@@ -11,7 +11,7 @@ using Xunit;
 
 [assembly: WebApplicationFactoryContentRoot("OttoTheGeek.Tests", ".", "OttoTheGeek.Tests.dll", "0")]
 
-namespace OttoTheGeek.Tests
+namespace OttoTheGeek.Tests.Integration
 {
     public sealed class AspNetCoreTests
     {

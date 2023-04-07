@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -9,9 +9,9 @@ using Newtonsoft.Json.Linq;
 using OttoTheGeek.RuntimeSchema;
 using Xunit;
 
-namespace OttoTheGeek.Tests
+namespace OttoTheGeek.Tests.Integration
 {
-    public sealed class NestedListFieldTests
+    public sealed class NestedListFieldWithArgsTests
     {
         public sealed class ChildObject
         {
@@ -20,9 +20,7 @@ namespace OttoTheGeek.Tests
         }
         public sealed class GrandchildObject
         {
-            public string Value1 { get; set; }
-            public string Value2 { get; set; }
-            public int Value3 { get; set; }
+            public string Arg { get; set; }
         }
         public class Model : OttoModel<SimpleEnumerableQueryModel<ChildObject>>
         {
@@ -39,6 +37,7 @@ namespace OttoTheGeek.Tests
                 return builder
                     .GraphType<ChildObject>(b =>
                         b.ListField(x => x.Children)
+                            .WithArgs<GrandchildArgs>()
                             .ResolvesVia<GrandchildResolver>()
                     )
                     .GraphType<SimpleEnumerableQueryModel<ChildObject>>(b =>
@@ -66,7 +65,12 @@ namespace OttoTheGeek.Tests
             }
         }
 
-        public sealed class GrandchildResolver : IListFieldResolver<ChildObject, GrandchildObject>
+        public sealed class GrandchildArgs
+        {
+            public string Arg { get; set; }
+        }
+
+        public sealed class GrandchildResolver : IListFieldWithArgsResolver<ChildObject, GrandchildObject, GrandchildArgs>
         {
             private readonly Model _model;
 
@@ -74,7 +78,7 @@ namespace OttoTheGeek.Tests
             {
                 _model = model;
             }
-            public async Task<ILookup<object, GrandchildObject>> GetData(IEnumerable<object> keys)
+            public async Task<ILookup<object, GrandchildObject>> GetData(IEnumerable<object> keys, GrandchildArgs args)
             {
                 _model.IncrementGrandchildResolves();
                 await Task.CompletedTask;
@@ -82,8 +86,8 @@ namespace OttoTheGeek.Tests
                 return keys
                     .Cast<long>()
                     .SelectMany(x => new[]{
-                        new GrandchildObject { Value1 = "one", Value2 = "uno", Value3 = (int)(1000 * x + 1) },
-                        new GrandchildObject { Value1 = "one", Value2 = "uno", Value3 = (int)(1000 * x + 2) }
+                        new GrandchildObject { Arg = args.Arg, },
+                        new GrandchildObject { Arg = args.Arg, },
                     }, (key, child) => (key, child))
                     .ToLookup(x => (object)x.Item1, x => x.Item2);
             }
@@ -116,7 +120,7 @@ namespace OttoTheGeek.Tests
                         }
                     }
                 }
-            }");
+            }", "__type");
 
             var expectedField = new ObjectField
             {
@@ -127,7 +131,7 @@ namespace OttoTheGeek.Tests
                 })
             };
 
-            var queryType = rawResult["__type"].ToObject<ObjectType>();
+            var queryType = rawResult.ToObject<ObjectType>();
 
             queryType.Fields
                 .SingleOrDefault(x => x.Name == "children")
@@ -143,10 +147,8 @@ namespace OttoTheGeek.Tests
             var rawResult = await server.GetResultAsync<JObject>(@"{
                 children {
                     id
-                    children {
-                        value1
-                        value2
-                        value3
+                    children(arg: ""derp"") {
+                        arg
                     }
                 }
             }");
@@ -156,10 +158,10 @@ namespace OttoTheGeek.Tests
                 .Select(x => x.ToObject<GrandchildObject>())
                 .ToArray();
             var expected = new[] {
-                new GrandchildObject { Value1 = "one", Value2 = "uno", Value3 = 1001 },
-                new GrandchildObject { Value1 = "one", Value2 = "uno", Value3 = 1002 },
-                new GrandchildObject { Value1 = "one", Value2 = "uno", Value3 = 2001 },
-                new GrandchildObject { Value1 = "one", Value2 = "uno", Value3 = 2002 }
+                new GrandchildObject { Arg = "derp" },
+                new GrandchildObject { Arg = "derp" },
+                new GrandchildObject { Arg = "derp" },
+                new GrandchildObject { Arg = "derp" },
             };
 
             actual
@@ -173,13 +175,11 @@ namespace OttoTheGeek.Tests
             var model = new Model();
             var server = model.CreateServer();
 
-            var rawResult = await server.GetResultAsync<JObject>(@"{
+            await server.GetResultAsync<JObject>(@"{
                 children {
                     id
-                    children {
-                        value1
-                        value2
-                        value3
+                    children(arg: ""derp"") {
+                        arg
                     }
                 }
             }");

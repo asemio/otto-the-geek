@@ -2,7 +2,7 @@ using System;
 using FluentAssertions;
 using Xunit;
 
-namespace OttoTheGeek.Tests
+namespace OttoTheGeek.Tests.Integration
 {
 
     public sealed class DerivedClassUnableToResolveBaseFieldTests

@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace OttoTheGeek.Tests
+namespace OttoTheGeek.Tests.Integration
 {
     public class SimpleEnumerableQueryModel<T>
     {

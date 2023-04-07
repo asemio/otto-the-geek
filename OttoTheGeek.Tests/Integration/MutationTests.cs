@@ -4,7 +4,7 @@ using Newtonsoft.Json.Linq;
 using OttoTheGeek.RuntimeSchema;
 using Xunit;
 
-namespace OttoTheGeek.Tests
+namespace OttoTheGeek.Tests.Integration
 {
     public sealed class MutationTests
     {

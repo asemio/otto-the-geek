@@ -3,7 +3,7 @@ using FluentAssertions;
 using Newtonsoft.Json.Linq;
 using Xunit;
 
-namespace OttoTheGeek.Tests
+namespace OttoTheGeek.Tests.Integration
 {
     public sealed class ComputedAndDefaultPropTests
     {

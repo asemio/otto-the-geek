@@ -1,4 +1,4 @@
-﻿namespace OttoTheGeek.Tests
+﻿namespace OttoTheGeek.Tests.Integration
 {
     public sealed class EmptyQueryType
     {

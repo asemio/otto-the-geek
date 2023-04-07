@@ -2,7 +2,7 @@
 using FluentAssertions;
 using Xunit;
 
-namespace OttoTheGeek.Tests
+namespace OttoTheGeek.Tests.Integration
 {
     public sealed class GraphTypeNameValidationTests
     {
@@ -37,8 +37,8 @@ namespace OttoTheGeek.Tests
                 .Message
                 .Should().ContainAll(
                     "The following C# types have the same GraphQL type name of \"Thing\" configured",
-                    "    OttoTheGeek.Tests.GraphTypeNameValidationTests+Query+Thing",
-                    "    OttoTheGeek.Tests.GraphTypeNameValidationTests+Thing",
+                    "    OttoTheGeek.Tests.Integration.GraphTypeNameValidationTests+Query+Thing",
+                    "    OttoTheGeek.Tests.Integration.GraphTypeNameValidationTests+Thing",
                     "Please configure unique type names for each."
                 );
         }

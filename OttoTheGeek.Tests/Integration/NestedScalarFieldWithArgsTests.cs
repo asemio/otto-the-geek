@@ -9,14 +9,14 @@ using Newtonsoft.Json.Linq;
 using OttoTheGeek.RuntimeSchema;
 using Xunit;
 
-namespace OttoTheGeek.Tests
+namespace OttoTheGeek.Tests.Integration
 {
-    public sealed class NestedListFieldWithArgsTests
+    public sealed class NestedScalarFieldWithArgsTests
     {
         public sealed class ChildObject
         {
             public long Id { get; set; }
-            public IEnumerable<GrandchildObject> Children { get; set; }
+            public GrandchildObject Child { get; set; }
         }
         public sealed class GrandchildObject
         {
@@ -36,7 +36,7 @@ namespace OttoTheGeek.Tests
             {
                 return builder
                     .GraphType<ChildObject>(b =>
-                        b.ListField(x => x.Children)
+                        b.ScalarField(x => x.Child)
                             .WithArgs<GrandchildArgs>()
                             .ResolvesVia<GrandchildResolver>()
                     )
@@ -70,7 +70,7 @@ namespace OttoTheGeek.Tests
             public string Arg { get; set; }
         }
 
-        public sealed class GrandchildResolver : IListFieldWithArgsResolver<ChildObject, GrandchildObject, GrandchildArgs>
+        public sealed class GrandchildResolver : IScalarFieldWithArgsResolver<ChildObject, GrandchildObject, GrandchildArgs>
         {
             private readonly Model _model;
 
@@ -78,18 +78,15 @@ namespace OttoTheGeek.Tests
             {
                 _model = model;
             }
-            public async Task<ILookup<object, GrandchildObject>> GetData(IEnumerable<object> keys, GrandchildArgs args)
+            public async Task<IDictionary<object, GrandchildObject>> GetData(IEnumerable<object> keys, GrandchildArgs args)
             {
                 _model.IncrementGrandchildResolves();
                 await Task.CompletedTask;
 
                 return keys
                     .Cast<long>()
-                    .SelectMany(x => new[]{
-                        new GrandchildObject { Arg = args.Arg, },
-                        new GrandchildObject { Arg = args.Arg, },
-                    }, (key, child) => (key, child))
-                    .ToLookup(x => (object)x.Item1, x => x.Item2);
+                    .Select(x => (x, new GrandchildObject { Arg = args.Arg, }))
+                    .ToDictionary(x => (object)x.Item1, x => x.Item2);
             }
 
             public object GetKey(ChildObject context)
@@ -120,21 +117,21 @@ namespace OttoTheGeek.Tests
                         }
                     }
                 }
-            }", "__type");
+            }");
 
             var expectedField = new ObjectField
             {
-                Name = "children",
-                Type = ObjectType.ListOf(new ObjectType {
+                Name = "child",
+                Type = new ObjectType {
                     Name = "GrandchildObject",
                     Kind = ObjectKinds.Object
-                })
+                }
             };
 
-            var queryType = rawResult.ToObject<ObjectType>();
+            var queryType = rawResult["__type"].ToObject<ObjectType>();
 
             queryType.Fields
-                .SingleOrDefault(x => x.Name == "children")
+                .SingleOrDefault(x => x.Name == "child")
                 .Should()
                 .BeEquivalentTo(expectedField);
         }
@@ -147,19 +144,17 @@ namespace OttoTheGeek.Tests
             var rawResult = await server.GetResultAsync<JObject>(@"{
                 children {
                     id
-                    children(arg: ""derp"") {
+                    child(arg: ""derp"") {
                         arg
                     }
                 }
             }");
 
             var actual = rawResult["children"]
-                .SelectMany(x => x["children"])
+                .Select(x => x["child"])
                 .Select(x => x.ToObject<GrandchildObject>())
                 .ToArray();
             var expected = new[] {
-                new GrandchildObject { Arg = "derp" },
-                new GrandchildObject { Arg = "derp" },
                 new GrandchildObject { Arg = "derp" },
                 new GrandchildObject { Arg = "derp" },
             };
@@ -168,24 +163,5 @@ namespace OttoTheGeek.Tests
                 .Should()
                 .BeEquivalentTo(expected);
         }
-
-        [Fact]
-        public async Task AvoidsNPlusOne()
-        {
-            var model = new Model();
-            var server = model.CreateServer();
-
-            await server.GetResultAsync<JObject>(@"{
-                children {
-                    id
-                    children(arg: ""derp"") {
-                        arg
-                    }
-                }
-            }");
-
-            model.GrandchildResolves.Should().Be(1);
-        }
-
     }
 }
