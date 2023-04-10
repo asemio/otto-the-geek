@@ -9,9 +9,9 @@ namespace OttoTheGeek.Internal
     {
         public async ValueTask<object> ResolveAsync(IResolveFieldContext context)
         {
-            var resolver = ((IServiceProvider)context.Schema);
+            var provider = context.RequestServices;
 
-            return await Resolve(context, resolver);
+            return await Resolve(context, provider);
         }
 
         protected abstract Task<T> Resolve(IResolveFieldContext context, IServiceProvider provider);
