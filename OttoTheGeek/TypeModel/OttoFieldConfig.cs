@@ -56,6 +56,7 @@ public record OttoFieldConfig(
                 Type = gtt,
                 Name = Property.Name,
                 Description = desc,
+                Arguments = config.GetGqlNetArguments(ArgumentsType, inputGraphTypes),
                 Resolver = AuthResolver.GetResolver(ResolverConfiguration?.CreateGraphQLResolver() ?? NameFieldResolver.Instance)
             };
         }
