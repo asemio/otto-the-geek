@@ -164,8 +164,7 @@ namespace OttoTheGeek.Tests.Integration
                 new FieldArgument
                 {
                     Name = nameof(Args.ComplexThing).ToCamelCase(),
-                    Type = ObjectType.NonNullableOf(
-                        new ObjectType { Name = $"{nameof(ComplexThing)}Input", Kind = ObjectKinds.InputObject })
+                    Type = new ObjectType { Name = $"{nameof(ComplexThing)}Input", Kind = ObjectKinds.InputObject }
                 });
             queryType.Fields.Single().Args.Should().ContainEquivalentOf(
                 new FieldArgument

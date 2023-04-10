@@ -89,9 +89,10 @@ namespace OttoTheGeek.Tests.Integration
                 }
             }");
 
-            var expectedEnumType = ObjectType.NonNullableOf(new ObjectType {
+            var expectedEnumType = new ObjectType {
+                Kind = ObjectKinds.Enum,
                 Name = "ChildOrderBy",
-            });
+            };
 
             var result = rawResult["__type"].ToObject<ObjectType>();
 

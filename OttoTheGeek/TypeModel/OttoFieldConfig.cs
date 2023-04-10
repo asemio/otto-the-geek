@@ -172,7 +172,12 @@ public record OttoFieldConfig(
             return (null, cachedGraphTypes[ResolverConfiguration.ConnectionType]);
         }
 
-        if (Nullability == Nullability.NonNull || isInputType && !(graphType is EnumerationGraphType))
+        var needsNonNull =
+                Nullability == Nullability.NonNull
+                && !Property.PropertyType.IsAssignableTo(typeof(OrderValue))
+            ;
+        
+        if (needsNonNull)
         {
             return (null, new NonNullGraphType(graphType));
         }
