@@ -19,7 +19,7 @@ namespace OttoTheGeek.Internal.Authorization
 
         public async ValueTask<object> ResolveAsync(IResolveFieldContext context)
         {
-            var sp = ((IServiceProvider)context.Schema);
+            var sp = context.RequestServices;
             var authorizer = sp.GetRequiredService<TAuthorizer>();
             if(await _authFn(authorizer))
             {

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Globalization;
 using System.Threading.Tasks;
 using GraphQL;
 using GraphQL.DataLoader;
@@ -26,7 +27,7 @@ namespace OttoTheGeek.Internal.ResolverConfiguration
         {
             public ValueTask<object> ResolveAsync(IResolveFieldContext context)
             {
-                var provider = ((IServiceProvider)context.Schema);
+                var provider = context.RequestServices;
                 var loaderContext = provider.GetRequiredService<IDataLoaderContextAccessor>().Context;
                 var resolver = provider.GetRequiredService<TResolver>();
 
