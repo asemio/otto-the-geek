@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "graphiql": "^0.16.0",
+    "graphiql": "^1.4.7",
     "graphql": "^14.5.8",
     "react": "^16.11.0",
     "react-dom": "^16.11.0",
